@@ -9,7 +9,9 @@ import io.github.tfgcn.fieldguide.item.SpotlightItem;
 import io.github.tfgcn.fieldguide.book.page.*;
 import io.github.tfgcn.fieldguide.book.page.tfc.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -460,6 +462,20 @@ public class BookParser {
     }
 
     public void buildBookHtml(Context context) throws Exception {
+
+        // copy files from assets/static to outputDir
+        FileUtils.copyDirectory(new File("assets/static"), new File(context.getOutputRootDir() + "/static"));
+        // copy files from assets/textures to outputDir/_images
+        FileUtils.copyDirectory(new File("assets/textures"), new File(context.getOutputRootDir() + "/_images"));
+        // Always copy the redirect, which defaults to en_us/
+        FileUtils.copyFile(new File("assets/templates/redirect.html"), new File(context.getOutputDir() + "/index.html"));
+        // Write metadata.js
+        StringBuffer metadata = new StringBuffer();
+        metadata.append("window._VERSIONS = [\n");
+        metadata.append("    [\"%s - %s\", null, false],\n".formatted(Versions.MC_VERSION, Versions.VERSION));
+        metadata.append("];");
+        FileUtils.writeStringToFile(new File(context.getOutputRootDir() + "/static/metadata.js"), metadata.toString(), "UTF-8");
+
         Map<String, Object> data = new HashMap<>();
         data.put("title", context.translate(I18n.TITLE));
         data.put("long_title", context.translate(I18n.TITLE) + " | " + Versions.MC_VERSION);
