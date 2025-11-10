@@ -292,15 +292,12 @@ public class HtmlRenderer {
                         // 当前分类，显示子条目
                         String subEntries = category.getSortedEntries().stream()
                                 .map(subEntry -> {
-                                    String entryId = subEntry.getKey();
                                     BookEntry bookEntry = subEntry.getValue();
-                                    // 计算相对路径
-                                    String relativePath = getRelativePath(entryId, catId);
                                     return String.format(
                                             """
                                             <li><a href="./%s.html">%s</a></li>
                                             """,
-                                            relativePath, bookEntry.getName()
+                                            bookEntry.getRelId(), bookEntry.getName()
                                     );
                                 })
                                 .collect(Collectors.joining("\n"));
@@ -348,14 +345,6 @@ public class HtmlRenderer {
         );
     }
 
-    private static String getRelativePath(String entryId, String categoryId) {
-        // 简化实现，假设 entryId 已经是相对于 categoryId 的路径
-        // 如果需要更复杂的路径计算，可以在这里实现
-        return entryId.startsWith(categoryId + "/")
-                ? entryId.substring(categoryId.length() + 1)
-                : entryId;
-    }
-
     private void buildEntryPages(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
         for (Map.Entry<String, BookEntry> entryEntry : cat.getSortedEntries()) {
             String entryId = entryEntry.getKey();
@@ -374,7 +363,7 @@ public class HtmlRenderer {
             data.put("text_discord", context.translate(I18n.DISCORD));
             data.put("current_lang_key", context.getLang());
             data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
-            data.put("langs", generateEntryLanguageLinks(Versions.LANGUAGES, context, entryId));
+            data.put("langs", generateEntryLanguageLinks(Versions.LANGUAGES, context, categoryId, entry.getRelId()));
             data.put("index", "../");
             data.put("root", context.getRootDir());
             data.put("tfc_version", Versions.TFC_VERSION);
@@ -383,7 +372,7 @@ public class HtmlRenderer {
             data.put("page_content", generateEntryPageContent(entry));
 
             // 生成条目页面
-            String outputFileName = entryId + ".html";
+            String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
             context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), outputFileName, data);
         }
     }
@@ -393,13 +382,13 @@ public class HtmlRenderer {
         return iconPath.replace("../../_images/", "").replace("..\\..\\_images\\", "");
     }
 
-    private static String generateEntryLanguageLinks(List<String> languages, Context context, String entryId) {
+    private static String generateEntryLanguageLinks(List<String> languages, Context context, String categoryId, String relId) {
         return languages.stream()
                 .map(lang -> String.format(
                         """
-                        <a href="../../%s/%s.html" class="dropdown-item">%s</a>
+                        <a href="../../%s/%s/%s.html" class="dropdown-item">%s</a>
                         """,
-                        lang, entryId, context.translate(String.format(I18n.LANGUAGE_NAME, lang))
+                        lang, categoryId, relId, context.translate(String.format(I18n.LANGUAGE_NAME, lang))
                 ))
                 .collect(Collectors.joining("\n"));
     }
@@ -436,14 +425,13 @@ public class HtmlRenderer {
                                 .map(subEntry -> {
                                     String entryId = subEntry.getKey();
                                     BookEntry bookEntry = subEntry.getValue();
-                                    String relativePath = getRelativePath(entryId, catId);
                                     boolean isCurrent = entryId.equals(currentEntryId);
 
                                     return String.format(
                                             """
                                             <li><a href="./%s.html"%s>%s</a></li>
                                             """,
-                                            relativePath,
+                                            bookEntry.getRelId(),
                                             isCurrent ? " class=\"active\"" : "",
                                             bookEntry.getName()
                                     );
