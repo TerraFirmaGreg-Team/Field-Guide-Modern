@@ -39,14 +39,6 @@
                 <button class="btn btn-outline-success" type="submit">Search</button>
               </form>
              </li>
-            <!-- Version submenu -->
-            <li class="nav-item px-2 dropdown" id="version-dropdown">
-              <a class="nav-link dropdown-toggle" id="version-dropdown-button" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-collection-fill"></i> ${text_version} ${tfc_version}
-              </a>
-              <div class="dropdown-menu" aria-labelledby="version-dropdown-button" id="version-dropdown-menu">
-              </div>
-            </li>
 
             <!-- Language submenu -->
             <li class="nav-item px-2 dropdown">
@@ -152,7 +144,6 @@
 
     <script src="${root}/static/metadata.js"></script>
     <script src="${root}/static/tooltips.js"></script>
-    <script src="${root}/static/versions.js"></script>
     <script src="${root}/static/search.js"></script>
   </body>
 </html>
