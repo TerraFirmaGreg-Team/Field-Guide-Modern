@@ -76,10 +76,11 @@ public class AssetLoader {
             }
         }
 
+        addMcClientSource();
         log.info("Total sources: {}", sources.size());
     }
 
-    public void addMcClientSource() {
+    private void addMcClientSource() {
         if (!MCMeta.ENABLED) {
             log.info("Skipping client JAR loading because MCMeta is disabled");
             return;

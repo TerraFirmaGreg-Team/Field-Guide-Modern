@@ -1,10 +1,11 @@
 package io.github.tfgcn.fieldguide.asset;
 
-import io.github.tfgcn.fieldguide.BookParser;
-import io.github.tfgcn.fieldguide.Context;
 import io.github.tfgcn.fieldguide.MCMeta;
 import io.github.tfgcn.fieldguide.Versions;
+import io.github.tfgcn.fieldguide.mc.BlockModel;
+import io.github.tfgcn.fieldguide.opengl.OBJExporter;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -13,7 +14,7 @@ import java.nio.file.Paths;
  *
  * @author yanmaoyuan
  */
-public class BookParserTest {
+public class ObjExporterText {
 
     public static void main(String[] args) throws IOException {
         // The TerraFirmaGreg modpack directory
@@ -26,15 +27,12 @@ public class BookParserTest {
 
         AssetLoader assetLoader = new AssetLoader(Paths.get(modpackPath));
 
-        Context context = new Context(assetLoader, "assets/www", "/Field-Guide-TFG", false);
-        // Context context = new Context(assetLoader, "output", ".", false);
+        BlockModel itemModel = assetLoader.loadItemModel("tfc:metal/anvil/bismuth_bronze");
 
-        BookParser bookParser = new BookParser();
-        bookParser.processAllLanguages(context);
+        BlockModel blockModel = assetLoader.loadModel("tfc:block/metal/anvil/bismuth_bronze");
 
-        System.out.println("Missing keys: " + context.missingKeys.size());
-        for (String key : context.missingKeys) {
-            System.out.println(key);
-        }
+        OBJExporter exporter = new OBJExporter(assetLoader);
+        exporter.exportToOBJ(blockModel, "output/1.obj");
+        System.out.println(itemModel);
     }
 }
