@@ -1,11 +1,10 @@
 package io.github.tfgcn.fieldguide.renderer;
 
 import freemarker.template.*;
-import io.github.tfgcn.fieldguide.Context;
-import io.github.tfgcn.fieldguide.I18n;
-import io.github.tfgcn.fieldguide.Versions;
+import io.github.tfgcn.fieldguide.*;
 import io.github.tfgcn.fieldguide.patchouli.BookCategory;
 import io.github.tfgcn.fieldguide.patchouli.BookEntry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -14,15 +13,11 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class HtmlRenderer {
     private final Configuration cfg;
-    private final String outputDir;
-    
-    public HtmlRenderer(String templateDir, String outputDir) throws IOException {
-        this.outputDir = outputDir;
-        
-        Files.createDirectories(Paths.get(outputDir));
 
+    public HtmlRenderer(String templateDir) throws IOException {
         // 配置 FreeMarker
         cfg = new Configuration(Configuration.VERSION_2_3_32);
         cfg.setDirectoryForTemplateLoading(new File(templateDir));
@@ -43,7 +38,7 @@ public class HtmlRenderer {
         buildHomePage(context);
 
         // Search page
-        // TODO
+        buildSearchPage(context);
 
         // Category pages
         for (Map.Entry<String, BookCategory> entry : context.getSortedCategories()) {
@@ -120,6 +115,41 @@ public class HtmlRenderer {
         context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), "index.html", data);
     }
 
+    public void buildSearchPage(Context context) throws IOException, TemplateException {
+        Map<String, Object> data = new HashMap<>();
+        // meta
+        data.put("title", context.translate(I18n.TITLE));
+        data.put("long_title", context.translate(I18n.TITLE) + " | " + Versions.MC_VERSION);
+        data.put("short_description", context.translate(I18n.HOME));
+        data.put("preview_image", "splash.png");
+        data.put("root", "..");// context.getRootDir()
+
+        // text
+        data.put("text_index", context.translate(I18n.INDEX));
+        data.put("text_contents", context.translate(I18n.CONTENTS));
+        data.put("text_github", context.translate(I18n.GITHUB));
+        data.put("text_discord", context.translate(I18n.DISCORD));
+
+        // langs and navigation
+        data.put("current_lang_key", context.getLang());
+        data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
+        data.put("langs", generateLanguageDropdown(Versions.LANGUAGES, context));
+        data.put("index", "../");
+        data.put("location", indexBreadcrumbModern(null));
+
+        // contents
+        data.put("contents", generateTableOfContents(context.getSortedCategories()));
+
+        // generate page
+        context.getHtmlRenderer().generatePage("search.ftl", context.getOutputDir(), "search.html", data);
+
+        for (Map<String, String> result : context.getSearchTree()) {
+            String content = ProjectUtil.searchStrip(result.get("content"));
+            result.put("content", content);
+        }
+        JsonUtils.writeFile(new File(context.getOutputDir() + "/search_index.json"), context.getSearchTree());
+    }
+
     public void buildCategoryPage(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
         Map<String, Object> data = new HashMap<>();
         data.put("title", context.translate(I18n.TITLE));
@@ -147,6 +177,34 @@ public class HtmlRenderer {
         buildEntryPages(context, categoryId, cat);
     }
 
+    private void buildEntryPages(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
+        for (Map.Entry<String, BookEntry> entryEntry : cat.getSortedEntries()) {
+            String entryId = entryEntry.getKey();
+            BookEntry entry = entryEntry.getValue();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("title", context.translate(I18n.TITLE));
+            data.put("long_title", entry.getName() + " | " + context.translate(I18n.SHORT_TITLE));
+            data.put("short_description", entry.getName());
+            data.put("preview_image", cleanImagePath(entry.getIconPath()));
+            data.put("text_index", context.translate(I18n.INDEX));
+            data.put("text_contents", context.translate(I18n.CONTENTS));
+            data.put("text_github", context.translate(I18n.GITHUB));
+            data.put("text_discord", context.translate(I18n.DISCORD));
+            data.put("current_lang_key", context.getLang());
+            data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
+            data.put("langs", generateEntryLanguageLinks(Versions.LANGUAGES, context, categoryId, entry.getRelId()));
+            data.put("index", "../");
+            data.put("root", "../..");// context.getRootDir()
+            data.put("location", generateEntryBreadcrumb("../", cat.getName(), entry.getName()));
+            data.put("contents", generateEntryTableOfContents(context.getSortedCategories(), categoryId, entryId));
+            data.put("page_content", generateEntryPageContent(entry));
+
+            // 生成条目页面
+            String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
+            context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), outputFileName, data);
+        }
+    }
 
     public static String generateLanguageDropdown(List<String> languages, Context context) {
         if (languages == null || languages.isEmpty()) {
@@ -337,35 +395,6 @@ public class HtmlRenderer {
                 """,
                 cat.getName(), cat.getDescription(), categoryListing
         );
-    }
-
-    private void buildEntryPages(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
-        for (Map.Entry<String, BookEntry> entryEntry : cat.getSortedEntries()) {
-            String entryId = entryEntry.getKey();
-            BookEntry entry = entryEntry.getValue();
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("title", context.translate(I18n.TITLE));
-            data.put("long_title", entry.getName() + " | " + context.translate(I18n.SHORT_TITLE));
-            data.put("short_description", entry.getName());
-            data.put("preview_image", cleanImagePath(entry.getIcon()));
-            data.put("text_index", context.translate(I18n.INDEX));
-            data.put("text_contents", context.translate(I18n.CONTENTS));
-            data.put("text_github", context.translate(I18n.GITHUB));
-            data.put("text_discord", context.translate(I18n.DISCORD));
-            data.put("current_lang_key", context.getLang());
-            data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
-            data.put("langs", generateEntryLanguageLinks(Versions.LANGUAGES, context, categoryId, entry.getRelId()));
-            data.put("index", "../");
-            data.put("root", "../..");// context.getRootDir()
-            data.put("location", generateEntryBreadcrumb("../", cat.getName(), entry.getName()));
-            data.put("contents", generateEntryTableOfContents(context.getSortedCategories(), categoryId, entryId));
-            data.put("page_content", generateEntryPageContent(entry));
-
-            // 生成条目页面
-            String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
-            context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), outputFileName, data);
-        }
     }
 
     private static String cleanImagePath(String iconPath) {

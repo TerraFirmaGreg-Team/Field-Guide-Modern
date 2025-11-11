@@ -81,7 +81,7 @@ public class Context {
     private int blocksFailed = 0;
     
     // 搜索树
-    private List<Map<String, Object>> searchTree = new ArrayList<>();
+    private List<Map<String, String>> searchTree = new ArrayList<>();
 
     private Map<String, ItemImageResult> itemImageCache = new HashMap<>();
 
@@ -92,7 +92,7 @@ public class Context {
         this.rootDir = rootDir;
         this.debugI18n = debugI18n;
 
-        this.htmlRenderer = new HtmlRenderer("assets/templates", outputRootDir);
+        this.htmlRenderer = new HtmlRenderer("assets/templates");
 
         // init en_us lang
         this.langFallbackKeys.putAll(loadLang("en_us"));
@@ -202,7 +202,7 @@ public class Context {
         return this.entries.containsKey(entryId);
     }
 
-    public void addEntry(String categoryId, String entryId, BookEntry entry, Map<String, Object> search) {
+    public void addEntry(String categoryId, String entryId, BookEntry entry, Map<String, String> search) {
         try {
             this.entries.put(entryId, entry);
             this.categories.get(categoryId).getEntries().add(entryId);
@@ -249,12 +249,12 @@ public class Context {
         }
     }
     
-    public void formatText(List<String> buffer, String text, Map<String, Object> search) {
+    public void formatText(List<String> buffer, String text, Map<String, String> search) {
         if (text != null && !text.isEmpty()) {
             TextFormatter.formatText(buffer, text, this.keybindings);
 
             if (search != null) {
-                Map<String, Object> searchData = new HashMap<>(search);
+                Map<String, String> searchData = new HashMap<>(search);
                 searchData.put("content", text);
                 this.searchTree.add(searchData);
             }
@@ -265,13 +265,13 @@ public class Context {
         formatText(buffer, page.getText(), null);
     }
     
-    public void formatTitle(List<String> buffer, String title, Map<String, Object> search) {
+    public void formatTitle(List<String> buffer, String title, Map<String, String> search) {
         if (title != null && !title.isEmpty()) {
             String stripped = TextFormatter.stripVanillaFormatting(title);
             buffer.add("<h5>" + stripped + "</h5>\n");
 
             if (search != null) {
-                Map<String, Object> searchData = new HashMap<>(search);
+                Map<String, String> searchData = new HashMap<>(search);
                 searchData.put("content", stripped);
                 this.searchTree.add(searchData);
             }
@@ -283,7 +283,7 @@ public class Context {
      */
     public void formatTitleWithIcon(List<String> buffer, String iconSrc, String iconName, 
                                    String inTitle, String tag,
-                                   String tooltip, Map<String, Object> search) {
+                                   String tooltip, Map<String, String> search) {
         String title = iconName;
         if (inTitle != null && !inTitle.isEmpty()) {
             title = TextFormatter.stripVanillaFormatting(inTitle);
@@ -291,7 +291,7 @@ public class Context {
                 iconName = title;
             }
             if (search != null) {
-                Map<String, Object> searchData = new HashMap<>(search);
+                Map<String, String> searchData = new HashMap<>(search);
                 searchData.put("content", iconName);
                 this.searchTree.add(searchData);
             }

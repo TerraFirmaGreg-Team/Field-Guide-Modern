@@ -282,7 +282,6 @@ public class AssetLoader {
     }
 
     public Map<String, Object> loadRecipe(String recipeId) {
-        // 1.20.1 "recipes", 1.20.1+ "recipe"
         Asset asset = loadResource(recipeId, "recipes", "data", ".json");
         if (asset == null) {
             log.error("Recipe not found: {}", recipeId);

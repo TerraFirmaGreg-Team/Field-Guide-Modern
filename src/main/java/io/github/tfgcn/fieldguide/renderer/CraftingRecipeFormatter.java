@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CraftingRecipeFormatter {
-    
+
     /**
      * 格式化合成配方
      */
@@ -23,7 +23,7 @@ public class CraftingRecipeFormatter {
     public static void formatCraftingRecipeFromData(Context context, List<String> buffer, 
                                                    String identifier, Map<String, Object> data) {
         String recipeType = (String) data.get("type");
-        CraftingRecipe recipe = null;
+        CraftingRecipe recipe;
         
         switch (recipeType) {
             case "minecraft:crafting_shaped":
@@ -65,53 +65,51 @@ public class CraftingRecipeFormatter {
             default:
                 throw new RuntimeException("Unknown crafting recipe type: " + recipeType + " for recipe " + identifier);
         }
-        
-        if (recipe != null) {
-            for (int i = 0; i < recipe.grid.length; i++) {
-                Object key = recipe.grid[i];
-                if (key != null) {
-                    recipe.grid[i] = formatIngredient(context, key);
-                }
+
+        for (int i = 0; i < recipe.grid.length; i++) {
+            Object key = recipe.grid[i];
+            if (key != null) {
+                recipe.grid[i] = formatIngredient(context, key);
             }
-            
-            buffer.add(String.format("""
-                <div class="d-flex align-items-center justify-content-center">
-                    <div class="crafting-recipe">
-                        <img src="../../_images/crafting_%s.png" />
-                """, recipe.shapeless ? "shapeless" : "shaped"));
-            
-            // 添加网格物品
-            for (int i = 0; i < recipe.grid.length; i++) {
-                Object key = recipe.grid[i];
-                if (key != null) {
-                    ItemImageResult ingredient = (ItemImageResult) key;
-                    int x = i % 3;
-                    int y = i / 3;
-                    buffer.add(String.format("""
-                        <div class="crafting-recipe-item crafting-recipe-pos-%d-%d">
-                            <span href="#" data-bs-toggle="tooltip" title="%s" class="crafting-recipe-item-tooltip"></span>
-                            <img class="recipe-item" src="%s" />
-                        </div>
-                        """, x, y, ingredient.getName(), ingredient.getPath()));
-                }
+        }
+
+        buffer.add(String.format("""
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="crafting-recipe">
+                    <img src="../../_images/crafting_%s.png" />
+            """, recipe.shapeless ? "shapeless" : "shaped"));
+
+        // 添加网格物品
+        for (int i = 0; i < recipe.grid.length; i++) {
+            Object key = recipe.grid[i];
+            if (key != null) {
+                ItemImageResult ingredient = (ItemImageResult) key;
+                int x = i % 3;
+                int y = i / 3;
+                buffer.add(String.format("""
+                    <div class="crafting-recipe-item crafting-recipe-pos-%d-%d">
+                        <span href="#" data-bs-toggle="tooltip" title="%s" class="crafting-recipe-item-tooltip"></span>
+                        <img class="recipe-item" src="%s" />
+                    </div>
+                    """, x, y, ingredient.getName(), ingredient.getPath()));
             }
-            
-            // 添加输出物品
-            ItemStackResult output = recipe.output;
-            buffer.add(String.format("""
-                        <div class="crafting-recipe-item crafting-recipe-pos-out">
-                            <span href="#" data-bs-toggle="tooltip" title="%s" class="crafting-recipe-item-tooltip"></span>
-                            %s
-                            <img class="recipe-item" src="%s" />
-                        </div>
+        }
+
+        // 添加输出物品
+        ItemStackResult output = recipe.output;
+        buffer.add(String.format("""
+                    <div class="crafting-recipe-item crafting-recipe-pos-out">
+                        <span href="#" data-bs-toggle="tooltip" title="%s" class="crafting-recipe-item-tooltip"></span>
+                        %s
+                        <img class="recipe-item" src="%s" />
                     </div>
                 </div>
-                """,
-                output.name,
-                formatCount(output.count),
-                output.path
-            ));
-        }
+            </div>
+            """,
+            output.name,
+            formatCount(output.count),
+            output.path
+        ));
     }
     
     /**
@@ -185,7 +183,7 @@ public class CraftingRecipeFormatter {
                         StringBuilder csvString = new StringBuilder();
                         for (Map<String, Object> child : children) {
                             if (child.containsKey("item")) {
-                                if (csvString.length() > 0) {
+                                if (!csvString.isEmpty()) {
                                     csvString.append(",");
                                 }
                                 csvString.append(child.get("item"));
@@ -201,7 +199,7 @@ public class CraftingRecipeFormatter {
                 if (item instanceof Map) {
                     Map<String, Object> itemMap = (Map<String, Object>) item;
                     if (itemMap.containsKey("item")) {
-                        if (csvString.length() > 0) {
+                        if (!csvString.isEmpty()) {
                             csvString.append(",");
                         }
                         csvString.append(itemMap.get("item"));
@@ -282,7 +280,7 @@ class CraftingRecipe {
 class SizedIngredientResult {
     public final ItemImageResult ingredient;
     public final int count;
-    
+
     public SizedIngredientResult(ItemImageResult ingredient, int count) {
         this.ingredient = ingredient;
         this.count = count;

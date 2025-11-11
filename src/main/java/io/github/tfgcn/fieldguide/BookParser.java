@@ -162,10 +162,10 @@ public class BookParser {
                 log.error("Failed to get item image for entry: {}", entryId);
             }
             
-            Map<String, Object> search = new HashMap<>();
+            Map<String, String> search = new HashMap<>();
             search.put("content", "");
             search.put("entry", entry.getName());
-            search.put("url", "./" + entryId + ".html");
+            search.put("url", "./" + categoryId + "/" + entry.getRelId() + ".html");
             
             // 解析页面
             List<BookPage> pages = entry.getPages();
@@ -190,7 +190,7 @@ public class BookParser {
     }
     
     public void parsePage(Context context, String entryId, List<String> buffer,
-                         BookPage page, Map<String, Object> search) {
+                         BookPage page, Map<String, String> search) {
         String pageType = page.getType();
         String anchor = page.getAnchor();
         if (anchor != null) {
@@ -331,7 +331,7 @@ public class BookParser {
     }
     
     private void parseCraftingRecipe(Context context, List<String> buffer,
-                                     PageCrafting page, Map<String, Object> search) {
+                                     PageCrafting page, Map<String, String> search) {
         // 处理主要配方
         if (page.getRecipe() != null) {
             try {
@@ -359,7 +359,7 @@ public class BookParser {
     
     @SuppressWarnings("unchecked")
     private void parseSpotlightPage(Context context, List<String> buffer,
-                                    PageSpotlight page, Map<String, Object> search) {
+                                    PageSpotlight page, Map<String, String> search) {
         List<PageSpotlightItem> items = page.getItem();
         if (items == null || items.isEmpty()) {
             log.warn("Spotlight page did not have an item or tag key: {}", page);
@@ -404,7 +404,7 @@ public class BookParser {
     }
 
     private void parseMultiblockPage(Context context, List<String> buffer,
-                                     PageMultiblock page, Map<String, Object> search) {
+                                     PageMultiblock page, Map<String, String> search) {
         context.formatTitle(buffer, page.getName(), search);
         
         try {
@@ -435,7 +435,7 @@ public class BookParser {
     }
 
     private void parseMultiMultiblockPage(Context context, List<String> buffer,
-                                     PageMultiMultiblock page, Map<String, Object> search) {
+                                     PageMultiMultiblock page, Map<String, String> search) {
         try {
             // FIXME 修复加载多方块结构图片的功能
             throw new InternalException("tfc:multimultiblock image processing not implemented");
@@ -453,7 +453,7 @@ public class BookParser {
     }
 
     private void parseMiscRecipe(Context context, List<String> buffer,
-                                 IPageDoubleRecipe page, Map<String, Object> search, String pageType) {
+                                 IPageDoubleRecipe page, Map<String, String> search, String pageType) {
         try {
             // FIXME misc_recipe.format_misc_recipe(context, buffer, data['recipe'])
             log.debug("Misc recipe processing not implemented for: {}", pageType);
@@ -468,7 +468,7 @@ public class BookParser {
     }
     
     private void parseBarrelRecipe(Context context, List<String> buffer, 
-                                 PageBarrel page, Map<String, Object> search, String pageType) {
+                                 PageBarrel page, Map<String, String> search, String pageType) {
         try {
             // FIXME barrel_recipe.format_barrel_recipe(context, buffer, data['recipe'])
             log.debug("Barrel recipe processing not implemented for: {}", pageType);
@@ -481,7 +481,7 @@ public class BookParser {
     }
 
     private void parseRockKnappingRecipe(Context context, List<String> buffer,
-                                     PageRockKnapping page, Map<String, Object> search) {
+                                     PageRockKnapping page, Map<String, String> search) {
         try {
             String recipeId = page.getRecipes().get(0);
             if (page.getRecipe() != null && !page.getRecipe().isEmpty()) {
@@ -502,7 +502,7 @@ public class BookParser {
     }
 
     private void parseKnappingRecipe(Context context, List<String> buffer,
-                                     PageKnapping page, Map<String, Object> search) {
+                                     PageKnapping page, Map<String, String> search) {
         try {
             KnappingRecipe recipe = KnappingRecipes.formatKnappingRecipe(context, page.getRecipe());
             buffer.add(String.format(IMAGE_KNAPPING, recipe.image(), "Recipe: " + recipe.recipeId()));
