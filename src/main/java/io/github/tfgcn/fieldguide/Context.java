@@ -560,7 +560,7 @@ public class Context {
             log.info("tag: {}", item);
         }
 
-        // TODO get from cache
+        // get from cache
         if (itemImageCache.containsKey(item)) {
             ItemImageResult result = itemImageCache.get(item);
             if (result.getKey() != null) {
@@ -640,7 +640,7 @@ public class Context {
             log.warn("Failed to create item image: {}", item, e);
             if (placeholder) {
                 // Fallback to using the placeholder image
-                ItemImageResult fallback = new ItemImageResult("_images/item_placeholder.png", name, null);
+                ItemImageResult fallback = new ItemImageResult("../../_images/item_placeholder.png", name, null);
                 itemImageCache.put(item, fallback);
             }
             throw new InternalException("Failed to create item image: " + item);
