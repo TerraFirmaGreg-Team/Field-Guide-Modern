@@ -509,7 +509,7 @@ public class Context {
         String processedPath = processPath(path);
 
         // Create output directory if it doesn't exist
-        File outputFile = new File(outputDir, processedPath);
+        File outputFile = new File(outputRootDir, processedPath);
         outputFile.getParentFile().mkdirs();
 
         // Save as GIF
