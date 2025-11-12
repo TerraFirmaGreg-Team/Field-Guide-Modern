@@ -211,10 +211,10 @@ public class FluidLoader {
      * 将颜色应用到图像的所有像素上
      */
     public static BufferedImage applyColorToImage(BufferedImage img, Color color) {
-        return applyColorToImage(img, color, 50);
+        return applyColorToImage(img, color, 0.5f);
     }
 
-    public static BufferedImage applyColorToImage(BufferedImage img, Color color, int darkThreshold) {
+    public static BufferedImage applyColorToImage(BufferedImage img, Color color, float darkThreshold) {
         BufferedImage result = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         float[] hsv = rgbToHsv(color.getRed(), color.getGreen(), color.getBlue());
