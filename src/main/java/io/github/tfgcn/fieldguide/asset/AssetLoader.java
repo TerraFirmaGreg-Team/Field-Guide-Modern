@@ -385,6 +385,38 @@ public class AssetLoader {
         }
     }
 
+    public BlockModel loadBlockModel(String blockId) {
+        String resourceLocation;
+        if (blockId.indexOf(':') < 0) {
+            resourceLocation = "minecraft:" + blockId;
+        } else {
+            resourceLocation = blockId;
+        }
+        if (blockModelCache.containsKey(resourceLocation)) {
+            log.debug("Hitting block model cache: {}", resourceLocation);
+            return blockModelCache.get(resourceLocation);
+        }
+
+        Asset asset = loadResource(blockId, "models/block", "assets", ".json");
+        try {
+            BlockModel model = JsonUtils.readFile(asset.getInputStream(), BlockModel.class);
+            model.getInherits().add(resourceLocation);
+
+            String parent = model.getParent();
+            if (parent != null && !parent.isEmpty()) {
+                BlockModel parentModel = loadModel(parent);
+                model.setParentModel(parentModel);
+            }
+
+            model.mergeWithParent();// important
+            blockModelCache.put(resourceLocation, model);
+            return model;
+        } catch (Exception e) {
+            log.warn("Failed to load block model: {}", blockId, e);
+            throw new InternalException("Failed to load block model: " + blockId);
+        }
+    }
+
     public BlockModel loadItemModel(String itemId) {
         String resourceLocation;
         if (itemId.indexOf(':') < 0) {

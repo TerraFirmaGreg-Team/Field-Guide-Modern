@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class ElementFace {
     private String texture;// #id
-    private double[] uv;// u1,v1,u2,v2
+    private double[] uv = {0, 0, 16, 16};// u1,v1,u2,v2
     private Integer rotation = 0;// 0,90,180,270
     private Integer tintIndex = -1;
     private String cullface;

@@ -11,7 +11,6 @@ import io.github.jmecn.draw3d.renderer.Camera;
 import io.github.jmecn.draw3d.renderer.Renderer;
 import io.github.jmecn.draw3d.scene.Geometry;
 import io.github.jmecn.draw3d.scene.Node;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 应用程序主类
@@ -19,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author yanmaoyuan
  *
  */
-@Slf4j
 public abstract class Application {
 
     protected int width;
@@ -147,7 +145,7 @@ public abstract class Application {
 
         // 计算总运行时间
         long totalTime = System.nanoTime() - startTime;
-        log.info("运行总时间：{}",totalTime / 1000000000.0f);
+        System.out.println("运行总时间：" + (totalTime / 1000000000.0f));
     }
 
     /**

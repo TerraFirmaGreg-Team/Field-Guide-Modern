@@ -19,6 +19,7 @@ import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
 import io.github.tfgcn.fieldguide.mc.BlockModel;
 import io.github.tfgcn.fieldguide.mc.ElementFace;
 import io.github.tfgcn.fieldguide.mc.ModelElement;
+import io.github.tfgcn.fieldguide.patchouli.page.PageMultiblockData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
@@ -32,10 +33,10 @@ import java.util.Map;
  * @author yanmaoyuan
  */
 @Slf4j
-public class RendererTest extends Application {
+public class MultiblockTest extends Application {
 
     public static void main(String[] args) {
-        RendererTest app = new RendererTest();
+        MultiblockTest app = new MultiblockTest();
         app.start();
     }
     //String model = "beneath:block/unposter";
@@ -62,10 +63,10 @@ public class RendererTest extends Application {
 
     private AssetLoader assetLoader;
 
-    public RendererTest() {
+    public MultiblockTest() {
         this.width = 1080;
         this.height = 720;
-        this.title = model;
+        this.title = "Multiblock";
     }
 
     @Override
@@ -74,16 +75,54 @@ public class RendererTest extends Application {
         String modpackPath = "Modpack-Modern";
         assetLoader = new AssetLoader(Paths.get(modpackPath));
 
-        Node node = buildModel(model);
+        String[][] pattern = {{"X"}, {"Y"}, {"0"}};
+        Map<String, String> mapping = new HashMap<>();
+        mapping.put("X", "firmalife:vat");
+        mapping.put("Y", "firmalife:cured_oven_bottom");
 
-        rootNode.attachChild(node);
+        pattern = new String[][] {
+                {"  G  ", "  G  ", "GGCGG", "  G  ", "  G  "},
+                {"XXXXX", "XXXXX", "XX0XX", "XXBXX", "XXXXX"}
+        };
+        mapping = new HashMap<>();
+        mapping.put("X", "tfc:rock/smooth/gabbro");
+        mapping.put("G", "minecraft:light_blue_stained_glass");
+        mapping.put("0", "tfc:charcoal_forge/heat_7");// [heat_level=7]
+        mapping.put("C", "tfc:crucible");
+        mapping.put("B", "tfc:bellows");
 
-        // light
-        AmbientLight ambientLight = new AmbientLight(new Vector4f(0.7f));
-        lights.add(ambientLight);
+        int height = pattern.length;
+        int width = pattern[0].length;
 
-        DirectionalLight dirLight = new DirectionalLight(new Vector4f(0.3f), new Vector3f(-1f, -0.5f, -2f).normalizeLocal());
-        lights.add(dirLight);
+        int y = height * 16;
+        for (String[] layer : pattern) {
+            int z = 0;
+            for (String line : layer) {
+                for (int x = 0; x < width; x++) {
+                    char c = line.charAt(x);
+                    if (c == ' ') {
+                        continue;
+                    }
+                    String model = mapping.get(String.valueOf(c));
+                    if (model != null) {
+                    Node node = buildModel(model);
+                    node.getLocalTransform().getTranslation().addLocal(new Vector3f(x * 16, y, z));
+                    rootNode.attachChild(node);
+                    }
+                }
+                z += 16;
+            }
+            y -= 16;
+        }
+//
+//        int i = 0;
+//        for (String block : mapping.values()) {
+//            System.out.println("block:" +block);
+//            Node node = buildModel(block);
+//            node.getLocalTransform().getTranslation().addLocal(new Vector3f(i * 16, 0, 0));
+//            rootNode.attachChild(node);
+//            i++;
+//        };
 
         // 初始化摄像机
         Camera cam = getCamera();
@@ -105,7 +144,7 @@ public class RendererTest extends Application {
     }
 
     public Node buildModel(String modelId) {
-        BlockModel blockModel = assetLoader.loadModel(modelId);
+        BlockModel blockModel = assetLoader.loadBlockModel(modelId);
         Map<String, String> textures = blockModel.getTextures();
         Node node = new Node();
         for (ModelElement element : blockModel.getElements()) {
@@ -131,6 +170,7 @@ public class RendererTest extends Application {
 
         Material material = new Material();
         material.setShader(new UnshadedShader());
+        material.getRenderState().setBlendMode(RenderState.BlendMode.ALPHA_BLEND);
         material.getRenderState().setCullMode(cullMode);
         material.getRenderState().setAlphaTest(true);
         material.getRenderState().setAlphaFalloff(0.1f);
