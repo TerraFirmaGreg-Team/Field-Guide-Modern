@@ -108,7 +108,7 @@ public class Transform {
      */
     public void fromTransformMatrix(Matrix4f mat) {
         translation.set(mat.toTranslationVector());
-        rot.set(mat.toRotationQuat());
+        rot.set(mat.toRotationQuad());
         scale.set(mat.toScaleVector());
     }
     

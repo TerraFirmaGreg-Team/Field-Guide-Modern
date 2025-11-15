@@ -188,7 +188,7 @@ public class Matrix3f {
     
     /**
      * 矩阵乘法
-     * @param mat3
+     * @param mat
      * @return
      */
     public Matrix3f mult(Matrix3f mat) {

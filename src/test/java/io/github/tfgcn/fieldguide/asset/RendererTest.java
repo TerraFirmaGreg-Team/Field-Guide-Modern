@@ -1,14 +1,9 @@
 package io.github.tfgcn.fieldguide.asset;
 
 import io.github.jmecn.draw3d.Application;
-import io.github.jmecn.draw3d.light.AmbientLight;
-import io.github.jmecn.draw3d.light.DirectionalLight;
 import io.github.jmecn.draw3d.material.Material;
-import io.github.jmecn.draw3d.material.RenderState;
 import io.github.jmecn.draw3d.material.Texture;
-import io.github.jmecn.draw3d.math.Vector2f;
-import io.github.jmecn.draw3d.math.Vector3f;
-import io.github.jmecn.draw3d.math.Vector4f;
+import io.github.jmecn.draw3d.math.*;
 import io.github.jmecn.draw3d.renderer.Camera;
 import io.github.jmecn.draw3d.renderer.Image;
 import io.github.jmecn.draw3d.scene.Geometry;
@@ -18,6 +13,7 @@ import io.github.jmecn.draw3d.shader.UnshadedShader;
 import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
 import io.github.tfgcn.fieldguide.mc.BlockModel;
 import io.github.tfgcn.fieldguide.mc.ElementFace;
+import io.github.tfgcn.fieldguide.mc.ElementRotation;
 import io.github.tfgcn.fieldguide.mc.ModelElement;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,17 +30,32 @@ import java.util.Map;
 @Slf4j
 public class RendererTest extends Application {
 
+    static int SCALER = 16;
+    static float SCALE = 1f / SCALER;
+
+    String[] models = {
+        "beneath:block/unposter",
+        "tfc:block/metal/anvil/bismuth_bronze",
+        "firmalife:block/plant/pineapple_bush_2",// TODO 需要处理模型旋转
+        "create:block/mechanical_pump/item",// TODO 需要处理模型旋转
+        "createaddition:block/electric_motor/block",// TODO 纹理坐标映射不正确
+        "create:block/steam_engine/block",// TODO 纹理坐标映射不正确
+        "tfc:block/wattle/unstained_wattle",
+        "beneath:block/blackstone_aqueduct_base"
+    };
+
     public static void main(String[] args) {
         RendererTest app = new RendererTest();
         app.start();
     }
+
     //String model = "beneath:block/unposter";
     //String model = "tfc:block/metal/anvil/bismuth_bronze";
-    String model = "firmalife:block/plant/pineapple_bush_2";// TODO 需要处理模型旋转
-    //String model = "create:block/mechanical_pump/item";// TODO 模型不正常，需要处理uv旋转
+    //String model = "firmalife:block/plant/pineapple_bush_2";// TODO 需要处理模型旋转
+    //String model = "create:block/mechanical_pump/item";// TODO 需要处理模型旋转
     //String model = "gtceu:block/machine/hv_chemical_reactor";// TODO 需要处理变体
-    //String model = "createaddition:block/electric_motor/block";// TODO cullface, face.rotaton, element.name, element.rotation
-    //String model = "create:block/steam_engine/block";
+    String model = "createaddition:block/electric_motor/block";// TODO 纹理坐标映射不正确
+    //String model = "create:block/steam_engine/block";// TODO 纹理坐标映射不正确
     //String model = "tfc:block/wattle/unstained_wattle";
     //String model = "beneath:block/blackstone_aqueduct_base";
 
@@ -65,7 +76,7 @@ public class RendererTest extends Application {
     public RendererTest() {
         this.width = 512;
         this.height = 512;
-        this.title = model;
+        this.title = "Block Model Preview";
     }
 
     @Override
@@ -74,24 +85,33 @@ public class RendererTest extends Application {
         String modpackPath = "Modpack-Modern";
         assetLoader = new AssetLoader(Paths.get(modpackPath));
 
-        Node node = buildModel(model);
+        int size = models.length;
+        int rows = (int) Math.sqrt(size);
+        if (rows * rows < size) {
+            rows++;
+        }
 
-        rootNode.attachChild(node);
-
-        // light
-        AmbientLight ambientLight = new AmbientLight(new Vector4f(0.7f));
-        lights.add(ambientLight);
-
-        DirectionalLight dirLight = new DirectionalLight(new Vector4f(0.3f), new Vector3f(-1f, -0.5f, -2f).normalizeLocal());
-        lights.add(dirLight);
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < size; i++) {
+            String model = models[i];
+            if (i % rows == 0) {
+                x = 0;
+                y += SCALER * 2;
+            }
+            Node node = buildModel(model);
+            node.getLocalTransform().setTranslation(v3(x, 0, y));
+            rootNode.attachChild(node);
+            x += SCALER * 2;
+        }
 
         Camera cam = getCamera();
 
         // parallel
-        //cam.setParallel(-16f, 16, -16, 16, -1000f, 1000f);
+        //cam.setParallel(-SCALER, SCALER, -SCALER, SCALER, -1000f, 1000f);
         //cam.lookAt(new Vector3f(100, 100, 100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
 
-        cam.setLocation(new Vector3f(32f, 32f, 32f));
+        cam.setLocation(new Vector3f(32f, 32f, 32f).multLocal((float) SCALE));
         cam.setDirection(new Vector3f(-1f, -1f, -1f).normalizeLocal());
     }
 
@@ -99,10 +119,8 @@ public class RendererTest extends Application {
     protected void update(float delta) {
     }
 
-    double v3_scale = 1.0;
-
     private Vector3f v3(double x, double y, double z) {
-        return new Vector3f((float)(x * v3_scale), (float)(y * v3_scale), (float)(z * v3_scale));
+        return new Vector3f((float)(x * SCALE), (float)(y * SCALE), (float)(z * SCALE));
     }
 
     private Vector2f v2(double s, double t) {
@@ -174,6 +192,57 @@ public class RendererTest extends Application {
         double y2 = element.getTo()[1];
         double z2 = element.getTo()[2];
 
+        // origin, for rotation
+        double o1 = (x1 + x2) * 0.5;
+        double o2 = (y1 + y2) * 0.5;
+        double o3 = (z1 + z2) * 0.5;
+
+        ElementRotation rotation = element.getRotation();
+        Quaternion rot = null;
+        if (rotation != null) {
+            double[] origin = rotation.getOrigin();
+            if (origin != null && origin.length == 3) {
+                o1 = origin[0];
+                o2 = origin[1];
+                o3 = origin[2];
+            } else {
+                System.out.println("origin is null!!!");
+            }
+
+            if (rotation.getAxis() != null && rotation.getAngle() != null && rotation.getAngle() != 0) {
+                String axis = rotation.getAxis();
+                double angle = rotation.getAngle();
+
+                switch(axis) {
+                    case "x": {
+                        rot = new Quaternion().rotateX((float) angle);
+                        break;
+                    }
+                    case "y": {
+                        rot = new Quaternion().rotateY((float) angle);
+                        break;
+                    }
+                    case "z": {
+                        rot = new Quaternion().rotateZ((float) angle);
+                        break;
+                    }
+                    default: {
+                        log.error("Unknown axis: {}", axis);
+                        rot = null;
+                        break;
+                    }
+                }
+            }
+        }
+
+        x1 = x1 - o1;
+        y1 = y1 - o2;
+        z1 = z1 - o3;
+
+        x2 = x2 - o1;
+        y2 = y2 - o2;
+        z2 = z2 - o3;
+
         for (Map.Entry<String, ElementFace> entry : faces.entrySet()) {
             String dir = entry.getKey();
             ElementFace face = entry.getValue();
@@ -209,7 +278,6 @@ public class RendererTest extends Application {
                 // TODO change normals
             }
 
-            System.out.printf("%s: %d, cull %s\n", dir, face.getRotation(), face.getCullface());
             Mesh mesh;
             switch (dir) {
                 case "down": {
@@ -303,8 +371,68 @@ public class RendererTest extends Application {
 
             String texture = getTexture(textures, face.getTexture());
             Material material = makeMaterial(texture);
-            rootNode.attachChild(new Geometry(mesh, material));
+            Geometry geometry = new Geometry(mesh, material);
+            rootNode.attachChild(geometry);
+
+            // TODO，对于rotation 考虑直接改变顶点的坐标，而不是改变矩阵
+            if (rot != null) {
+                geometry.getLocalTransform().setRotation(rot);
+            }
+            geometry.getLocalTransform().setTranslation(v3(o1, o2, o3));
         }
     }
 
+    public void rotation(ModelElement element) {
+
+        double o0 = (element.getFrom()[0] + element.getTo()[0]) * 0.5;
+        double o1 = (element.getFrom()[1] + element.getTo()[1]) * 0.5;
+        double o2 = (element.getFrom()[2] + element.getTo()[2]) * 0.5;
+
+        ElementRotation rotation = element.getRotation();
+        Matrix4f rot;
+        if (rotation != null) {
+            double[] origin = rotation.getOrigin();
+            if (origin != null && origin.length == 3) {
+                o0 = origin[0];
+                o1 = origin[1];
+                o2 = origin[2];
+            } else {
+                log.warn("origin is null, element: {}", element);
+            }
+
+            if (rotation.getAxis() != null && rotation.getAngle() != null && rotation.getAngle() != 0) {
+                String axis = rotation.getAxis();
+                double angle = rotation.getAngle();
+
+                switch(axis) {
+                    case "x": {
+                        rot = new Matrix4f().fromRotateX((float) angle);
+                        break;
+                    }
+                    case "y": {
+                        rot = new Matrix4f().fromRotateY((float) angle);
+                        break;
+                    }
+                    case "z": {
+                        rot = new Matrix4f().fromRotateZ((float) angle);
+                        break;
+                    }
+                    default: {
+                        log.error("Unknown axis: {}", axis);
+                        rot = null;
+                        break;
+                    }
+                }
+
+                if (rot != null) {
+                    Matrix4f translate = new Matrix4f().initTranslation((float) o0, (float) o1, (float) o2);
+                    Matrix4f translateBack = new Matrix4f().initTranslation(-(float) o0, -(float) o1, -(float) o2);
+                    Matrix4f transform = translateBack.mult(rot).mult(translate);
+                    // TODO
+                }
+            } else {
+                log.warn("axis or angle is null, element: {}", element);
+            }
+        }
+    }
 }

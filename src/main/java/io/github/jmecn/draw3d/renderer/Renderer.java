@@ -128,7 +128,7 @@ public class Renderer {
 
     /**
      * 渲染场景
-     * @param scene
+     * @param geomList
      * @param camera
      */
     public void render(List<Geometry> geomList, Camera camera) {

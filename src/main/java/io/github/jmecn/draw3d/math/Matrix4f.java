@@ -750,17 +750,17 @@ public class Matrix4f {
      * 旋转矩阵转为四元数
      * @return
      */
-    public Quaternion toRotationQuat() {
-        Quaternion quat = new Quaternion();
-        quat.fromRotationMatrix(toRotationMatrix());
-        return quat;
+    public Quaternion toRotationQuad() {
+        Quaternion quad = new Quaternion();
+        quad.fromRotationMatrix(toRotationMatrix());
+        return quad;
     }
 
     /**
      * 旋转矩阵转为四元数
      * @param q
      */
-    public void toRotationQuat(Quaternion q) {
+    public void toRotationQuad(Quaternion q) {
         q.fromRotationMatrix(toRotationMatrix());
     }
 
@@ -802,7 +802,7 @@ public class Matrix4f {
     /**
      * 设置比例变换向量
      * 
-     * @param the
+     * @param vector
      */
     public void toScaleVector(Vector3f vector) {
         float scaleX = (float) Math.sqrt(m00 * m00 + m10 * m10 + m20 * m20);
