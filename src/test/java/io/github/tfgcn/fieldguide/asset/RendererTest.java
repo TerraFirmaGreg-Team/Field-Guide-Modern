@@ -37,7 +37,9 @@ public class RendererTest extends Application {
         "beneath:block/unposter",
         "tfc:block/metal/anvil/bismuth_bronze",
         "firmalife:block/plant/pineapple_bush_2",// TODO 需要处理模型旋转
+        "create:block/mechanical_pump/block",// TODO 需要处理模型旋转
         "create:block/mechanical_pump/item",// TODO 需要处理模型旋转
+        "create:block/mechanical_pump/cog",// TODO 需要处理模型旋转
         "createaddition:block/electric_motor/block",// TODO 纹理坐标映射不正确
         "create:block/steam_engine/block",// TODO 纹理坐标映射不正确
         "tfc:block/wattle/unstained_wattle",
@@ -51,10 +53,12 @@ public class RendererTest extends Application {
 
     //String model = "beneath:block/unposter";
     //String model = "tfc:block/metal/anvil/bismuth_bronze";
-    //String model = "firmalife:block/plant/pineapple_bush_2";// TODO 需要处理模型旋转
-    //String model = "create:block/mechanical_pump/item";// TODO 需要处理模型旋转
+    //String model = "firmalife:block/plant/pineapple_bush_2";
+    String model = "create:block/mechanical_pump/block";
+    //String model = "create:block/mechanical_pump/item";
+    //String model = "create:block/mechanical_pump/cog";
     //String model = "gtceu:block/machine/hv_chemical_reactor";// TODO 需要处理变体
-    String model = "createaddition:block/electric_motor/block";// TODO 纹理坐标映射不正确
+    //String model = "createaddition:block/electric_motor/block";// TODO 纹理坐标映射不正确
     //String model = "create:block/steam_engine/block";// TODO 纹理坐标映射不正确
     //String model = "tfc:block/wattle/unstained_wattle";
     //String model = "beneath:block/blackstone_aqueduct_base";
@@ -91,19 +95,22 @@ public class RendererTest extends Application {
             rows++;
         }
 
-        int x = 0;
-        int y = 0;
-        for (int i = 0; i < size; i++) {
-            String model = models[i];
-            if (i % rows == 0) {
-                x = 0;
-                y += SCALER * 2;
-            }
-            Node node = buildModel(model);
-            node.getLocalTransform().setTranslation(v3(x, 0, y));
-            rootNode.attachChild(node);
-            x += SCALER * 2;
-        }
+//        int x = 0;
+//        int y = 0;
+//        for (int i = 0; i < size; i++) {
+//            String model = models[i];
+//            if (i % rows == 0) {
+//                x = 0;
+//                y += SCALER * 2;
+//            }
+//            Node node = buildModel(model);
+//            node.getLocalTransform().setTranslation(v3(x, 0, y));
+//            rootNode.attachChild(node);
+//            x += SCALER * 2;
+//        }
+
+        Node node = buildModel(model);
+        rootNode.attachChild(node);
 
         Camera cam = getCamera();
 
@@ -211,19 +218,20 @@ public class RendererTest extends Application {
 
             if (rotation.getAxis() != null && rotation.getAngle() != null && rotation.getAngle() != 0) {
                 String axis = rotation.getAxis();
-                double angle = rotation.getAngle();
+                double angle = rotation.getAngle();// in degrees
+                double rad = 0.017453292 * angle;
 
                 switch(axis) {
                     case "x": {
-                        rot = new Quaternion().rotateX((float) angle);
+                        rot = new Quaternion().rotateX((float) rad);
                         break;
                     }
                     case "y": {
-                        rot = new Quaternion().rotateY((float) angle);
+                        rot = new Quaternion().rotateY((float) rad);
                         break;
                     }
                     case "z": {
-                        rot = new Quaternion().rotateZ((float) angle);
+                        rot = new Quaternion().rotateZ((float) rad);
                         break;
                     }
                     default: {
@@ -232,8 +240,21 @@ public class RendererTest extends Application {
                         break;
                     }
                 }
+
+                // when abs(angle) == 22.5 or 45, apply the rescale
+                if (rotation.getRescale() != null && rotation.getRescale()) {
+                    if (angle == 45.0 || angle == -45.0) {
+                        // TODO double rescale = 1.41421356237309
+                    } else if (angle == 22.5 || angle == -22.5) {
+                        // TODO double rescale = 0.76536686473018
+                    }
+                }
             }
         }
+
+        if (element.getShade() != null && !element.getShade()) {
+            log.info("don't shade this block element");
+        };
 
         x1 = x1 - o1;
         y1 = y1 - o2;

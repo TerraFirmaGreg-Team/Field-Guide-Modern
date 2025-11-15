@@ -52,28 +52,6 @@ public class AssetLoader {
     private void initializeSources() {
         log.info("Initializing AssetManager for: {}", instanceRoot);
 
-        // KubeJS Export Zips
-        Path kubejsExport = instanceRoot.resolve(CACHE);
-        if (Files.exists(kubejsExport)) {
-            log.info("Found KubeJS export directory");
-            try (Stream<Path> files = Files.list(kubejsExport)) {
-                List<Path> zipList = files
-                        .filter(p -> p.toString().endsWith(".zip"))
-                        .sorted()
-                        .toList();
-
-                for (Path zip : zipList) {
-                    try {
-                        sources.add(new ZipAssetSource(zip));
-                    } catch (IOException e) {
-                        log.error("Error loading KubeJS export: {}", zip, e);
-                    }
-                }
-            } catch (IOException e) {
-                log.error("Error scanning KubeJS export", e);
-            }
-        }
-
         // KubeJS
         Path kubejsPath = instanceRoot.resolve("kubejs");
         if (Files.exists(kubejsPath)) {
