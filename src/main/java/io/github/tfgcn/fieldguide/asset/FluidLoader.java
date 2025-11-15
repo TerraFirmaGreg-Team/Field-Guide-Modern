@@ -157,7 +157,7 @@ public class FluidLoader {
             if (images.size() == 1) {
                 path = context.saveImage("assets/generated/" + fluidId + ".png", images.getFirst());
             } else {
-                path = context.saveGif("assets/generated/" + fluidId + ".gif", images);
+                path = Context.saveGif(context.getOutputRootDir(), "assets/generated/" + fluidId + ".gif", images);
             }
         } catch (Exception e) {
             System.err.println("Warning: Fluid Image(s) - " + e.getMessage());

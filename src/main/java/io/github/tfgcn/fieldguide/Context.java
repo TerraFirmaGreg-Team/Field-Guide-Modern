@@ -16,10 +16,7 @@ import io.github.tfgcn.fieldguide.patchouli.page.PageMultiblock;
 import io.github.tfgcn.fieldguide.patchouli.page.PageMultiblockData;
 import io.github.tfgcn.fieldguide.patchouli.page.tfc.PageMultiMultiblock;
 import io.github.tfgcn.fieldguide.patchouli.page.tfc.TFCMultiblockData;
-import io.github.tfgcn.fieldguide.renderer.Block3DRenderer;
-import io.github.tfgcn.fieldguide.renderer.TextFormatter;
-import io.github.tfgcn.fieldguide.renderer.TextureRenderer;
-import io.github.tfgcn.fieldguide.renderer.HtmlRenderer;
+import io.github.tfgcn.fieldguide.renderer.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -52,6 +49,7 @@ public class Context {
     private final AssetLoader loader;
     private final HtmlRenderer htmlRenderer;
     private final Block3DRenderer block3DRenderer;
+    private final Multiblock3DRenderer multiblock3DRenderer;
     private final String outputRootDir;// The output directory
     private final String rootDir;// The root directory to fetch static assets from
     private final boolean debugI18n;
@@ -102,6 +100,7 @@ public class Context {
 
         this.htmlRenderer = new HtmlRenderer("assets/templates");
         this.block3DRenderer = new Block3DRenderer(loader, 256, 256);
+        this.multiblock3DRenderer = new Multiblock3DRenderer(loader, 256, 256);
 
         // init en_us lang
         this.langFallbackKeys.putAll(loadLang("en_us"));
@@ -476,7 +475,7 @@ public class Context {
     /**
      * Saves multiple images to a .gif based on an identifier. Returns the relative path to that location.
      */
-    public String saveGif(String path, List<BufferedImage> images) throws IOException {
+    public static String saveGif(String outputRootDir, String path, List<BufferedImage> images) throws IOException {
         if (images == null || images.isEmpty()) {
             throw new IllegalArgumentException("Images list cannot be empty");
         }
@@ -611,7 +610,7 @@ public class Context {
                     }).toList();
                 }
 
-                path = saveGif("assets/generated/" + itemId + ".gif", images);
+                path = saveGif(outputRootDir, "assets/generated/" + itemId + ".gif", images);
             }
 
             ItemImageResult result = new ItemImageResult(path, name, key);
@@ -851,6 +850,11 @@ public class Context {
             throw new RuntimeException("Multiblock : Custom Multiblock");
         }
 
+        if (images.isEmpty()) {
+            log.error("Multiblock : No multiblocks found");
+            throw new RuntimeException("Multiblock : No multiblocks found");
+        }
+
         if (CACHE.containsKey(key)) {
             return CACHE.get(key);
         }
@@ -860,7 +864,7 @@ public class Context {
         if (images.size() == 1) {
             path = saveImage("assets/generated/" + blockId + ".png", images.getFirst());
         } else {
-            path = saveGif("assets/generated/" + blockId + ".gif", images);
+            path = saveGif(outputRootDir, "assets/generated/" + blockId + ".gif", images);
         }
 
         CACHE.put(key, path);
@@ -868,11 +872,12 @@ public class Context {
     }
 
     public String getMultiBlockImage(PageMultiblock data) throws Exception {
-        String key;
+         String key;
         List<BufferedImage> images;
 
         if (data.getMultiblock() != null) {
             PageMultiblockData multiblock = data.getMultiblock();
+
             Pair<String, List<BufferedImage>> result = getMultiBlockImages(multiblock);
             key = result.getKey();
             images = result.getValue();
@@ -889,7 +894,7 @@ public class Context {
         if (images.size() == 1) {
             path = saveImage("assets/generated/" + blockId + ".png", images.getFirst());
         } else {
-            path = saveGif("assets/generated/" + blockId + ".gif", images);
+            path = saveGif(outputRootDir, "assets/generated/" + blockId + ".gif", images);
         }
 
         CACHE.put(key, path);
@@ -910,6 +915,12 @@ public class Context {
         boolean isTFGOre = false;
         if (!Arrays.deepEquals(pattern, validPattern1) && !Arrays.deepEquals(pattern, validPattern2)) {
             if (!Arrays.deepEquals(pattern, validPattern3)) {
+                try {
+                    BufferedImage image = multiblock3DRenderer.render(pattern, data.getMapping());
+                    return new Pair<>(Arrays.deepToString(pattern), List.of(image));
+                } catch (Exception e) {
+                    log.error("Failed loading multiblock image: {}, mapping: {}, message: {}", Arrays.deepToString(pattern), data.getMapping(), e.getMessage());
+                }
                 throw new RuntimeException("Multiblock : Complex Pattern '" + Arrays.deepToString(pattern) + "'");
             } else {
                 isTFGOre = true;

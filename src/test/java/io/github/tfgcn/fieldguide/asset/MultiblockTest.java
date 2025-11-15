@@ -24,6 +24,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.github.tfgcn.fieldguide.asset.RendererTest.SCALE;
+
 /**
  * desc:
  *
@@ -75,43 +77,45 @@ public class MultiblockTest extends Application {
         mapping.put("B", "tfc:bellows");
 
         int height = pattern.length;
-        int width = pattern[0].length;
+        int col = pattern[0].length;
+        int row = pattern[0][0].length();
 
-        int y = 0;
-        for (int i = 0; i < height; i++) {
-            String[] layer = pattern[height - i - 1];
-            int z = 0;
-            for (String line : layer) {
-                for (int x = 0; x < width; x++) {
+        float startX = -col * 8f;
+        float startZ = -row * 8f;
+        float startY = -height * 8f;
+
+        for (int y = 0; y < height; y++) {
+            String[] layer = pattern[height - y - 1];
+            for (int z = 0; z < row; z++) {
+                String line = layer[z];
+                for (int x = 0; x < col; x++) {
                     char c = line.charAt(x);
                     if (c == ' ') {
                         continue;
                     }
                     String model = mapping.get(String.valueOf(c));
-                    if (model != null) {
-                    Node node = buildModel(model);
-                    node.getLocalTransform().getTranslation().addLocal(new Vector3f(x * 16, y, z));
-                    rootNode.attachChild(node);
+                    if (model == null) {
+                        continue;
                     }
+                    Vector3f location = v3(x * 16 + startX, y * 16 + startY, z * 16 + startZ);
+                    Node node = buildModel(model);
+                    node.getLocalTransform().setTranslation(location);
+                    rootNode.attachChild(node);
                 }
-                z += 16;
             }
-            y += 16;
         }
 
         // 初始化摄像机
         Camera cam = getCamera();
-        cam.lookAt(new Vector3f(100, 100, 100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+        cam.lookAt(v3(100, 100, 100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
     }
 
     @Override
     protected void update(float delta) {
     }
 
-    double v3_scale = 1.0;
-
     private Vector3f v3(double x, double y, double z) {
-        return new Vector3f((float)(x * v3_scale), (float)(y * v3_scale), (float)(z * v3_scale));
+        return new Vector3f((float)(x * SCALE), (float)(y * SCALE), (float)(z * SCALE));
     }
 
     private Vector2f v2(double s, double t) {

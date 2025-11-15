@@ -7,6 +7,7 @@ import io.github.tfgcn.fieldguide.minecraft.ElementFace;
 import io.github.tfgcn.fieldguide.minecraft.ElementRotation;
 import io.github.tfgcn.fieldguide.minecraft.ModelElement;
 import io.github.tfgcn.fieldguide.render3d.material.Material;
+import io.github.tfgcn.fieldguide.render3d.material.RenderState;
 import io.github.tfgcn.fieldguide.render3d.material.Texture;
 import io.github.tfgcn.fieldguide.render3d.math.*;
 import io.github.tfgcn.fieldguide.render3d.renderer.Camera;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,11 +73,7 @@ public class Multiblock3DRenderer {
         // 创建摄像机
         camera = new Camera(width, height);
 
-        // parallel
-        camera.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -10000f, 10000f);
-
-        camera.setLocation(new Vector3f(-100f, 100f, -100f).multLocal(SCALE));
-        camera.setDirection(new Vector3f(1f, -1f, 1f).normalizeLocal());
+        camera.lookAt(v3(100, 100, 100), v3(0, 0, 0), Vector3f.UNIT_Y);
 
         // 场景根节点
         rootNode = new Node();
@@ -87,43 +85,39 @@ public class Multiblock3DRenderer {
      */
     public BufferedImage render(String[][] pattern, Map<String, String> mapping) {
 
+        Node root = new Node();
         int height = pattern.length;
         int col = pattern[0].length;
         int row = pattern[0][0].length();
         log.info("Model size: {}x{}x{}", col, height, row);
 
-        //camera.setParallel(-col * 10 * SCALE, col * 10 * SCALE, -row * 10 * SCALE, row * 10 * SCALE, -height * 10 * SCALE, height * 10 * SCALE);
+        float startX = -col * 8f;
+        float startZ = -row * 8f;
+        float startY = -height * 8f;
 
-        //camera.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -1000f, 1000f);
-
-        //camera.updateViewProjectionMatrix();
-
-        Node root = new Node();
-        int y = 0;
-        for (int i = 0; i < height; i++) {
-            String[] layer = pattern[height - i - 1];
-            int z = 0;
-            for (String line : layer) {
+        for (int y = 0; y < height; y++) {
+            String[] layer = pattern[height - y - 1];
+            for (int z = 0; z < row; z++) {
+                String line = layer[z];
                 for (int x = 0; x < col; x++) {
                     char c = line.charAt(x);
                     if (c == ' ') {
                         continue;
                     }
                     String model = mapping.get(String.valueOf(c));
-                    if (model != null) {
-                        try {
-                            Node node = buildModel(model);
-                            node.getLocalTransform().getTranslation().addLocal(new Vector3f(x * 16 * SCALE, y * 16 * SCALE, z * 16 * SCALE));
-                            root.attachChild(node);
-                        } catch (Exception e) {
-                            log.error("Failed to build model: {}", model);
-                        }
+                    if (model == null) {
+                        continue;
                     }
+                    Vector3f location = v3(x * 16 + startX, y * 16 + startY, z * 16 + startZ);
+                    Node node = buildModel(model);
+                    node.getLocalTransform().setTranslation(location);
+                    root.attachChild(node);
                 }
-                z += 1;
             }
-            y += 1;
         }
+
+        int max = Math.max(Math.max(col, height), row);
+        camera.lookAt(v3(max * 10, max * 10, max * 10), v3(0, 0, 0), Vector3f.UNIT_Y);
 
         rootNode.attachChild(root);
         BufferedImage image = render();
@@ -178,6 +172,10 @@ public class Multiblock3DRenderer {
     }
 
     public Node buildModel(String modelId) {
+        if (modelId.startsWith("#")) {
+            List<String> blocks = assetLoader.loadBlockTag(modelId.substring(1));
+            modelId = blocks.get(0);// 获取第一个方块
+        }
         BlockModel blockModel = assetLoader.loadBlockModel(modelId);
         return buildModel(blockModel);
     }
@@ -203,10 +201,11 @@ public class Multiblock3DRenderer {
         diffuseMap.setMagFilter(Texture.MagFilter.NEAREST);
 
         Material material = new Material();
-        material.getRenderState().setAlphaTest(true);
-        material.getRenderState().setAlphaFalloff(0.1f);
         material.setUseVertexColor(true);
         material.setShader(new UnshadedShader());
+        material.getRenderState().setBlendMode(RenderState.BlendMode.ALPHA_BLEND);
+        material.getRenderState().setAlphaTest(true);
+        material.getRenderState().setAlphaFalloff(0.1f);
         material.setDiffuseMap(diffuseMap);
 
         materialCache.put(texture, material);
