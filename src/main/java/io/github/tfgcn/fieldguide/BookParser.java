@@ -50,11 +50,11 @@ public class BookParser {
     }
 
     public void parseBook(Context context) {
-        parseCategories(context, "tfc");
-        parseEntries(context, "tfc");
+        parseCategories(context);
+        parseEntries(context);
     }
 
-    private void parseCategories(Context context, String ownerId) {
+    private void parseCategories(Context context) {
         // assets/tfc/patchouli_books/field_guide/en_us/categories
         String categoriesPath = context.getSourcePath("categories");
         List<Asset> assets;
@@ -67,7 +67,7 @@ public class BookParser {
         for (Asset asset : assets) {
             if (asset.getPath().endsWith(".json")) {
                 try {
-                    parseCategory(context, categoriesPath, asset, ownerId);
+                    parseCategory(context, categoriesPath, asset);
                 } catch (Exception e) {
                     log.error("Failed to parse category file: {}, message: {}", asset, e.getMessage());
                 }
@@ -75,7 +75,7 @@ public class BookParser {
         }
     }
 
-    private void parseEntries(Context context, String ownerId) {
+    private void parseEntries(Context context) {
         // assets/tfc/patchouli_books/field_guide/en_us/entries
         String entriesPath = context.getSourcePath("entries");
         List<Asset> assets;
@@ -88,7 +88,7 @@ public class BookParser {
         for (Asset asset : assets) {
             if (asset.getPath().endsWith(".json")) {
                 try {
-                    parseEntry(context, entriesPath, asset, ownerId);
+                    parseEntry(context, entriesPath, asset);
                 } catch (Exception e) {
                     log.error("Failed to parse entry file: {}, message: {}", asset, e.getMessage());
                 }
@@ -96,7 +96,7 @@ public class BookParser {
         }
     }
 
-    public void parseCategory(Context context, String categoryDir, Asset asset, String ownerId) {
+    public void parseCategory(Context context, String categoryDir, Asset asset) {
         // get categoryId
         String relativePath = asset.getPath().substring(categoryDir.length() + 1);
         String categoryId = relativePath.substring(0, relativePath.lastIndexOf('.'));
@@ -115,7 +115,6 @@ public class BookParser {
             TextFormatter.formatText(descriptionBuffer, category.getDescription(), context.getKeybindings());
             category.setDescription(String.join("", descriptionBuffer));
 
-            context.getCategoryOwners().put(categoryId, ownerId);
             context.getCategories().put(categoryId, category);
             
         } catch (IOException e) {
@@ -123,13 +122,14 @@ public class BookParser {
         }
     }
     
-    public void parseEntry(Context context, String entryDir, Asset asset, String ownerId) {
+    public void parseEntry(Context context, String entryDir, Asset asset) {
         // 提取条目ID
         String relativePath = asset.getPath().substring(entryDir.length() + 1);
         String entryId = relativePath.substring(0, relativePath.lastIndexOf('.'));
 
         if (context.hasEntry(entryId)) {
-            // FIXME remove later log.info("Entry {}@{} already exists, skipping", entryId, asset);
+            // FIXME remove later
+            log.info("Entry {}@{} already exists, skipping", entryId, asset);
             return;
         }
 
@@ -140,16 +140,6 @@ public class BookParser {
             String categoryId = entry.getCategory();
             if (categoryId.contains(":")) {
                 categoryId = categoryId.substring(categoryId.indexOf(':') + 1);
-            }
-
-            // 防止覆盖，移除页面
-            if (!context.getCategoryOwners().containsKey(categoryId)) {
-                log.error("Category {} not found, skipping", categoryId);
-                return;
-            }
-            if (!context.getCategoryOwners().get(categoryId).equals(ownerId)) {
-                log.warn("Skipping entry {} as it is an override from {}", entryId, ownerId);
-                return;
             }
 
             entry.setName(TextFormatter.stripVanillaFormatting(entry.getName()));

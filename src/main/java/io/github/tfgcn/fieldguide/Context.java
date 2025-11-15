@@ -64,7 +64,6 @@ public class Context {
 
     // 所有权管理
     private Map<String, String> categoryOwners = new HashMap<>();
-    private Map<String, String> addonCategories = new HashMap<>();
 
     // language
     private Map<String, String> langFallbackKeys = new HashMap<>();// en_us
