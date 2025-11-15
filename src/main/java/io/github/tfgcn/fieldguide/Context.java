@@ -16,6 +16,7 @@ import io.github.tfgcn.fieldguide.patchouli.page.PageMultiblock;
 import io.github.tfgcn.fieldguide.patchouli.page.PageMultiblockData;
 import io.github.tfgcn.fieldguide.patchouli.page.tfc.PageMultiMultiblock;
 import io.github.tfgcn.fieldguide.patchouli.page.tfc.TFCMultiblockData;
+import io.github.tfgcn.fieldguide.renderer.Block3DRenderer;
 import io.github.tfgcn.fieldguide.renderer.TextFormatter;
 import io.github.tfgcn.fieldguide.renderer.TextureRenderer;
 import io.github.tfgcn.fieldguide.renderer.HtmlRenderer;
@@ -50,6 +51,7 @@ public class Context {
     // 实例字段
     private final AssetLoader loader;
     private final HtmlRenderer htmlRenderer;
+    private final Block3DRenderer block3DRenderer;
     private final String outputRootDir;// The output directory
     private final String rootDir;// The root directory to fetch static assets from
     private final boolean debugI18n;
@@ -99,6 +101,7 @@ public class Context {
         this.debugI18n = debugI18n;
 
         this.htmlRenderer = new HtmlRenderer("assets/templates");
+        this.block3DRenderer = new Block3DRenderer(loader, 256, 256);
 
         // init en_us lang
         this.langFallbackKeys.putAll(loadLang("en_us"));
@@ -1070,8 +1073,12 @@ public class Context {
             g.dispose();
             return createBlockModelProjection(combined, combined, combined, false);
         } else {
-            log.warn("Unsupported parent: {}@{}", parent, block);
-            throw new RuntimeException("Block Model : Unknown Parent '" + parent + "' : at '" + block + "'");
+            try {
+                return block3DRenderer.render(model);
+            } catch (Exception e) {
+                log.warn("Unsupported parent: {}@{}", parent, block);
+                throw new RuntimeException("Block Model : Unknown Parent '" + parent + "' : at '" + block + "'");
+            }
         }
     }
 

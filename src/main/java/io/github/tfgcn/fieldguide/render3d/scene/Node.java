@@ -39,7 +39,7 @@ public class Node extends Spatial {
      */
     public List<Geometry> getGeometryList(List<Geometry> list) {
         if (list == null) {
-            list = new ArrayList<Geometry>();
+            list = new ArrayList<>();
         }
         int len = children.size();
         for(int i=0; i<len; i++) {

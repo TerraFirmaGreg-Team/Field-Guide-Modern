@@ -51,7 +51,7 @@ public class RendererTest extends Application {
         app.start();
     }
 
-    //String model = "beneath:block/unposter";
+    String model = "beneath:block/unposter";
     //String model = "tfc:block/metal/anvil/bismuth_bronze";
     //String model = "firmalife:block/plant/pineapple_bush_2";
     //String model = "create:block/mechanical_pump/block";
@@ -59,7 +59,7 @@ public class RendererTest extends Application {
     //String model = "create:block/mechanical_pump/cog";
     //String model = "gtceu:block/machine/hv_chemical_reactor";// TODO 需要处理变体
     //String model = "createaddition:block/electric_motor/block";// TODO 纹理坐标映射不正确
-    String model = "create:block/steam_engine/block";// TODO 纹理坐标映射不正确
+    //String model = "create:block/steam_engine/block";// TODO 纹理坐标映射不正确
     //String model = "tfc:block/wattle/unstained_wattle";
     //String model = "beneath:block/blackstone_aqueduct_base";
     //String model = "tfc:block/blast_furnace/unlit";
@@ -116,8 +116,8 @@ public class RendererTest extends Application {
         Camera cam = getCamera();
 
         // parallel
-        //cam.setParallel(-SCALER, SCALER, -SCALER, SCALER, -1000f, 1000f);
-        //cam.lookAt(new Vector3f(100, 100, 100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+        cam.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -1000f, 1000f);
+        cam.lookAt(new Vector3f(-100, 100, -100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
 
         cam.setLocation(new Vector3f(32f, 32f, 32f).multLocal((float) SCALE));
         cam.setDirection(new Vector3f(-1f, -1f, -1f).normalizeLocal());
