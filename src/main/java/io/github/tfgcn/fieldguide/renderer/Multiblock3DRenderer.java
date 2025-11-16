@@ -2,10 +2,7 @@ package io.github.tfgcn.fieldguide.renderer;
 
 import io.github.tfgcn.fieldguide.asset.AssetLoader;
 import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
-import io.github.tfgcn.fieldguide.minecraft.BlockModel;
-import io.github.tfgcn.fieldguide.minecraft.ElementFace;
-import io.github.tfgcn.fieldguide.minecraft.ElementRotation;
-import io.github.tfgcn.fieldguide.minecraft.ModelElement;
+import io.github.tfgcn.fieldguide.minecraft.*;
 import io.github.tfgcn.fieldguide.render3d.material.Material;
 import io.github.tfgcn.fieldguide.render3d.material.RenderState;
 import io.github.tfgcn.fieldguide.render3d.material.Texture;
@@ -21,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +101,7 @@ public class Multiblock3DRenderer {
                         continue;
                     }
                     String model = mapping.get(String.valueOf(c));
-                    if (model == null) {
+                    if (model == null || "AIR".equalsIgnoreCase(model)) {
                         continue;
                     }
                     Vector3f location = v3(x * 16 + startX, y * 16 + startY, z * 16 + startZ);
@@ -176,7 +172,7 @@ public class Multiblock3DRenderer {
             List<String> blocks = assetLoader.loadBlockTag(modelId.substring(1));
             modelId = blocks.get(0);// 获取第一个方块
         }
-        BlockModel blockModel = assetLoader.loadBlockModel(modelId);
+        BlockModel blockModel = assetLoader.loadBlockModelWithState(modelId);
         return buildModel(blockModel);
     }
 
@@ -420,6 +416,11 @@ public class Multiblock3DRenderer {
 
             if (noShade) {
                 colors = new Vector4f[]{LIGHT, LIGHT, LIGHT, LIGHT};
+            }
+
+            if (face.getTintIndex() != null && face.getTintIndex() >= 0) {
+                // TODO tintindex
+                log.info("tintindex: {}", face.getTintIndex());
             }
 
             mesh = new Mesh(

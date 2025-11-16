@@ -396,6 +396,11 @@ public class Block3DRenderer {
                 colors = new Vector4f[]{LIGHT, LIGHT, LIGHT, LIGHT};
             }
 
+            if (face.getTintIndex() != null && face.getTintIndex() >= 0) {
+                // TODO tintindex
+                log.info("tintindex: {}", face.getTintIndex());
+            }
+
             mesh = new Mesh(
                     positions,
                     index,

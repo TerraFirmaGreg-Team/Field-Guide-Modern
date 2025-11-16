@@ -72,7 +72,7 @@ public class MultiblockTest extends Application {
         Map<String, String> mapping = new HashMap<>();
         mapping.put("X", "tfc:rock/smooth/gabbro");
         mapping.put("G", "minecraft:light_blue_stained_glass");
-        mapping.put("0", "tfc:charcoal_forge/heat_7");// [heat_level=7]
+        mapping.put("0", "tfc:charcoal_forge[heat_level=7]");
         mapping.put("C", "tfc:crucible");
         mapping.put("B", "tfc:bellows");
 
@@ -94,7 +94,7 @@ public class MultiblockTest extends Application {
                         continue;
                     }
                     String model = mapping.get(String.valueOf(c));
-                    if (model == null) {
+                    if (model == null || "AIR".equals(model)) {
                         continue;
                     }
                     Vector3f location = v3(x * 16 + startX, y * 16 + startY, z * 16 + startZ);

@@ -1,4 +1,4 @@
-package io.github.tfgcn.fieldguide.minecraft;
+package io.github.tfgcn.fieldguide.minecraft.blockstate;
 
 import lombok.Data;
 

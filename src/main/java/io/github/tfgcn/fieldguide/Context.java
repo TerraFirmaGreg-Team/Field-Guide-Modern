@@ -6,6 +6,7 @@ import io.github.tfgcn.fieldguide.asset.Asset;
 import io.github.tfgcn.fieldguide.asset.AssetKey;
 import io.github.tfgcn.fieldguide.asset.AssetLoader;
 import io.github.tfgcn.fieldguide.exception.InternalException;
+import io.github.tfgcn.fieldguide.minecraft.blockstate.BlockVariant;
 import io.github.tfgcn.fieldguide.patchouli.BookCategory;
 import io.github.tfgcn.fieldguide.patchouli.BookEntry;
 import io.github.tfgcn.fieldguide.patchouli.page.IPageDoubleRecipe;
@@ -517,9 +518,11 @@ public class Context {
             return result;
         }
 
-        if (item.indexOf('{') > 0) {
+        int nbtIndex = item.indexOf('{');
+        if (nbtIndex > 0) {
             log.warn("Item with NBT: {}", item);
-            throw new InternalException("Item with NBT: " + item);
+            item = item.substring(0, nbtIndex);// TODO remove it for test, maybe nbt support is much harder than I think
+            //throw new InternalException("Item with NBT: " + item);
         }
 
         String name = null;
@@ -934,54 +937,11 @@ public class Context {
     }
 
     public BufferedImage getBlockImage(String blockState) throws Exception {
-        Pair<String, Map<String, String>> parsedState = parseBlockState(blockState);
-        String block = parsedState.getKey();
-        Map<String, String> state = parsedState.getValue();
 
-        Asset asset = loader.loadResource(block, "blockstates", "assets", ".json");
-        // FIXME 使用BlockState 来反序列化，但需要处理好variants的变体，有时是list有时是object
-        Map<String, Object> stateData = JsonUtils.readFile(asset.getInputStream(), new TypeToken<Map<String, Object>>() {}.getType());
+        BlockVariant parsedState = AssetLoader.parseBlockState(blockState);
+        String block = parsedState.getBlock();
 
-        if (!stateData.containsKey("variants") || !(stateData.get("variants") instanceof Map)) {
-            throw new RuntimeException("BlockState : Must be a 'variants' block state: '" + blockState + "'");
-        }
-
-        Map<String, Object> variants = (Map<String, Object>) stateData.get("variants");
-        Map<String, Object> defaultModelData = null;
-        Map<String, Object> modelData = null;
-
-        for (Map.Entry<String, Object> entry : variants.entrySet()) {
-            String key = entry.getKey();
-            Map<String, Object> value = (Map<String, Object>) entry.getValue();
-
-            if (defaultModelData == null) {
-                defaultModelData = value;
-            }
-
-            Map<String, String> variantProperties = parseBlockProperties(key);
-            if (state.entrySet().containsAll(variantProperties.entrySet())) {
-                modelData = value;
-                break;
-            }
-        }
-
-        if (modelData == null) {
-            if (state.isEmpty() && !variants.isEmpty()) {
-                modelData = defaultModelData;
-            } else {
-                throw new RuntimeException("BlockState: No matching state found for '" + blockState + "' in " + variants);
-            }
-        }
-
-        if (!modelData.containsKey("model")) {
-            throw new RuntimeException("BlockState : No Model '" + block + "'");
-        }
-
-        String modelPath = (String) modelData.get("model");
-
-        // load model
-        BlockModel model = loader.loadModel(modelPath);
-
+        BlockModel model = loader.loadBlockModelWithState(blockState);
         return createBlockModelImage(block, model);
     }
 

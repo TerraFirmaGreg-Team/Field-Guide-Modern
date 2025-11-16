@@ -5,9 +5,10 @@ import com.google.gson.stream.JsonReader;
 import io.github.tfgcn.fieldguide.JsonUtils;
 import io.github.tfgcn.fieldguide.MCMeta;
 import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
-import io.github.tfgcn.fieldguide.minecraft.BlockModel;
-import io.github.tfgcn.fieldguide.minecraft.TagElement;
-import io.github.tfgcn.fieldguide.minecraft.Tags;
+import io.github.tfgcn.fieldguide.minecraft.*;
+import io.github.tfgcn.fieldguide.minecraft.blockstate.BlockState;
+import io.github.tfgcn.fieldguide.minecraft.blockstate.BlockVariant;
+import io.github.tfgcn.fieldguide.minecraft.blockstate.Variant;
 import io.github.tfgcn.fieldguide.patchouli.Book;
 import io.github.tfgcn.fieldguide.Versions;
 import io.github.tfgcn.fieldguide.exception.InternalException;
@@ -348,14 +349,126 @@ public class AssetLoader {
         return asset;
     }
 
-    public void loadModelByType(String path) {
+    public BlockModel loadBlockModelWithState(String modelId) {
+        // FIXME 这样对吗？有一些blockState文件中没有定义默认模型，导致 modelId 中没有 [] 时，无法正确找到映射的方块。
+        BlockVariant blockVariant = loadBlockVariant(modelId);
+        log.info("blockVariant: {}", blockVariant);
+        return loadModel(blockVariant.getVariant().getModel());
+//        if (modelId.indexOf('[') > 0) {
+//            BlockVariant blockVariant = loadBlockVariant(modelId);
+//            log.info("blockVariant: {}", blockVariant);
+//            return loadModel(blockVariant.getVariant().getModel());
+//        } else {
+//            return loadBlockModel(modelId);
+//        }
+    }
 
-        // Block States
-        // assets/{namespace}/blockstates/{res}.json
-        // Block Model
-        // assets/{namespace}/models/block/{res}.json
-        // Item Model
-        // assets/{namespace}/models/item/{res}.json
+    public static BlockVariant parseBlockState(String blockStateId) {
+        BlockVariant variant = new BlockVariant();
+
+        int index = blockStateId.indexOf('[');
+        if (index > 0) {
+            String block = blockStateId.substring(0, index);
+            String props = blockStateId.substring(index + 1, blockStateId.length() - 1);
+            Map<String, String> properties = parseBlockProperties(props);
+            variant.setBlock(block);
+            variant.setProperties(properties);
+        } else {
+            variant.setBlock(blockStateId);
+            variant.setProperties(new HashMap<>());
+        }
+
+        return variant;
+    }
+
+    public static Map<String, String> parseBlockProperties(String properties) {
+        Map<String, String> state = new HashMap<>();
+        if (properties.contains("=")) {
+            String[] pairs = properties.split(",");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                state.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return state;
+    }
+
+    public BlockState loadBlockState(String blockState) {
+        BlockVariant parsedState = parseBlockState(blockState);
+        String block = parsedState.getBlock();
+
+        Asset asset = loadResource(block, "blockstates", "assets", ".json");
+        try {
+            return JsonUtils.readFile(asset.getInputStream(), BlockState.class);
+        } catch (IOException e) {
+            log.error("Failed to read blockstate:{}, message: {}", blockState, e.getMessage());
+            throw new InternalException("Failed to read blockState: " + blockState);
+        }
+    }
+
+    public BlockVariant loadBlockVariant(String blockStateId) {
+        BlockVariant blockVariant = parseBlockState(blockStateId);
+        String block = blockVariant.getBlock();
+        if (!blockVariant.hasProperties()) {
+            // FIXME what to do if no variants found ?
+            log.info("No properties for blockStateId:{}", blockStateId);
+        }
+
+        Map<String, String> state = blockVariant.getProperties();
+
+        BlockState blockState = loadBlockState(block);
+
+        if (blockState.hasVariants()) {
+            List<Variant> variants = blockState.selectByVariants(state);
+            blockVariant.setVariants(variants);
+
+            if (variants == null || variants.isEmpty()) {
+                throw new RuntimeException("BlockState: No matching variant found for '" + blockStateId + "'");
+            }
+
+            Variant variant = blockState.selectByWeight(variants);
+            blockVariant.setVariant(variant);
+            return blockVariant;
+        } else if (blockState.hasMultipart()) {
+            log.debug("blockstate: {}, multipart: {}", block, blockState.getMultipart());
+            List<Variant> variants = blockState.selectByMultipart(state);
+
+            if (variants == null || variants.isEmpty()) {
+                throw new RuntimeException("BlockState: No matching multipart case found for '" + blockStateId + "'");
+            }
+
+            blockVariant.setVariants(variants);
+            return blockVariant;
+        } else {
+            throw new RuntimeException("BlockState : Must be a 'variants' or 'multipart' block state: '" + blockStateId + "'");
+        }
+    }
+
+    /**
+     * 根据权重选择变体
+     */
+    private Variant selectVariantByWeight(List<Variant> variants) {
+        if (variants.size() == 1) {
+            return variants.getFirst();
+        }
+
+        // 计算总权重
+        int totalWeight = variants.stream().mapToInt(Variant::getWeight).sum();
+
+        // 随机选择
+        Random random = new Random();
+        int randomValue = random.nextInt(totalWeight);
+        int currentWeight = 0;
+
+        for (Variant variant : variants) {
+            currentWeight += variant.getWeight();
+            if (randomValue < currentWeight) {
+                return variant;
+            }
+        }
+
+        // 如果权重计算有问题，返回第一个
+        return variants.getFirst();
     }
 
     public BlockModel loadModel(String modelId) {
@@ -402,6 +515,8 @@ public class AssetLoader {
             log.debug("Hitting block model cache: {}", resourceLocation);
             return blockModelCache.get(resourceLocation);
         }
+
+        // TODO 支持blockstate，例如 // tfc:charcoal_forge[heat_level=7]
 
         Asset asset = loadResource(blockId, "models/block", "assets", ".json");
         try {

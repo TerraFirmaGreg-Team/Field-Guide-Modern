@@ -142,8 +142,7 @@ public class BookParser {
         String entryId = relativePath.substring(0, relativePath.lastIndexOf('.'));
 
         if (context.hasEntry(entryId)) {
-            // FIXME remove later
-            log.info("Entry {}@{} already exists, skipping", entryId, asset);
+            log.debug("Entry {}@{} already exists, skipping", entryId, asset);
             return;
         }
 
@@ -431,19 +430,17 @@ public class BookParser {
             context.formatCenteredText(buffer, page.getText());
             context.setBlocksPassed(context.getBlocksPassed() + 1);
         } catch (Exception e) {
-            // FIXME addback later log.error("Multiblock image processing failed", e);
-            Object multiblock = page.getMultiblock() != null ? page.getMultiblock() : page.getMultiblockId();
-            if (multiblock == null) {
-                log.warn("multiblock is null, page:{}", page);
-            }
-
+            // FIXME add me later log.error("Multiblock image processing failed, message: {}", e.getMessage());
             // Fallback
             if (page.getMultiblockId() != null) {
-                context.formatWithTooltip(buffer, 
-                    String.format("%s: <code>%s</code>", context.translate(I18n.MULTIBLOCK), page.getMultiblockId()),
-                    context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
+                context.formatWithTooltip(buffer,
+                        String.format("%s: <code>%s</code>", context.translate(I18n.MULTIBLOCK), page.getMultiblockId()),
+                        context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
             } else {
-                context.formatWithTooltip(buffer, context.translate(I18n.MULTIBLOCK), context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
+                // FIXME for debug
+                context.formatWithTooltip(buffer,
+                        String.format("%s: <code>%s</code>", context.translate(I18n.MULTIBLOCK), JsonUtils.toJson(page.getMultiblock())),
+                        context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
             }
             context.formatCenteredText(buffer, page.getText());
             context.setBlocksFailed(context.getBlocksFailed() + 1);
@@ -459,8 +456,13 @@ public class BookParser {
             context.setBlocksPassed(context.getBlocksPassed() + 1);
         } catch (Exception e) {
             // TODO 日志太多暂时移除 log.error("tfc:multimultiblock image processing failed", e);
-            // Fallback
-            context.formatWithTooltip(buffer, context.translate(I18n.MULTIBLOCK), context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
+            // FIXME for debug
+            for (TFCMultiblockData multiblock : page.getMultiblocks()) {
+                context.formatWithTooltip(buffer,
+                        String.format("%s: <code>%s</code>", context.translate(I18n.MULTIBLOCK), JsonUtils.toJson(multiblock)),
+                        context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
+            }
+            // TODO context.formatWithTooltip(buffer, context.translate(I18n.MULTIBLOCK), context.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
             context.formatCenteredText(buffer, page.getText());
             context.setBlocksFailed(context.getBlocksFailed() + 1);
         }
