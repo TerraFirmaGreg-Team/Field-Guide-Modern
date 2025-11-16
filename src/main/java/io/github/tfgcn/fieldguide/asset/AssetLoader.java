@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,10 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.github.tfgcn.fieldguide.MCMeta.CACHE;
+import static io.github.tfgcn.fieldguide.renderer.TextureRenderer.multiplyImageByColor;
 
 @Slf4j
 public class AssetLoader {
@@ -75,6 +78,33 @@ public class AssetLoader {
         itemModelCache.put("minecraft:builtin/generated", builtinGenerated);
         itemModelCache.put("forge:item/bucket", new BlockModel());
         itemModelCache.put("forge:item/default", new BlockModel());
+    }
+
+    private void initGtceuIngots() {
+
+        BufferedImage bronzeIngot = createIngot(0xffc370, 0x806752);
+    }
+
+    private BufferedImage createIngot(int colorMain, int colorSecondary) {
+        BufferedImage ingot = loadTexture("gtceu:item/material_sets/metallic/ingot");
+        BufferedImage ingotOverlay = loadTexture("gtceu:item/material_sets/metallic/ingot_overlay");
+        //BufferedImage ingot = assetLoader.loadTexture("gtceu:item/material_sets/metallic/ingot_hot");
+        //BufferedImage ingotOverlay = assetLoader.loadTexture("gtceu:item/material_sets/metallic/ingot_hot_overlay");
+        BufferedImage ingotSecondary = loadTexture("gtceu:item/material_sets/metallic/ingot_secondary");
+
+        Color color = new Color(colorMain);// color(0xffc370).secondaryColor(0x806752)
+        Color secondary = new Color(colorSecondary);
+
+        BufferedImage base = multiplyImageByColor(ingot, color);
+        BufferedImage secondaryOverlay = multiplyImageByColor(ingotSecondary, secondary);
+
+        BufferedImage combined = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = combined.createGraphics();
+        g.drawImage(base, 0, 0, null);
+        g.drawImage(ingotOverlay, 0, 0, null);
+        g.drawImage(secondaryOverlay, 0, 0, null);
+        g.dispose();
+        return combined;
     }
 
     private void initializeSources() {
