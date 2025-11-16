@@ -85,7 +85,7 @@ public class AssetLoader {
     }
 
     private void initGtceuIngots() {
-        registerIngotImage("bronze_ingot", 0xffc370, 0x806752, "metallic");
+        registerIngotImage("bronze", 0xffc370, 0x806752, "metallic");
         registerIngotImage("bismuth_bronze", 0xffd26f, 0x895f3d, "metallic");
         registerIngotImage("black_bronze", 0x8b7c70, 0x4b3d32, "metallic");
         registerIngotImage("rose_gold", 0xecd5b8, 0xd85f2d, "shiny");
@@ -93,7 +93,7 @@ public class AssetLoader {
     }
 
     private void registerIngotImage(String id, int colorMain, int colorSecondary, String iconSet) {
-        String item = "gtceu:" + id;
+        String item = "gtceu:" + id + "_ingot";
         BufferedImage itemIcon = createIngot(colorMain, colorSecondary, iconSet);
 
         registeredImage.put(item, itemIcon);
