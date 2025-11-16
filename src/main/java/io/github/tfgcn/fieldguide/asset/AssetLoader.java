@@ -44,6 +44,8 @@ public class AssetLoader {
     private final Map<String, BlockModel> itemModelCache;
     private final Map<String, List<Tags>> tagsCache;
 
+    private final Map<String, BufferedImage> registeredImage;
+
     @Getter
     private final Set<String> missingAssets = new TreeSet<>();
 
@@ -54,9 +56,11 @@ public class AssetLoader {
         this.blockModelCache = new TreeMap<>();
         this.itemModelCache = new TreeMap<>();
         this.tagsCache = new TreeMap<>();
+        this.registeredImage = new HashMap<>();
 
         initializeSources();
         initBuiltinModels();
+        initGtceuIngots();
     }
 
     private void initBuiltinModels() {
@@ -81,18 +85,37 @@ public class AssetLoader {
     }
 
     private void initGtceuIngots() {
-
-        BufferedImage bronzeIngot = createIngot(0xffc370, 0x806752);
+        registerIngotImage("bronze_ingot", 0xffc370, 0x806752, "metallic");
+        registerIngotImage("bismuth_bronze", 0xffd26f, 0x895f3d, "metallic");
+        registerIngotImage("black_bronze", 0x8b7c70, 0x4b3d32, "metallic");
+        registerIngotImage("rose_gold", 0xecd5b8, 0xd85f2d, "shiny");
+        registerIngotImage("sterling_silver", 0xfaf4dc, 0x484434, "shiny");
     }
 
-    private BufferedImage createIngot(int colorMain, int colorSecondary) {
-        BufferedImage ingot = loadTexture("gtceu:item/material_sets/metallic/ingot");
-        BufferedImage ingotOverlay = loadTexture("gtceu:item/material_sets/metallic/ingot_overlay");
-        //BufferedImage ingot = assetLoader.loadTexture("gtceu:item/material_sets/metallic/ingot_hot");
-        //BufferedImage ingotOverlay = assetLoader.loadTexture("gtceu:item/material_sets/metallic/ingot_hot_overlay");
-        BufferedImage ingotSecondary = loadTexture("gtceu:item/material_sets/metallic/ingot_secondary");
+    private void registerIngotImage(String id, int colorMain, int colorSecondary, String iconSet) {
+        String item = "gtceu:" + id;
+        BufferedImage itemIcon = createIngot(colorMain, colorSecondary, iconSet);
 
-        Color color = new Color(colorMain);// color(0xffc370).secondaryColor(0x806752)
+        registeredImage.put(item, itemIcon);
+
+
+        // String modelKey = "assets/gtceu/models/item/%s.json".formatted(id);
+        BlockModel model = new BlockModel();
+        model.setParent("item/generated");
+        model.setTextures(Map.of("layer0", item));
+        itemModelCache.put(item, model);
+        log.info("register gtceu ingot: {}", item);
+    }
+
+    private BufferedImage createIngot(int colorMain, int colorSecondary, String iconSet) {
+        String ingotKey = "gtceu:item/material_sets/%s/ingot".formatted(iconSet);
+        String ingotOverlayKey = "gtceu:item/material_sets/%s/ingot_overlay".formatted(iconSet);
+        String ingotSecondaryKey = "gtceu:item/material_sets/%s/ingot_secondary".formatted(iconSet);
+        BufferedImage ingot = loadTexture(ingotKey);
+        BufferedImage ingotOverlay = loadTexture(ingotOverlayKey);
+        BufferedImage ingotSecondary = loadTexture(ingotSecondaryKey);
+
+        Color color = new Color(colorMain);
         Color secondary = new Color(colorSecondary);
 
         BufferedImage base = multiplyImageByColor(ingot, color);
@@ -343,6 +366,10 @@ public class AssetLoader {
     }
 
     public BufferedImage loadTexture(String path) {
+        if (path != null && registeredImage.containsKey(path)) {
+            return registeredImage.get(path);
+        }
+
         AssetKey assetKey;
         if (path.endsWith(".png")) {
             assetKey = new AssetKey(path, null, "assets", ".png");
@@ -350,7 +377,9 @@ public class AssetLoader {
             assetKey = new AssetKey(path, "textures", "assets", ".png");
         }
 
-        return loadTexture(assetKey);
+        BufferedImage image = loadTexture(assetKey);
+        registeredImage.put(path, image);
+        return image;
     }
 
     public BufferedImage loadTexture(AssetKey assetKey) {
