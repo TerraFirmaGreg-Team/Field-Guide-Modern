@@ -8,11 +8,13 @@ import io.github.tfgcn.fieldguide.data.mc.blockstate.AndCondition;
 import io.github.tfgcn.fieldguide.data.mc.blockstate.Condition;
 import io.github.tfgcn.fieldguide.data.mc.blockstate.OrCondition;
 import io.github.tfgcn.fieldguide.data.mc.blockstate.PropertyCondition;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Slf4j
 public class BlockStateConditionAdapter extends TypeAdapter<Condition> {
 
     @Override
@@ -87,19 +89,26 @@ public class BlockStateConditionAdapter extends TypeAdapter<Condition> {
 
     private PropertyCondition readPropertyCondition(String firstKey, JsonReader in) throws IOException {
         Map<String, String> properties = new TreeMap<>();
-        properties.put(firstKey, in.nextString());
+
+        put(properties, firstKey, in);
         while (in.hasNext()) {
-            switch(in.peek()) {
-                case STRING -> properties.put(in.nextName(), in.nextString());
-                case NUMBER -> properties.put(in.nextName(), in.nextDouble() + "");
-                case BOOLEAN -> properties.put(in.nextName(), in.nextBoolean() + "");
-                default -> throw new IllegalArgumentException("Unknown property type: " + in.peek());
-            }
+            String name = in.nextName();
+            put(properties, name, in);
         }
         in.endObject();
 
         PropertyCondition propertyCondition = new PropertyCondition();
         propertyCondition.setConditions(properties);
         return propertyCondition;
+    }
+
+    private void put(Map<String, String> map, String key, JsonReader in) throws IOException {
+        JsonToken token = in.peek();
+        switch(in.peek()) {
+            case STRING -> map.put(key, in.nextString());
+            case BOOLEAN -> map.put(key, String.valueOf(in.nextBoolean()));
+            case NUMBER -> map.put(key, String.valueOf(in.nextInt()));// FIXME 如何判断是小数点还是整数？
+            default -> log.info("Unknown token type: {}, {}", key, token);
+        }
     }
 }

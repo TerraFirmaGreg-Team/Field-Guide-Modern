@@ -48,10 +48,11 @@ public class BlockState {
             }
         }
 
-        log.warn("No variants found, state:{} in variants: {}", state, variants.keySet());
+        // FIXME 改为扫描多个blockState文件
         if (defaultVariants != null && !defaultVariants.isEmpty()) {
             return defaultVariants;
         }
+        log.warn("No variants found, state:{} in variants: {}", state, variants.keySet());
 
         if (hasMultipart()) {
             return selectByMultipart(state);

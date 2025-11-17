@@ -906,7 +906,7 @@ public class Context {
                     BufferedImage image = multiblock3DRenderer.render(pattern, data.getMapping());
                     return new Pair<>(Arrays.deepToString(pattern), List.of(image));
                 } catch (Exception e) {
-                    log.error("Failed loading multiblock image: {}, mapping: {}, message: {}", Arrays.deepToString(pattern), data.getMapping(), e.getMessage());
+                    log.error("Failed loading multiblock image: {}, mapping: {}, message: {}", Arrays.deepToString(pattern), data.getMapping(), e.getMessage(), e);
                 }
                 throw new RuntimeException("Multiblock : Complex Pattern '" + Arrays.deepToString(pattern) + "'");
             } else {
@@ -930,7 +930,7 @@ public class Context {
                 image = resizeImage(image, 64, 64);
                 blockImages.add(image);
             } catch (Exception e) {
-                log.error("Failed loading block image: {}, message: {}", b, e.getMessage());
+                log.error("Failed loading block image: {}, message: {}", b, e.getMessage(), e);
             }
         }
 

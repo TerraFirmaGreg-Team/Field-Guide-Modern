@@ -96,9 +96,9 @@ public class Multiblock3DRenderer {
 
         for (int y = 0; y < height; y++) {
             String[] layer = pattern[height - y - 1];
-            for (int z = 0; z < row; z++) {
+            for (int z = 0; z < col; z++) {
                 String line = layer[z];
-                for (int x = 0; x < col; x++) {
+                for (int x = 0; x < row; x++) {
                     char c = line.charAt(x);
                     if (c == ' ') {
                         continue;
@@ -176,6 +176,9 @@ public class Multiblock3DRenderer {
             modelId = blocks.get(0);// 获取第一个方块
         }
         BlockModel blockModel = assetLoader.loadBlockModelWithState(modelId);
+        if (!blockModel.hasElements()) {
+            return new Node();// FIXME
+        }
         return buildModel(blockModel);
     }
 

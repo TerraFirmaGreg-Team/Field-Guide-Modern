@@ -25,6 +25,10 @@ public class BlockModel {
     private transient BlockModel parentModel;
     private transient Set<String> inherits = new TreeSet<>();
 
+    public boolean hasElements() {
+        return elements != null && !elements.isEmpty();
+    }
+
     public void mergeWithParent() {
         if (this.parentModel == null) {
             initRootModel();
