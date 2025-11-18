@@ -38,13 +38,13 @@ jobs:
       - name: Grant Execute Permission For Gradlew
         run: chmod +x gradlew
 
-      - name: Build jar
-        run: ./gradlew clean build
-
       - name: Fetch mods
         run: |
           cd Modpack-Modern
           java -jar pakku.jar fetch
+
+      - name: Build jar
+        run: ./gradlew clean build
 
       - name: Build Website
         run: |

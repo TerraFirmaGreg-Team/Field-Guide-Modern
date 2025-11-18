@@ -20,7 +20,7 @@ public class AssetLoaderTest {
 
     static AssetLoader loader;
 
-    //@BeforeAll
+    @BeforeAll
     static void init() {
         Path path = Paths.get("Modpack-Modern");
         loader = new AssetLoader(path);
@@ -31,7 +31,7 @@ public class AssetLoaderTest {
         Assertions.assertTrue(true);
     }
 
-    //@Test
+    @Test
     void testLoadBook() throws IOException {
         Book book = loadBook();
         Assertions.assertNotNull(book);
