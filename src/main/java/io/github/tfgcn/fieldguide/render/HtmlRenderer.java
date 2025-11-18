@@ -111,7 +111,7 @@ public class HtmlRenderer {
         data.put("page_content", generateHomePageContent(context, context.getCategories()));
 
         // generate page
-        context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), "index.html", data);
+        context.getHtmlRenderer().generatePage("index.ftl", context.getOutputLangDir(), "index.html", data);
     }
 
     public void buildSearchPage(Context context) throws IOException, TemplateException {
@@ -140,14 +140,14 @@ public class HtmlRenderer {
         data.put("contents", generateTableOfContents(context.getCategories()));
 
         // generate page
-        context.getHtmlRenderer().generatePage("search.ftl", context.getOutputDir(), "search.html", data);
+        context.getHtmlRenderer().generatePage("search.ftl", context.getOutputLangDir(), "search.html", data);
 
         for (Map<String, String> result : context.getSearchTree()) {
             String originalContent = result.get("content");
             String content = searchStrip(originalContent);
             result.put("content", content);
         }
-        JsonUtils.writeFile(new File(context.getOutputDir() + "/search_index.json"), context.getSearchTree());
+        JsonUtils.writeFile(new File(context.getOutputLangDir() + "/search_index.json"), context.getSearchTree());
     }
 
     public void buildCategoryPage(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
@@ -170,7 +170,7 @@ public class HtmlRenderer {
         data.put("page_content", generateCategoryPageContent(cat));
 
         // 生成分类页面
-        String outputDir = Paths.get(context.getOutputDir(), categoryId).toString();
+        String outputDir = Paths.get(context.getOutputLangDir(), categoryId).toString();
         context.getHtmlRenderer().generatePage("index.ftl", outputDir, "index.html", data);
 
         // 生成该分类下的条目页面
@@ -201,7 +201,7 @@ public class HtmlRenderer {
 
             // 生成条目页面
             String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
-            context.getHtmlRenderer().generatePage("index.ftl", context.getOutputDir(), outputFileName, data);
+            context.getHtmlRenderer().generatePage("index.ftl", context.getOutputLangDir(), outputFileName, data);
         }
     }
 

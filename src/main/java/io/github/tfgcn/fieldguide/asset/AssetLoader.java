@@ -12,7 +12,6 @@ import io.github.tfgcn.fieldguide.data.minecraft.blockstate.BlockState;
 import io.github.tfgcn.fieldguide.data.minecraft.blockstate.BlockVariant;
 import io.github.tfgcn.fieldguide.data.minecraft.blockstate.Variant;
 import io.github.tfgcn.fieldguide.data.minecraft.blockmodel.BlockModel;
-import io.github.tfgcn.fieldguide.data.patchouli.Book;
 import io.github.tfgcn.fieldguide.Constants;
 import io.github.tfgcn.fieldguide.exception.InternalException;
 import lombok.Getter;
@@ -105,13 +104,10 @@ public class AssetLoader {
 
         registeredImage.put(item, itemIcon);
 
-
-        // String modelKey = "assets/gtceu/models/item/%s.json".formatted(id);
         BlockModel model = new BlockModel();
         model.setParent("item/generated");
         model.setTextures(Map.of("layer0", item));
         itemModelCache.put(item, model);
-        log.info("register gtceu ingot: {}", item);
     }
 
     private void initTFCWoods() {
@@ -296,54 +292,6 @@ public class AssetLoader {
             }
         }
         return assets;
-    }
-
-    public Map<String, List<Book>> findAllPatchouliBooks() {
-        Map<String, List<Book>> booksByMod = new HashMap<>();
-        
-        for (AssetSource source : sources) {
-            List<String> bookPaths = source.findPatchouliBooks();
-            for (String bookPath : bookPaths) {
-                try {
-                    String[] parts = bookPath.split("/");
-                    if (parts.length < 4) {
-                        continue;
-                    }
-                    String modId = parts[1]; // data/modid/... or assets/modid/...
-                    String bookId = parts[3]; // .../patchouli_books/bookid/...
-
-                    Book book = new Book(modId, bookId, source.getSourceId());
-                    booksByMod.computeIfAbsent(modId, k -> new ArrayList<>()).add(book);
-
-                    System.out.println("Found book: " + book);
-                } catch (Exception e) {
-                    System.err.println("Error parsing book path: " + bookPath + " - " + e.getMessage());
-                }
-            }
-        }
-        
-        return booksByMod;
-    }
-
-    public void generateSourceReport() {
-        System.out.println("\n=== Resource Source Report ===");
-        System.out.println("Instance Root: " + instanceRoot);
-        System.out.println("\nSources (by priority):");
-        
-        for (AssetSource source : sources) {
-            List<String> books = source.findPatchouliBooks();
-            System.out.println("  " + source + " - " + books.size() + " books");
-            
-            for (String book : books) {
-                System.out.println("    - " + book);
-            }
-        }
-        
-        Map<String, List<Book>> allBooks = findAllPatchouliBooks();
-        System.out.println("\nTotal books by mod:");
-        for (Map.Entry<String, List<Book>> entry : allBooks.entrySet()) {
-            System.out.println("  " + entry.getKey() + ": " + entry.getValue().size() + " books");
-        }
     }
 
     public Map<String, String> loadLang(String namespace, String lang) {

@@ -35,7 +35,7 @@ public class BookParser {
                 log.error("Failed to build book html", e);
             }
         }
-        
+
         log.info("Done");
         log.info("  Recipes : {} passed / {} failed / {} skipped", 
                 context.getRecipesPassed(), context.getRecipesFailed(), context.getRecipesSkipped());
@@ -69,7 +69,7 @@ public class BookParser {
 
     private void parseCategories(Context context) {
         // assets/tfc/patchouli_books/field_guide/en_us/categories
-        String categoriesPath = context.getSourcePath("categories");
+        String categoriesPath = Constants.getCategoryDir(context.getLang());
         List<Asset> assets;
         try {
             assets = context.listAssets(categoriesPath);
@@ -90,7 +90,7 @@ public class BookParser {
 
     private void parseEntries(Context context) {
         // assets/tfc/patchouli_books/field_guide/en_us/entries
-        String entriesPath = context.getSourcePath("entries");
+        String entriesPath = Constants.getEntryDir(context.getLang());
         List<Asset> assets;
         try {
             assets = context.listAssets(entriesPath);
@@ -113,6 +113,11 @@ public class BookParser {
         // get categoryId
         String relativePath = asset.getPath().substring(categoryDir.length() + 1);
         String categoryId = relativePath.substring(0, relativePath.lastIndexOf('.'));
+
+        if (context.getCategoryMap().containsKey(categoryId)) {
+            log.info("Category already exists:{}", relativePath);
+            return;
+        }
 
         try {
             BookCategory category = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);

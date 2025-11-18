@@ -1,17 +1,22 @@
 package io.github.tfgcn.fieldguide.data.patchouli;
 
 import com.google.gson.annotations.SerializedName;
+import io.github.tfgcn.fieldguide.asset.Asset;
+import io.github.tfgcn.fieldguide.asset.AssetSource;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @see <a href="https://vazkiimods.github.io/Patchouli/docs/reference/category-json>Category JSON Format</a>
  */
+@Slf4j
 @Data
 public class BookCategory implements Comparable<BookCategory> {
-    private List<BookEntry> entries = new ArrayList<>();
 
     private String id;
     /**
@@ -55,13 +60,36 @@ public class BookCategory implements Comparable<BookCategory> {
      */
     private boolean secret = false;
 
+    private transient AssetSource assetSource;
+    private transient List<BookEntry> entries = new ArrayList<>();
+    private transient Map<String, BookEntry> entryMap = new TreeMap<>();
+
+    /**
+     * Set the id of this category.
+     *
+     * @param categoryPath The path of the category. e.g. assets/tfc/patchouli_data/en_us/categories
+     * @param asset The asset of the category. e.g. assets/tfc/patchouli_data/en_us/categories/category.json
+     */
+    public void setAssetSource(String categoryPath, Asset asset) {
+        this.assetSource = asset.getSource();
+
+        String assetPath = asset.getPath();
+        try {
+            String relativePath = assetPath.substring(categoryPath.length() + 1);
+            this.id = relativePath.substring(0, relativePath.lastIndexOf('.'));
+        } catch (Exception e) {
+            log.error("Failed to parse category id for: {} -> {}", categoryPath, assetPath, e);
+        }
+    }
+
     public void addEntry(BookEntry entry) {
         this.entries.add(entry);
+        this.entryMap.put(entry.getId(), entry);
     }
 
     @Override
     public String toString() {
-        return name;
+        return id + "@" + assetSource.getSourceId();
     }
 
     @Override

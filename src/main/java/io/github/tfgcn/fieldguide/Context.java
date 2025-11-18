@@ -52,10 +52,10 @@ public class Context {
     private final Block3DRenderer block3DRenderer;
     private final Multiblock3DRenderer multiblock3DRenderer;
     private final String outputRootDir;// The output directory
-    private final String rootDir;// The root directory to fetch static assets from
+    private final String basePath;// The web base path
     private final boolean debugI18n;
     
-    private String outputDir;
+    private String outputLangDir;
     private String lang;
 
     // 数据结构
@@ -92,11 +92,11 @@ public class Context {
 
     private Map<String, ItemImageResult> itemImageCache = new HashMap<>();
 
-    public Context(AssetLoader loader, String outputRootDir, String rootDir, boolean debugI18n) throws IOException {
+    public Context(AssetLoader loader, String outputRootDir, String basePath, boolean debugI18n) throws IOException {
         this.loader = loader;
         this.outputRootDir = outputRootDir;
-        this.outputDir = outputRootDir;
-        this.rootDir = rootDir;
+        this.outputLangDir = outputRootDir;
+        this.basePath = basePath;
         this.debugI18n = debugI18n;
 
         this.htmlRenderer = new HtmlRenderer("assets/templates");
@@ -119,7 +119,7 @@ public class Context {
      */
     public Context withLang(String lang) {
         this.lang = lang;
-        this.outputDir = outputRootDir + "/" + lang;
+        this.outputLangDir = outputRootDir + "/" + lang;
 
         this.categoryMap = new HashMap<>();
         this.entryMap = new HashMap<>();
@@ -135,12 +135,6 @@ public class Context {
         }
         
         return this;
-    }
-
-    public String getSourcePath(String path) {
-        // if in resource pack, first folder is "data", otherwise "assets"
-        // for now only support "assets"
-        return String.format("%s/tfc/patchouli_books/field_guide/%s/%s", "assets", getLang(), path);
     }
 
     public List<Asset> listAssets(String resourcePath) throws IOException {

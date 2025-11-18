@@ -1,23 +1,18 @@
 package io.github.tfgcn.fieldguide.data.patchouli;
 
 import com.google.gson.annotations.SerializedName;
+import io.github.tfgcn.fieldguide.asset.Asset;
+import io.github.tfgcn.fieldguide.asset.AssetSource;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Data
 public class BookEntry implements Comparable<BookEntry> {
-    private List<String> buffer = new ArrayList<>();
-
-    /**
-     * The "entry ID" of an entry is the path necessary to get to it from
-     * `/en_us/entries`. So if your entry is in `/en_us/entries/misc/cool_stuff.json`,
-     * its ID would be `patchouli:misc/cool_stuff`.
-     */
-    private String id = "";    // The full name, <category>/<entry>
-    private String relId = ""; // Just the entry name, <entry>
-
     /**
      * The localized name of this entry
      */
@@ -105,12 +100,25 @@ public class BookEntry implements Comparable<BookEntry> {
     @SerializedName("entry_color")
     private String entryColor;
 
-    private String iconPath = "";
-    private String iconName = "";
+    /**
+     * The "entry ID" of an entry is the path necessary to get to it from
+     * `/en_us/entries`. So if your entry is in `/en_us/entries/misc/cool_stuff.json`,
+     * its ID would be `patchouli:misc/cool_stuff`.
+     */
+    private transient String id;    // The full name, <category>/<entry>
+    private transient String relId; // Just the entry name, <entry>
+    private transient String categoryId;
+
+    private transient String iconPath = "";
+    private transient String iconName = "";
+
+    private transient AssetSource assetSource;
+
+    private List<String> buffer = new ArrayList<>();
 
     @Override
     public String toString() {
-        return name;
+        return id + "@" + assetSource.getSourceId();
     }
 
     @Override
@@ -119,5 +127,23 @@ public class BookEntry implements Comparable<BookEntry> {
             return Integer.compare(this.sort, other.sort);
         }
         return this.id.compareTo(other.id);
+    }
+
+    public void setAssetSource(String entryPath, Asset asset) {
+        this.assetSource = asset.getSource();
+
+        String relativePath = asset.getPath().substring(entryPath.length() + 1);
+        String entryId = relativePath.substring(0, relativePath.lastIndexOf('.'));
+        this.id = entryId;
+
+        // remove "tfc:" prefix from categoryId,
+        int index = this.category.indexOf(':');
+        if (index > 0) {
+            this.categoryId = this.category.substring(index + 1);
+        } else {
+            this.categoryId = this.category;
+        }
+
+        this.relId = entryId.split("/")[1];
     }
 }
