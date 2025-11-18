@@ -129,7 +129,14 @@
             </ol>
           </nav>
 
-          ${page_content}
+          <h1 class="d-flex align-items-center mb-4">
+            <#if current_entry.iconPath?? && current_entry.iconPath?has_content>
+            <img class="icon-title me-3" src="${current_entry.iconPath}" alt="${current_entry.name}" title="${current_entry.iconName!current_entry.name}" />
+            </#if>
+            <span>${current_entry.name}</span>
+          </h1>
+
+          ${current_entry.innerHtml}
         </div>
       </div>
     </div>

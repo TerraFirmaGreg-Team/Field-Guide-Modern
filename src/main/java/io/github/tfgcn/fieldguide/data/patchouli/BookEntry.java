@@ -114,7 +114,10 @@ public class BookEntry implements Comparable<BookEntry> {
 
     private transient AssetSource assetSource;
 
-    private List<String> buffer = new ArrayList<>();
+    // render inner html
+    private transient List<String> buffer = new ArrayList<>();
+    private transient boolean isRendered = false;
+    private transient String innerHtml;
 
     @Override
     public String toString() {

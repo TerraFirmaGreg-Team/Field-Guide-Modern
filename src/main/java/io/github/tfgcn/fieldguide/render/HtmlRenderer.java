@@ -23,7 +23,6 @@ public class HtmlRenderer {
     private final Configuration cfg;
 
     public HtmlRenderer(String templateDir) throws IOException {
-        // 配置 FreeMarker
         cfg = new Configuration(Configuration.VERSION_2_3_32);
         cfg.setDirectoryForTemplateLoading(new File(templateDir));
         cfg.setDefaultEncoding("UTF-8");
@@ -198,8 +197,6 @@ public class HtmlRenderer {
             data.put("current_category", cat);
             data.put("current_entry", entry);
 
-            data.put("page_content", generateEntryPageContent(entry));
-
             // 生成条目页面
             String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
             context.getHtmlRenderer().generatePage("entry.ftl", context.getOutputLangDir(), outputFileName, data);
@@ -227,31 +224,5 @@ public class HtmlRenderer {
     private static String cleanImagePath(String iconPath) {
         if (iconPath == null) return "";
         return iconPath.replace("../../_images/", "").replace("..\\..\\_images\\", "");
-    }
-
-    private static String generateEntryPageContent(BookEntry entry) {
-        String titleWithIcon = titleWithOptionalIcon(entry.getName(), entry.getIconPath(), entry.getIconName());
-        String innerContent = String.join("", entry.getBuffer());
-
-        return String.format(
-                """
-                <h1 class="d-flex align-items-center mb-4">%s</h1>
-                %s
-                """,
-                titleWithIcon, innerContent
-        );
-    }
-
-    private static String titleWithOptionalIcon(String text, String iconSrc, String iconName) {
-        if (iconSrc != null && !iconSrc.isEmpty()) {
-            return String.format(
-                    """
-                    <img class="icon-title me-3" src="%s" alt="%s" title="%s" ><span>%s</span>
-                    """,
-                    iconSrc, text, iconName != null ? iconName : text, text
-            );
-        } else {
-            return text;
-        }
     }
 }

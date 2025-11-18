@@ -201,7 +201,12 @@ public class BookParser {
                     }
                 }
             }
-            
+            // render inner html
+            if (!entry.isRendered()) {
+                entry.setInnerHtml(String.join("", entry.getBuffer()));
+                entry.setRendered(true);
+            }
+
             context.addEntry(categoryId, entryId, entry, search);
             
         } catch (IOException e) {
