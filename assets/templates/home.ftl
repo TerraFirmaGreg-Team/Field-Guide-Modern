@@ -112,7 +112,37 @@
             </ol>
           </nav>
 
-          <ul id="results"></ul>
+          <!-- START -->
+            <div align="center">
+              <a href="https://discord.gg/AEaCzCTUwQ">
+                <img src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3.1.2/assets/compact/social/discord-singular_vector.svg" alt="Chat on Discord">
+              </a>
+              <a href="https://www.curseforge.com/members/terrafirmagreg/projects">
+                <img src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges/assets/compact/available/curseforge_vector.svg" alt="Available on СurseForge">
+              </a>
+              <br/>
+            </div>
+            <br/>
+            <img class="d-block w-200 mx-auto mb-3 img-fluid" src="${root}/_images/splash.png" alt="TerraFirmaCraft Field Guide Splash Image">
+            <p>${text_home}</p>
+            <p><strong>${text_categories}</strong></p>
+            <div class="row row-cols-1 row-cols-md-2 g-3">
+
+              <!-- category card -->
+              <#list categories as category>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            <a href="${category.id}/index.html">${category.name}</a>
+                        </div>
+                        <div class="card-body">
+                            ${category.description}
+                        </div>
+                    </div>
+                </div>
+              </#list>
+            </div>
+          <!-- END -->
         </div>
       </div>
     </div>
@@ -139,7 +169,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0"></script>
     <script src="${root}/static/icons.min.js"></script>
 
     <script>

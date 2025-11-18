@@ -5,6 +5,7 @@ import io.github.tfgcn.fieldguide.*;
 import io.github.tfgcn.fieldguide.gson.JsonUtils;
 import io.github.tfgcn.fieldguide.data.patchouli.BookCategory;
 import io.github.tfgcn.fieldguide.data.patchouli.BookEntry;
+import io.github.tfgcn.fieldguide.html.LanguageDropdown;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
@@ -91,27 +92,28 @@ public class HtmlRenderer {
         data.put("long_title", context.translate(I18n.TITLE) + " | " + Constants.MC_VERSION);
         data.put("short_description", context.translate(I18n.HOME));
         data.put("preview_image", "splash.png");
-        data.put("root", "..");// context.getRootDir()
+        data.put("root", "..");// context.getBasePath()
 
         // text
         data.put("text_index", context.translate(I18n.INDEX));
-        data.put("text_contents", context.translate(I18n.CONTENTS));
+        data.put("text_home", context.translate(I18n.HOME));
         data.put("text_github", context.translate(I18n.GITHUB));
         data.put("text_discord", context.translate(I18n.DISCORD));
+        data.put("text_categories", context.translate(I18n.CATEGORIES));
+        data.put("text_contents", context.translate(I18n.CONTENTS));
 
         // langs and navigation
         data.put("current_lang_key", context.getLang());
         data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
-        data.put("langs", generateLanguageDropdown(Constants.LANGUAGES, context));
+        data.put("languages", getLanguageDropdown(Constants.LANGUAGES, context));
         data.put("index", "#");
         data.put("location", indexBreadcrumbModern(null));
 
         // contents
-        data.put("contents", generateTableOfContents(context.getCategories()));
-        data.put("page_content", generateHomePageContent(context, context.getCategories()));
+        data.put("categories", context.getCategories());
 
         // generate page
-        context.getHtmlRenderer().generatePage("index.ftl", context.getOutputLangDir(), "index.html", data);
+        context.getHtmlRenderer().generatePage("home.ftl", context.getOutputLangDir(), "index.html", data);
     }
 
     public void buildSearchPage(Context context) throws IOException, TemplateException {
@@ -121,7 +123,7 @@ public class HtmlRenderer {
         data.put("long_title", context.translate(I18n.TITLE) + " | " + Constants.MC_VERSION);
         data.put("short_description", context.translate(I18n.HOME));
         data.put("preview_image", "splash.png");
-        data.put("root", "..");// context.getRootDir()
+        data.put("root", "..");// basePath
 
         // text
         data.put("text_index", context.translate(I18n.INDEX));
@@ -132,12 +134,12 @@ public class HtmlRenderer {
         // langs and navigation
         data.put("current_lang_key", context.getLang());
         data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
-        data.put("langs", generateLanguageDropdown(Constants.LANGUAGES, context));
+        data.put("languages", getLanguageDropdown(Constants.LANGUAGES, context));
         data.put("index", "../");
         data.put("location", indexBreadcrumbModern(null));
 
         // contents
-        data.put("contents", generateTableOfContents(context.getCategories()));
+        data.put("categories", context.getCategories());
 
         // generate page
         context.getHtmlRenderer().generatePage("search.ftl", context.getOutputLangDir(), "search.html", data);
@@ -156,22 +158,26 @@ public class HtmlRenderer {
         data.put("long_title", cat.getName() + " | " + context.translate(I18n.SHORT_TITLE));
         data.put("short_description", cat.getName());
         data.put("preview_image", "splash.png");
+        data.put("root", "../..");
+
         data.put("text_index", context.translate(I18n.INDEX));
         data.put("text_contents", context.translate(I18n.CONTENTS));
         data.put("text_github", context.translate(I18n.GITHUB));
         data.put("text_discord", context.translate(I18n.DISCORD));
+
         data.put("current_lang_key", context.getLang());
         data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
-        data.put("langs", generateCategoryLanguageLinks(Constants.LANGUAGES, context, categoryId));
+        data.put("current_category_id", cat.getId());
+        data.put("languages", getLanguageDropdown(Constants.LANGUAGES, context));
         data.put("index", "../");
-        data.put("root", "../..");// context.getRootDir()
         data.put("location", generateCategoryBreadcrumb("../", cat.getName()));
-        data.put("contents", generateCategoryTableOfContents(context.getCategories(), categoryId));
+
+        data.put("categories", context.getCategories());
         data.put("page_content", generateCategoryPageContent(cat));
 
         // 生成分类页面
         String outputDir = Paths.get(context.getOutputLangDir(), categoryId).toString();
-        context.getHtmlRenderer().generatePage("index.ftl", outputDir, "index.html", data);
+        context.getHtmlRenderer().generatePage("category.ftl", outputDir, "index.html", data);
 
         // 生成该分类下的条目页面
         buildEntryPages(context, categoryId, cat);
@@ -186,16 +192,20 @@ public class HtmlRenderer {
             data.put("long_title", entry.getName() + " | " + context.translate(I18n.SHORT_TITLE));
             data.put("short_description", entry.getName());
             data.put("preview_image", cleanImagePath(entry.getIconPath()));
+            data.put("root", "../..");
+
             data.put("text_index", context.translate(I18n.INDEX));
             data.put("text_contents", context.translate(I18n.CONTENTS));
             data.put("text_github", context.translate(I18n.GITHUB));
             data.put("text_discord", context.translate(I18n.DISCORD));
+
             data.put("current_lang_key", context.getLang());
             data.put("current_lang", context.translate(String.format(I18n.LANGUAGE_NAME, context.getLang())));
+            data.put("current_category_id", cat.getId());
             data.put("langs", generateEntryLanguageLinks(Constants.LANGUAGES, context, categoryId, entry.getRelId()));
             data.put("index", "../");
-            data.put("root", "../..");// context.getRootDir()
             data.put("location", generateEntryBreadcrumb("../", cat.getName(), entry.getName()));
+
             data.put("contents", generateEntryTableOfContents(context.getCategories(), categoryId, entryId));
             data.put("page_content", generateEntryPageContent(entry));
 
@@ -210,6 +220,17 @@ public class HtmlRenderer {
      */
     public static String searchStrip(String input) {
         return SEARCH_STRIP_PATTERN.matcher(input).replaceAll("");
+    }
+
+    public static List<LanguageDropdown> getLanguageDropdown(List<String> languages, Context context) {
+        if (languages == null || languages.isEmpty()) {
+            return null;
+        }
+
+        return languages.stream()
+                .filter(Objects::nonNull)
+                .map(lang -> new LanguageDropdown(lang, context.translate(String.format(I18n.LANGUAGE_NAME, lang))))
+                .collect(Collectors.toList());
     }
 
     public static String generateLanguageDropdown(List<String> languages, Context context) {

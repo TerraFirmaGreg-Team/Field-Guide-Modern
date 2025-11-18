@@ -47,7 +47,7 @@
               </a>
               <div class="dropdown-menu" aria-labelledby="lang-dropdown-button">
                 <#list languages as lang>
-                <a href="${root}/${lang.code}/index.html" class="dropdown-item">${lang.name}</a>
+                <a href="${root}/${lang.code}/${current_category_id}/index.html" class="dropdown-item">${lang.name}</a>
                 </#list>
               </div>
             </li>
@@ -99,7 +99,16 @@
           <ul class="list-unstyled lh-lg">
             <li><a href="${index}">${text_index}</a></li>
             <#list categories as category>
-            <li><a href="./${category.id}/">${category.name}</a></li>
+            <li>
+              <a href="../${category.id}/">${category.name}</a>
+              <#if current_category_id == category.id && category.entries?? && category.entries?size gt 0>
+              <ul>
+                <#list category.entries as entry>
+                <li><a href="./${entry.relId}.html">${entry.name}</a></li>
+              </#list>
+              </ul>
+              </#if>
+            </li>
             </#list>
           </ul>
         </nav>
@@ -112,7 +121,7 @@
             </ol>
           </nav>
 
-          <ul id="results"></ul>
+          ${page_content}
         </div>
       </div>
     </div>
@@ -139,7 +148,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0"></script>
     <script src="${root}/static/icons.min.js"></script>
 
     <script>
