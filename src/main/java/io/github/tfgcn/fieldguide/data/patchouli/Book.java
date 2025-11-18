@@ -270,11 +270,10 @@ public class Book {
         if (exist != null) {
             log.debug("Override entry: {}, {} -> {}", entry.getId(), exist.getAssetSource(), entry.getAssetSource());
         } else {
-            entries.add(entry);
-            entryMap.put(entry.getId(), entry);
-
             BookCategory category = categoryMap.get(entry.getCategoryId());
             if (category != null) {
+                entries.add(entry);
+                entryMap.put(entry.getId(), entry);
                 category.addEntry(entry);
             } else {
                 log.warn("Entry {} has an unknown category: {}", entry.getId(), entry.getCategoryId());
@@ -293,9 +292,9 @@ public class Book {
         System.out.printf("===== Report %s =====\n", language);
         System.out.printf("Total: %d categories, %d entries\n", getCategories().size(), getEntries().size());
         for (BookCategory category : getCategories()) {
-            System.out.printf("%s - <%s> (%d entries)\n", category.getId(), category.getName(), category.getEntries().size());
+            System.out.printf("%s - <%s> (%d entries): %s\n", category.getId(), category.getName(), category.getEntries().size(), category.getAssetSource().getSourceId());
             for (BookEntry entry : category.getEntries()) {
-                System.out.printf("  %s/%s - <%s> (%d pages)\n", entry.getCategoryId(), entry.getRelId(), entry.getName(), entry.getPages().size());
+                System.out.printf("  %s/%s - <%s> (%d pages): %s\n", entry.getCategoryId(), entry.getRelId(), entry.getName(), entry.getPages().size(), entry.getAssetSource().getSourceId());
             }
         }
     }

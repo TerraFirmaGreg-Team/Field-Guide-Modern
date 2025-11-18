@@ -39,21 +39,6 @@ public class JarAssetSource extends AssetSource {
     }
 
     @Override
-    public List<String> findPatchouliBooks() {
-        List<String> books = new ArrayList<>();
-        Enumeration<JarEntry> entries = jarFile.entries();
-        
-        while (entries.hasMoreElements()) {
-            JarEntry entry = entries.nextElement();
-            String name = entry.getName();
-            if (name.contains("patchouli_books") && entry.isDirectory()) {
-                books.add(name);
-            }
-        }
-        return books;
-    }
-
-    @Override
     public List<Asset> listAssets(String resourcePath) throws IOException {
         List<Asset> assets = new ArrayList<>();
         String normalizedDir = normalizePath(resourcePath);

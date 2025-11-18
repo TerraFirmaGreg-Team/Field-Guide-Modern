@@ -1,7 +1,5 @@
 package io.github.tfgcn.fieldguide.asset;
 
-import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -37,21 +35,6 @@ public class ZipAssetSource extends AssetSource {
             return zipFile.getInputStream(entry);
         }
         throw new IOException("Resource not found in ZIP: " + resourcePath);
-    }
-
-    @Override
-    public List<String> findPatchouliBooks() {
-        List<String> books = new ArrayList<>();
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            String name = entry.getName();
-            if (name.contains("patchouli_books") && entry.isDirectory()) {
-                books.add(name);
-            }
-        }
-        return books;
     }
 
     @Override

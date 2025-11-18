@@ -23,8 +23,6 @@ public abstract class AssetSource {
 
     public abstract InputStream getInputStream(String resourcePath) throws IOException;
 
-    public abstract List<String> findPatchouliBooks();
-
     public abstract List<Asset> listAssets(String resourcePath) throws IOException;
 
     public abstract boolean isDirectory(String resourcePath);

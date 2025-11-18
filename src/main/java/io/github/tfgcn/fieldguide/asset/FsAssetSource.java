@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Asset source that reads from the filesystem.
@@ -37,28 +36,6 @@ public class FsAssetSource extends AssetSource {
     }
     
     @Override
-    public List<String> findPatchouliBooks() {
-        List<String> books = new ArrayList<>();
-        if (!Files.exists(rootPath)) {
-            return books;
-        }
-
-        // Search in assets directory
-        Path assetsPath = rootPath.resolve("assets");
-        if (Files.exists(assetsPath)) {
-            findBooksInDirectory(assetsPath, "assets", books);
-        }
-
-        // Search in data directory
-        Path dataPath = rootPath.resolve("data");
-        if (Files.exists(dataPath)) {
-            findBooksInDirectory(dataPath, "data", books);
-        }
-
-        return books;
-    }
-
-    @Override
     public List<Asset> listAssets(String resourcePath) throws IOException {
         List<Asset> assets = new ArrayList<>();
         Path fullPath = rootPath.resolve(resourcePath);
@@ -81,19 +58,5 @@ public class FsAssetSource extends AssetSource {
     public boolean isDirectory(String resourcePath) {
         Path fullPath = rootPath.resolve(resourcePath);
         return Files.exists(fullPath) && Files.isDirectory(fullPath);
-    }
-
-    private void findBooksInDirectory(Path basePath, String prefix, List<String> books) {
-        try (Stream<Path> walk = Files.walk(basePath)) {
-            walk.filter(path -> path.toString().contains("patchouli_books"))
-                .filter(Files::isDirectory)
-                .forEach(bookPath -> {
-                    String relativePath = basePath.relativize(bookPath).toString();
-                    String fullPath = prefix + "/" + relativePath;
-                    books.add(fullPath);
-                });
-        } catch (IOException e) {
-            System.err.println("Error scanning directory: " + basePath + " - " + e.getMessage());
-        }
     }
 }

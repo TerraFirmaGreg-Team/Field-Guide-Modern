@@ -38,5 +38,5 @@ public class BookPage {
      */
     protected String anchor;
 
-    private JsonObject jsonObject;
+    private transient JsonObject jsonObject;
 }

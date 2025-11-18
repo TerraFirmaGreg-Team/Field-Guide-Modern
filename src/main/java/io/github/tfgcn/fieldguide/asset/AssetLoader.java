@@ -5,6 +5,9 @@ import com.google.gson.stream.JsonReader;
 import io.github.tfgcn.fieldguide.data.gtceu.utils.ResourceHelper;
 import io.github.tfgcn.fieldguide.data.minecraft.tag.TagElement;
 import io.github.tfgcn.fieldguide.data.minecraft.tag.Tags;
+import io.github.tfgcn.fieldguide.data.patchouli.Book;
+import io.github.tfgcn.fieldguide.data.patchouli.BookCategory;
+import io.github.tfgcn.fieldguide.data.patchouli.BookEntry;
 import io.github.tfgcn.fieldguide.data.tfc.TFCWood;
 import io.github.tfgcn.fieldguide.gson.JsonUtils;
 import io.github.tfgcn.fieldguide.exception.AssetNotFoundException;
@@ -33,6 +36,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static io.github.tfgcn.fieldguide.Constants.EN_US;
 import static io.github.tfgcn.fieldguide.asset.MCMeta.CACHE;
 import static io.github.tfgcn.fieldguide.render.TextureRenderer.multiplyImageByColor;
 
@@ -292,6 +296,94 @@ public class AssetLoader {
             }
         }
         return assets;
+    }
+
+    /**
+     * load book by id
+     * @param bookId The book id. e.g. field_guide
+     * @return The patchouli book
+     * @throws IOException
+     */
+    public Book loadBook(String bookId) throws IOException {
+        // load book
+        String bookPath = Constants.getBookPath(bookId);
+        Asset bookAsset = getAsset(bookPath);
+        if (bookAsset == null) {
+            log.error("Book not found: {}", bookPath);
+            throw new AssetNotFoundException("Book not found: " + bookPath);
+        }
+
+        Book book = JsonUtils.readFile(bookAsset.getInputStream(), Book.class);
+        book.setLanguage(EN_US);
+        book.setAssetSource(bookAsset);
+
+        // load categories
+        String categoryDir = Constants.getCategoryDir(bookId, EN_US);
+        List<Asset> assets = listAssets(categoryDir);
+        for (Asset asset : assets) {
+            BookCategory category = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
+            category.setAssetSource(categoryDir, asset);
+
+            book.addCategory(category);
+        }
+
+        // load entries
+        String entryDir = Constants.getEntryDir(bookId, EN_US);
+        assets = listAssets(entryDir);
+        for (Asset asset : assets) {
+            BookEntry entry = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
+            entry.setAssetSource(entryDir, asset);
+
+            book.addEntry(entry);
+        }
+
+        book.sort();
+        return book;
+    }
+
+    public Book loadBook(String bookId, String lang, Book fallback) throws IOException {
+        String bookPath = Constants.getBookPath(bookId);
+        Asset bookAsset = getAsset(bookPath);
+
+        Book book = JsonUtils.readFile(bookAsset.getInputStream(), Book.class);
+        book.setLanguage(lang);
+        book.setAssetSource(bookAsset);
+
+        String categoryDir = Constants.getCategoryDir(bookId, lang);
+        String fallbackCategoryDir = Constants.getCategoryDir();
+        for (BookCategory category : fallback.getCategories()) {
+            String path = Constants.getCategoryPath(lang, category.getId());
+            Asset asset = getAsset(path);
+            if (asset != null) {
+                BookCategory localizedCategory = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
+                localizedCategory.setAssetSource(categoryDir, asset);
+                book.addCategory(localizedCategory);
+            } else {
+                // fallback
+                path = Constants.getCategoryPath(category.getId());
+                asset = getAsset(path);
+                BookCategory localizedCategory = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
+                localizedCategory.setAssetSource(fallbackCategoryDir, asset);
+                book.addCategory(localizedCategory);
+            }
+        }
+
+        String entryDir = Constants.getEntryDir(lang);
+        for (BookEntry entry : fallback.getEntries()) {
+            String path = Constants.getEntryPath(lang, entry.getId());
+            Asset asset = getAsset(path);
+            if (asset != null) {
+                BookEntry localizedEntry = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
+                localizedEntry.setAssetSource(entryDir, asset);
+                book.addEntry(localizedEntry);
+            } else {
+                // fallback
+                book.addEntry(entry);
+            }
+        }
+
+        book.sort();
+        return book;
     }
 
     public Map<String, String> loadLang(String namespace, String lang) {
