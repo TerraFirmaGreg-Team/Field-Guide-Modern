@@ -117,10 +117,10 @@ public class RendererTest extends Application {
 
         // parallel
         cam.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -1000f, 1000f);
-        cam.lookAt(new Vector3f(-100, 100, -100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
 
-        cam.setLocation(new Vector3f(32f, 32f, 32f).multLocal((float) SCALE));
-        cam.setDirection(new Vector3f(-1f, -1f, -1f).normalizeLocal());
+        cam.lookAt(v3(32f, 32f, -16f), v3(8f, 8f, 8f), Vector3f.UNIT_Y);
+        //cam.setLocation(new Vector3f(32f, 32f, 32f).multLocal(SCALE));
+        //cam.setDirection(new Vector3f(-1f, -1f, -1f).normalizeLocal());
     }
 
     @Override
@@ -185,6 +185,7 @@ public class RendererTest extends Application {
             return map.getOrDefault(id, "assets/minecraft/textures/block/missing.png");
         }
     }
+
 
     public void buildNode(Node rootNode, ModelElement element, Map<String, String> textures) {
         Map<String, ElementFace> faces = element.getFaces();
@@ -253,9 +254,8 @@ public class RendererTest extends Application {
             }
         }
 
-        if (element.getShade() != null && !element.getShade()) {
-            log.info("don't shade this block element");
-        };
+        // don't shade this block
+        boolean noShade = element.getShade() != null && !element.getShade();
 
         x1 = x1 - o1;
         y1 = y1 - o2;
@@ -300,6 +300,9 @@ public class RendererTest extends Application {
                 // TODO change normals
             }
 
+            Vector3f[] positions;
+            Vector3f[] normals;
+            Vector4f[] colors;
             Mesh mesh;
             switch (dir) {
                 case "down": {
@@ -307,12 +310,10 @@ public class RendererTest extends Application {
                     Vector3f v1 = v3(x1, y1, z1);
                     Vector3f v2 = v3(x2, y1, z1);
                     Vector3f v3 = v3(x2, y1, z2);
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{DOWN, DOWN, DOWN, DOWN},
-                            new Vector4f[]{DARK, DARK, DARK, DARK});
+
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[] {DOWN, DOWN, DOWN, DOWN};
+                    colors = new Vector4f[] {DARK, DARK, DARK, DARK};
                     break;
                 }
 
@@ -322,12 +323,9 @@ public class RendererTest extends Application {
                     Vector3f v2 = v3(x2, y2, z2);
                     Vector3f v3 = v3(x2, y2, z1);
 
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{UP, UP, UP, UP},
-                            new Vector4f[]{LIGHT, LIGHT, LIGHT, LIGHT});
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[]{UP, UP, UP, UP};
+                    colors = new Vector4f[]{LIGHT, LIGHT, LIGHT, LIGHT};
                     break;
                 }
                 case "north": {
@@ -336,12 +334,9 @@ public class RendererTest extends Application {
                     Vector3f v2 = v3(x1, y1, z1);
                     Vector3f v3 = v3(x1, y2, z1);
 
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{NORTH, NORTH, NORTH, NORTH},
-                            new Vector4f[]{LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY});
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[]{NORTH, NORTH, NORTH, NORTH};
+                    colors = new Vector4f[]{LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY};
                     break;
                 }
                 case "south": {
@@ -350,12 +345,9 @@ public class RendererTest extends Application {
                     Vector3f v2 = v3(x2, y1, z2);
                     Vector3f v3 = v3(x2, y2, z2);
 
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{SOUTH, SOUTH, SOUTH, SOUTH},
-                            new Vector4f[]{LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY});
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[]{SOUTH, SOUTH, SOUTH, SOUTH};
+                    colors = new Vector4f[]{LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY, LIGHT_GRAY};
                     break;
                 }
                 case "west": {
@@ -364,12 +356,9 @@ public class RendererTest extends Application {
                     Vector3f v2 = v3(x1, y1, z2);
                     Vector3f v3 = v3(x1, y2, z2);
 
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{WEST, WEST, WEST, WEST},
-                            new Vector4f[]{DARK_GRAY, DARK_GRAY, DARK_GRAY, DARK_GRAY});
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[]{WEST, WEST, WEST, WEST};
+                    colors = new Vector4f[]{DARK_GRAY, DARK_GRAY, DARK_GRAY, DARK_GRAY};
                     break;
                 }
                 case "east": {
@@ -378,18 +367,26 @@ public class RendererTest extends Application {
                     Vector3f v2 = v3(x2, y1, z1);
                     Vector3f v3 = v3(x2, y2, z1);
 
-                    mesh = new Mesh(
-                            new Vector3f[]{v0, v1, v2, v3},
-                            index,
-                            texCoords,
-                            new Vector3f[]{EAST, EAST, EAST, EAST},
-                            new Vector4f[]{DARK_GRAY, DARK_GRAY, DARK_GRAY, DARK_GRAY});
+                    positions = new Vector3f[]{v0, v1, v2, v3};
+                    normals = new Vector3f[]{EAST, EAST, EAST, EAST};
+                    colors = new Vector4f[]{DARK_GRAY, DARK_GRAY, DARK_GRAY, DARK_GRAY};
                     break;
                 }
                 default: {
                     return;
                 }
             }
+
+            if (noShade) {
+                colors = new Vector4f[]{LIGHT, LIGHT, LIGHT, LIGHT};
+            }
+
+            if (face.getTintIndex() != null && face.getTintIndex() >= 0) {
+                // TODO tintindex
+                log.info("tintindex: {}", face.getTintIndex());
+            }
+
+            mesh = new Mesh(positions, index, texCoords, normals, colors);
 
             String texture = getTexture(textures, face.getTexture());
             Material material = makeMaterial(texture);

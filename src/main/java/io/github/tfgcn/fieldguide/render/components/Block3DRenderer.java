@@ -71,12 +71,8 @@ public class Block3DRenderer {
 
         // parallel
         camera.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -1000f, 1000f);
-        camera.lookAt(new Vector3f(-100, 100, -100), new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+        camera.lookAt(v3(32f, 32f, -16f), v3(8, 8, 8), Vector3f.UNIT_Y);
 
-        camera.setLocation(new Vector3f(32f, 32f, 32f).multLocal((float) SCALE));
-        camera.setDirection(new Vector3f(-1f, -1f, -1f).normalizeLocal());
-
-        // 场景根节点
         rootNode = new Node();
     }
 
@@ -401,12 +397,7 @@ public class Block3DRenderer {
                 log.info("tintindex: {}", face.getTintIndex());
             }
 
-            mesh = new Mesh(
-                    positions,
-                    index,
-                    texCoords,
-                    normals,
-                    colors);
+            mesh = new Mesh(positions, index, texCoords, normals, colors);
 
             String texture = getTexture(textures, face.getTexture());
             Material material = makeMaterial(texture);
