@@ -1,6 +1,5 @@
 package io.github.tfgcn.fieldguide.render;
 
-import io.github.tfgcn.fieldguide.Context;
 import io.github.tfgcn.fieldguide.asset.*;
 import io.github.tfgcn.fieldguide.data.patchouli.BookEntry;
 import io.github.tfgcn.fieldguide.data.patchouli.BookPage;
@@ -13,11 +12,7 @@ import io.github.tfgcn.fieldguide.localization.LocalizationManager;
 import io.github.tfgcn.fieldguide.render.components.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
@@ -29,22 +24,47 @@ import static io.github.tfgcn.fieldguide.render.TextureRenderer.resizeImage;
 @Slf4j
 public class PageRenderer {
 
-    private AssetLoader assetLoader;
-    private TextureRenderer textureRenderer;
-    private LocalizationManager localizationManager;
-    private String outputRootDir;
+
+    // 热量等级定义
+    private static final List<HeatLevel> HEAT = Arrays.asList(
+            new HeatLevel("warming", "gray", 80),
+            new HeatLevel("hot", "gray", 210),
+            new HeatLevel("very_hot", "gray", 480),
+            new HeatLevel("faint_red", "dark-red", 580),
+            new HeatLevel("dark_red", "dark-red", 730),
+            new HeatLevel("bright_red", "red", 930),
+            new HeatLevel("orange", "gold", 1100),
+            new HeatLevel("yellow", "yellow", 1300),
+            new HeatLevel("yellow_white", "yellow", 1400),
+            new HeatLevel("white", "white", 1500),
+            new HeatLevel("brilliant_white", "white", 1600)
+    );
+
+    // 玻璃加工物品映射
+    private static final Map<String, String> GLASS_ITEMS = Map.ofEntries(
+            Map.entry("saw", "tfc:gem_saw"),
+            Map.entry("roll", "tfc:wool_cloth"),
+            Map.entry("stretch", "tfc:blowpipe_with_glass"),
+            Map.entry("blow", "tfc:blowpipe_with_glass"),
+            Map.entry("table_pour", "tfc:blowpipe_with_glass"),
+            Map.entry("basin_pour", "tfc:blowpipe_with_glass"),
+            Map.entry("flatten", "tfc:paddle"),
+            Map.entry("pinch", "tfc:jacks")
+    );
+
+    private final AssetLoader assetLoader;
+    private final TextureRenderer textureRenderer;
+    private final LocalizationManager localizationManager;
 
     private int id = 0;
 
-    public PageRenderer(AssetLoader loader, LocalizationManager localizationManager, String outputRootDir) {
+    public PageRenderer(AssetLoader loader, LocalizationManager localizationManager, TextureRenderer textureRenderer) {
         this.assetLoader = loader;
         this.localizationManager = localizationManager;
-        this.outputRootDir = outputRootDir;
-        this.textureRenderer = new TextureRenderer(loader, localizationManager, outputRootDir);
+        this.textureRenderer = textureRenderer;
     }
 
-    public void parsePage(BookEntry entry,
-                          BookPage page, Map<String, String> search) {
+    public void renderPage(BookEntry entry, BookPage page) {
         String pageType = page.getType();
         String anchor = page.getAnchor();
         if (anchor != null) {
@@ -60,44 +80,7 @@ public class PageRenderer {
             }
             case PageImage pageImage: {// patchouli:image
                 formatTitle(entry, buffer, pageImage.getTitle());
-
-                List<String> images = pageImage.getImages();
-                List<Map.Entry<String, String>> processedImages = new ArrayList<>();
-
-                if (images != null) {
-                    for (String image : images) {
-                        try {
-                            String convertedImage = textureRenderer.convertImage(image);
-                            processedImages.add(Map.entry(image, convertedImage));
-                        } catch (InternalException e) {
-                            log.error("Failed to convert entry image: {}", image, e);
-                        }
-                    }
-                }
-
-                if (processedImages.size() == 1) {
-                    Map.Entry<String, String> imageEntry = processedImages.getFirst();
-                    buffer.add(String.format(IMAGE_SINGLE,
-                            imageEntry.getValue(), imageEntry.getKey()));
-                } else if (!processedImages.isEmpty()) {
-                    String uid = String.valueOf(id++);
-                    StringBuilder parts = new StringBuilder();
-                    StringBuilder seq = new StringBuilder();
-
-                    for (int i = 0; i < processedImages.size(); i++) {
-                        Map.Entry<String, String> imageEntry = processedImages.get(i);
-                        String active = i == 0 ? "active" : "";
-                        parts.append(String.format(ImageTemplates.IMAGE_MULTIPLE_PART,
-                                active, imageEntry.getValue(), imageEntry.getKey()));
-
-                        if (i > 0) {
-                            seq.append(String.format(ImageTemplates.IMAGE_MULTIPLE_SEQ, uid, i, i + 1));
-                        }
-                    }
-
-                    buffer.add(MessageFormat.format(ImageTemplates.IMAGE_MULTIPLE, uid, seq.toString(), parts.toString()));
-                }
-
+                renderImagePage(buffer, pageImage.getImages());
                 formatCenteredText(entry, buffer, pageImage.getText());
                 break;
             }
@@ -108,7 +91,7 @@ public class PageRenderer {
                 break;
             }
             case PageSpotlight pageSpotlight: {// patchouli:spotlight
-                parseSpotlightPage(entry, buffer, pageSpotlight, search);
+                parseSpotlightPage(entry, buffer, pageSpotlight);
                 formatText(entry, buffer, pageSpotlight.getText());
                 break;
             }
@@ -283,6 +266,44 @@ public class PageRenderer {
         }
     }
 
+    ///  patchouli:image
+    private void renderImagePage(List<String> buffer, List<String> images) {
+        List<Map.Entry<String, String>> processedImages = new ArrayList<>();
+
+        if (images != null) {
+            for (String image : images) {
+                try {
+                    String convertedImage = textureRenderer.convertImage(image);
+                    processedImages.add(Map.entry(image, convertedImage));
+                } catch (InternalException e) {
+                    log.error("Failed to convert entry image: {}", image, e);
+                }
+            }
+        }
+
+        if (processedImages.size() == 1) {
+            Map.Entry<String, String> imageEntry = processedImages.getFirst();
+            buffer.add(String.format(IMAGE_SINGLE,
+                    imageEntry.getValue(), imageEntry.getKey()));
+        } else if (!processedImages.isEmpty()) {
+            String uid = String.valueOf(id++);
+            StringBuilder parts = new StringBuilder();
+            StringBuilder seq = new StringBuilder();
+
+            for (int i = 0; i < processedImages.size(); i++) {
+                Map.Entry<String, String> imageEntry = processedImages.get(i);
+                String active = i == 0 ? "active" : "";
+                parts.append(String.format(ImageTemplates.IMAGE_MULTIPLE_PART,
+                        active, imageEntry.getValue(), imageEntry.getKey()));
+
+                if (i > 0) {
+                    seq.append(String.format(ImageTemplates.IMAGE_MULTIPLE_SEQ, uid, i, i + 1));
+                }
+            }
+
+            buffer.add(MessageFormat.format(ImageTemplates.IMAGE_MULTIPLE, uid, seq.toString(), parts.toString()));
+        }
+    }
     /// crafting recipe
 
     private void parseCraftingRecipe(List<String> buffer, PageCrafting page) {
@@ -604,8 +625,7 @@ public class PageRenderer {
     }
 
     ///  spotlight
-    private void parseSpotlightPage(BookEntry entry, List<String> buffer,
-                                    PageSpotlight page, Map<String, String> search) {
+    private void parseSpotlightPage(BookEntry entry, List<String> buffer, PageSpotlight page) {
         List<PageSpotlightItem> items = page.getItem();
         if (items == null || items.isEmpty()) {
             log.warn("Spotlight page did not have an item or tag key: {}", page);
@@ -691,34 +711,6 @@ public class PageRenderer {
             formatRecipe(buffer, page.getRecipe());
         }
     }
-
-
-    // 热量等级定义
-    private static final List<HeatLevel> HEAT = Arrays.asList(
-            new HeatLevel("warming", "gray", 80),
-            new HeatLevel("hot", "gray", 210),
-            new HeatLevel("very_hot", "gray", 480),
-            new HeatLevel("faint_red", "dark-red", 580),
-            new HeatLevel("dark_red", "dark-red", 730),
-            new HeatLevel("bright_red", "red", 930),
-            new HeatLevel("orange", "gold", 1100),
-            new HeatLevel("yellow", "yellow", 1300),
-            new HeatLevel("yellow_white", "yellow", 1400),
-            new HeatLevel("white", "white", 1500),
-            new HeatLevel("brilliant_white", "white", 1600)
-    );
-
-    // 玻璃加工物品映射
-    private static final Map<String, String> GLASS_ITEMS = Map.ofEntries(
-            Map.entry("saw", "tfc:gem_saw"),
-            Map.entry("roll", "tfc:wool_cloth"),
-            Map.entry("stretch", "tfc:blowpipe_with_glass"),
-            Map.entry("blow", "tfc:blowpipe_with_glass"),
-            Map.entry("table_pour", "tfc:blowpipe_with_glass"),
-            Map.entry("basin_pour", "tfc:blowpipe_with_glass"),
-            Map.entry("flatten", "tfc:paddle"),
-            Map.entry("pinch", "tfc:jacks")
-    );
 
     /**
      * 格式化杂项配方
@@ -851,23 +843,19 @@ public class PageRenderer {
     /**
      * 从数据格式化杂项配方
      */
-    public void formatMiscRecipeFromData(List<String> buffer, String identifier,
-                                                Map<String, Object> data) {
+    public void formatMiscRecipeFromData(List<String> buffer, String identifier, Map<String, Object> data) {
         formatMiscRecipeFromData(buffer, identifier, data, null, "result", 1);
     }
 
-    public void formatMiscRecipeFromData(List<String> buffer, String identifier,
-                                                Map<String, Object> data, String resultField) {
+    public void formatMiscRecipeFromData(List<String> buffer, String identifier, Map<String, Object> data, String resultField) {
         formatMiscRecipeFromData(buffer, identifier, data, null, resultField, 1);
     }
 
-    public void formatMiscRecipeFromData(List<String> buffer, String identifier,
-                                                Map<String, Object> data, Object ingredient, int inCount) {
+    public void formatMiscRecipeFromData(List<String> buffer, String identifier, Map<String, Object> data, Object ingredient, int inCount) {
         formatMiscRecipeFromData(buffer, identifier, data, ingredient, "result", inCount);
     }
 
-    public void formatMiscRecipeFromData(List<String> buffer, String identifier,
-                                                Map<String, Object> data, Object ingredient, String resultField, int inCount) {
+    public void formatMiscRecipeFromData(List<String> buffer, String identifier, Map<String, Object> data, Object ingredient, String resultField, int inCount) {
         if (!data.containsKey(resultField)) {
             throw new RuntimeException("Missing '" + resultField + "' field for recipe: " + identifier);
         }
@@ -1027,7 +1015,7 @@ public class PageRenderer {
 
         // 处理输入流体
         if (data.containsKey("input_fluid")) {
-            FluidImageResult fluidResult = getFluidImage(data.get("input_fluid"), true);
+            FluidImageResult fluidResult = textureRenderer.getFluidImage(data.get("input_fluid"), true);
             fInPath = fluidResult.getPath();
             fInName = fluidResult.getName();
             inputFluidDiv = makeIcon(fInName, fInPath, 2, "");
@@ -1035,7 +1023,7 @@ public class PageRenderer {
 
         // 处理输出流体
         if (data.containsKey("output_fluid")) {
-            FluidImageResult fluidResult = getFluidImage(data.get("output_fluid"), true);
+            FluidImageResult fluidResult = textureRenderer.getFluidImage(data.get("output_fluid"), true);
             fOutPath = fluidResult.getPath();
             fOutName = fluidResult.getName();
             outputFluidDiv = makeIcon(fOutName, fOutPath, 4, "");
@@ -1293,254 +1281,5 @@ public class PageRenderer {
         }
     }
 
-    /// fluid images
 
-    private static final Map<String, FluidImageResult> FLUID_CACHE = new HashMap<>();
-
-    // 流体颜色映射
-    private static final Map<String, String> FLUID_COLORS = Map.ofEntries(
-            Map.entry("brine", "#DCD3C9"),
-            Map.entry("curdled_milk", "#FFFBE8"),
-            Map.entry("limewater", "#B4B4B4"),
-            Map.entry("lye", "#feffde"),
-            Map.entry("milk_vinegar", "#FFFBE8"),
-            Map.entry("olive_oil", "#6A7537"),
-            Map.entry("olive_oil_water", "#4A4702"),
-            Map.entry("tannin", "#63594E"),
-            Map.entry("tallow", "#EDE9CF"),
-            Map.entry("vinegar", "#C7C2AA"),
-            Map.entry("beer", "#C39E37"),
-            Map.entry("cider", "#B0AE32"),
-            Map.entry("rum", "#6E0123"),
-            Map.entry("sake", "#B7D9BC"),
-            Map.entry("vodka", "#DCDCDC"),
-            Map.entry("whiskey", "#583719"),
-            Map.entry("corn_whiskey", "#D9C7B7"),
-            Map.entry("rye_whiskey", "#C77D51"),
-            Map.entry("water", "#2245CB"),
-            Map.entry("salt_water", "#4E63B9"),
-            Map.entry("spring_water", "#8AA3FF"),
-            Map.entry("yak_milk", "#E8E8E8"),
-            Map.entry("goat_milk", "#E8E8E8"),
-            Map.entry("chocolate", "#756745")
-    );
-
-    /**
-     * 解码流体数据
-     */
-    public static FluidResult decodeFluid(Object item) {
-        int amount = 0;
-        String ingredient = null;
-
-        if (item instanceof Map) {
-            Map<?, ?> itemMap = (Map<?, ?>) item;
-            if (itemMap.containsKey("ingredient")) {
-                ingredient = decodeFluidIngredient(itemMap.get("ingredient"));
-            } else if (itemMap.containsKey("fluid") || itemMap.containsKey("tag")) {
-                ingredient = decodeFluidIngredient(item);
-            }
-            amount = itemMap.containsKey("amount") ? ((Number) itemMap.get("amount")).intValue() : 1000;
-        } else if (item instanceof String) {
-            ingredient = (String) item;
-        }
-
-        if (ingredient == null) {
-            throw new RuntimeException("Invalid format for a fluid: '" + item + "'");
-        } else {
-            return new FluidResult(ingredient, amount);
-        }
-    }
-
-    /**
-     * 解码流体成分
-     */
-    @SuppressWarnings("unchecked")
-    public static String decodeFluidIngredient(Object item) {
-        if (item instanceof String) {
-            return (String) item;
-        } else if (item instanceof Map) {
-            Map<String, Object> itemMap = (Map<String, Object>) item;
-            if (itemMap.containsKey("fluid")) {
-                return (String) itemMap.get("fluid");
-            } else if (itemMap.containsKey("tag")) {
-                return "#" + itemMap.get("tag");
-            }
-        }
-        throw new RuntimeException("Could not decode fluid ingredient: " + item);
-    }
-
-    /**
-     * 获取流体图像
-     */
-    public FluidImageResult getFluidImage(Object fluidIn, boolean placeholder) {
-        return getFluidImage(fluidIn, placeholder, true);
-    }
-
-    public FluidImageResult getFluidImage(Object fluidIn, boolean placeholder, boolean includeAmount) {
-        FluidResult decoded = decodeFluid(fluidIn);
-        String fluid = decoded.getFluid();
-        int amount = decoded.getAmount();
-
-        if (FLUID_CACHE.containsKey(fluid)) {
-            FluidImageResult entry = FLUID_CACHE.get(fluid);
-            String name = entry.getName();
-            if (entry.getKey() != null) {
-                try {
-                    // 必须每次都重新翻译，因为相同的图像会在不同的本地化环境中被请求
-                    name = localizationManager.translate("fluid." + entry.getKey(), "block." + entry.getKey());
-                } catch (Exception e) {
-                    System.err.println("Warning: " + e.getMessage());
-                }
-            }
-            String finalName = includeAmount && amount > 0 ?
-                    String.format("%s mB %s", amount, name) : name;
-            entry.setName(finalName);
-            return entry;
-        }
-
-        String name = null;
-        String key = null;
-        List<String> fluids;
-
-        if (fluid.startsWith("#")) {
-            name = String.format(localizationManager.translate(I18n.TAG), fluid);
-            fluids = assetLoader.loadFluidTag(fluid.substring(1));
-        } else if (fluid.contains(",")) {
-            fluids = Arrays.asList(fluid.split(","));
-        } else {
-            fluids = Collections.singletonList(fluid);
-        }
-
-        if (fluids.size() == 1) {
-            key = fluids.get(0).replace("/", ".").replace(":", ".");
-            try {
-                name = localizationManager.translate("fluid." + key, "block." + key);
-            } catch (Exception e) {
-                System.err.println("Warning: " + e.getMessage());
-            }
-        }
-
-        String path;
-        try {
-            List<BufferedImage> images = new ArrayList<>();
-            for (String fluidId : fluids) {
-                images.add(createFluidImage(fluidId));
-            }
-
-            String fluidId = context.nextId("fluid");// counting fluid
-            if (images.size() == 1) {
-                path = textureRenderer.saveImage("assets/generated/" + fluidId + ".png", images.getFirst());
-            } else {
-                path = textureRenderer.saveGif("assets/generated/" + fluidId + ".gif", images);
-            }
-        } catch (Exception e) {
-            System.err.println("Warning: Fluid Image(s) - " + e.getMessage());
-
-            if (placeholder) {
-                // 回退到使用占位符图像
-                path = "../../_images/fluid.png";
-            } else {
-                throw new RuntimeException(e);
-            }
-        }
-
-
-        String finalName = includeAmount && amount > 0 ?
-                String.format("%s mB %s", amount, name) : name;
-
-        FluidImageResult result = new FluidImageResult(path, finalName, key);
-
-        FLUID_CACHE.put(fluid, result);
-        return result;
-    }
-
-    /**
-     * 创建流体图像
-     */
-    public static BufferedImage createFluidImage(String fluid) {
-        String path = fluid;
-        if (path.contains(":")) {
-            path = path.split(":", 2)[1];
-        }
-
-        // 加载基础流体图像并调整大小
-        BufferedImage base;
-        try {
-            base = ImageIO.read(new File("assets/textures/fluid.png"));
-        } catch (IOException e) {
-            log.error("Load fluid texture failed", e);
-            throw new InternalException("load fluid png failed");
-        }
-        base = resizeImage(base, 64, 64);
-
-        if (!FLUID_COLORS.containsKey(path)) {
-            System.out.println("Fluid " + path + " has no color specified.");
-            return base;
-        } else {
-            Color color = parseColor(FLUID_COLORS.get(path));
-            return applyColorToImage(base, color);
-        }
-    }
-
-    /**
-     * 将颜色应用到图像的所有像素上
-     */
-    public static BufferedImage applyColorToImage(BufferedImage img, Color color) {
-        return applyColorToImage(img, color, 0.5f);
-    }
-
-    public static BufferedImage applyColorToImage(BufferedImage img, Color color, float darkThreshold) {
-        BufferedImage result = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-        float[] hsv = rgbToHsv(color.getRed(), color.getGreen(), color.getBlue());
-        float hue = hsv[0];
-        float saturation = hsv[1];
-        float value = hsv[2];
-
-        for (int x = 0; x < img.getWidth(); x++) {
-            for (int y = 0; y < img.getHeight(); y++) {
-                int rgb = img.getRGB(x, y);
-                Color pixelColor = new Color(rgb, true);
-
-                float[] pixelHsv = rgbToHsv(pixelColor.getRed(), pixelColor.getGreen(), pixelColor.getBlue());
-                float newValue = value > darkThreshold ? pixelHsv[2] : pixelHsv[2] * 0.5f;
-
-                Color newColor = hsvToRgb(hue, saturation, newValue, pixelColor.getAlpha());
-                result.setRGB(x, y, newColor.getRGB());
-            }
-        }
-        return result;
-    }
-
-    // FIXME 合并所有resizeImage函数
-    private static BufferedImage resizeImage(BufferedImage original, int width, int height) {
-        BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = resized.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(original, 0, 0, width, height, null);
-        g.dispose();
-        return resized;
-    }
-
-    private static Color parseColor(String hex) {
-        if (hex.startsWith("#")) {
-            hex = hex.substring(1);
-        }
-        return new Color(
-                Integer.valueOf(hex.substring(0, 2), 16),
-                Integer.valueOf(hex.substring(2, 4), 16),
-                Integer.valueOf(hex.substring(4, 6), 16)
-        );
-    }
-
-    private static float[] rgbToHsv(int r, int g, int b) {
-        float[] hsv = new float[3];
-        Color.RGBtoHSB(r, g, b, hsv);
-        return hsv;
-    }
-
-    private static Color hsvToRgb(float h, float s, float v, int alpha) {
-        int rgb = Color.HSBtoRGB(h, s, v);
-        return new Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, alpha);
-    }
 }

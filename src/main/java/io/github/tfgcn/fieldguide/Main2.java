@@ -6,23 +6,19 @@ import io.github.tfgcn.fieldguide.data.patchouli.Book;
 import io.github.tfgcn.fieldguide.data.patchouli.BookCategory;
 import io.github.tfgcn.fieldguide.data.patchouli.BookEntry;
 import io.github.tfgcn.fieldguide.data.patchouli.BookPage;
-import io.github.tfgcn.fieldguide.data.patchouli.page.IPageWithText;
-import io.github.tfgcn.fieldguide.data.patchouli.page.PageTemplate;
 import io.github.tfgcn.fieldguide.exception.InternalException;
 import io.github.tfgcn.fieldguide.localization.Language;
 import io.github.tfgcn.fieldguide.localization.LazyLocalizationManager;
 import io.github.tfgcn.fieldguide.localization.LocalizationManager;
+import io.github.tfgcn.fieldguide.render.PageRenderer;
 import io.github.tfgcn.fieldguide.render.TextFormatter;
 import io.github.tfgcn.fieldguide.render.TextureRenderer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static io.github.tfgcn.fieldguide.Constants.FIELD_GUIDE;
@@ -67,17 +63,18 @@ public class Main2 implements Callable<Integer>  {
 
         TextureRenderer textureRenderer = new TextureRenderer(assetLoader, localizationManager, outputDir);
 
+        PageRenderer pageRenderer = new PageRenderer(assetLoader, localizationManager, textureRenderer);
         // Load en_us book as a fallback
         Book fallback = assetLoader.loadBook(FIELD_GUIDE);
 
         for (Language lang : Language.values()) {
             Book book = assetLoader.loadBook(FIELD_GUIDE, lang, fallback);
-            render(book, lang, localizationManager, textureRenderer);
+            render(book, lang, localizationManager, textureRenderer, pageRenderer);
         }
         return 0;
     }
 
-    public void render(Book book, Language lang, LocalizationManager localizationManager, TextureRenderer textureRenderer) {
+    public void render(Book book, Language lang, LocalizationManager localizationManager, TextureRenderer textureRenderer, PageRenderer pageRenderer) {
 
         // prepare
         localizationManager.switchLanguage(lang);
@@ -90,62 +87,30 @@ public class Main2 implements Callable<Integer>  {
         // render categories
         for (BookCategory category : book.getCategories()) {
             prepareCategory(category, localizationManager);
-            System.out.printf("%s\n%s\n\n", category.getName(), category.getDescription());
-
-            // 搜索树
-            List<Map<String, String>> searchTree = new ArrayList<>();
 
             for (BookEntry entry : category.getEntries()) {
-                prepareEntry(entry, localizationManager, textureRenderer);
-                System.out.printf("[%s]%s <img src=\"%s\" alt=\"%s\">\n", entry.getIcon(), entry.getName(), entry.getIconPath(), entry.getIconName());
+
+                if (entry.isRendered()) {
+                    continue;
+                }
+                prepareEntry(entry, textureRenderer);
 
                 for (BookPage page : entry.getPages()) {
                     try {
-                        preparePage(entry, page, localizationManager, textureRenderer, searchTree);
+                        pageRenderer.renderPage(entry, page);
                     } catch (InternalException e) {
                         log.error("Failed to parse page: {}", page, e);
                     }
                 }
-            }
-        }
 
-        // render entries
-        for (BookEntry entry : book.getEntries()) {
-            prepareEntry(entry, localizationManager, textureRenderer);
-
-            System.out.printf("[%s]%s <img src=\"%s\" alt=\"%s\">\n", entry.getIcon(), entry.getName(), entry.getIconPath(), entry.getIconName());
-        }
-
-        // 搜索树
-        List<Map<String, String>> searchTree = new ArrayList<>();
-
-        // render pages
-        for (BookEntry entry : book.getEntries()) {
-
-            Map<String, String> search = new HashMap<>();
-            search.put("content", "");
-            search.put("entry", entry.getName());
-            search.put("url", "./" + entry.getCategoryId() + "/" + entry.getRelId() + ".html");
-
-            for (BookPage page : entry.getPages()) {
-                try {
-                    preparePage(entry, page, localizationManager, textureRenderer, searchTree);
-                } catch (InternalException e) {
-                    log.error("Failed to parse page: {}", page, e);
-                }
-            }
-
-            searchTree.add(search);
-
-            // render inner html
-            if (!entry.isRendered()) {
+                // render inner html
                 entry.setInnerHtml(String.join("", entry.getBuffer()));
                 entry.setRendered(true);
             }
         }
     }
 
-    private void prepareCategory(BookCategory category, LocalizationManager localizationManager) {
+    public void prepareCategory(BookCategory category, LocalizationManager localizationManager) {
         // remove "§."
         category.setName(TextFormatter.stripVanillaFormatting(category.getName()));
 
@@ -155,7 +120,7 @@ public class Main2 implements Callable<Integer>  {
         category.setDescription(String.join("", descriptionBuffer));
     }
 
-    private void prepareEntry(BookEntry entry, LocalizationManager localizationManager, TextureRenderer textureRenderer) {
+    public void prepareEntry(BookEntry entry, TextureRenderer textureRenderer) {
         entry.setName(TextFormatter.stripVanillaFormatting(entry.getName()));
         try {
             ItemImageResult itemSrc = textureRenderer.getItemImage(entry.getIcon(), false);
@@ -167,27 +132,6 @@ public class Main2 implements Callable<Integer>  {
             }
         } catch (Exception e) {
             log.error("Failed to get item image for entry: {}", entry.getId());
-        }
-    }
-
-    private void preparePage(BookEntry entry,
-                             BookPage page,
-                             LocalizationManager localizationManager,
-                             TextureRenderer textureRenderer,
-                             List<Map<String, String>> searchTree) {
-
-        if (page instanceof PageTemplate) {
-            log.debug("Page: {}, {}", page.getType(), page.getJsonObject());
-        }
-
-        if (page instanceof IPageWithText textPage) {
-            if (StringUtils.isBlank(textPage.getText())) {
-                Map<String, String> search = new HashMap<>();
-                search.put("content", textPage.getText());
-                search.put("entry", entry.getName());
-                search.put("url", "./" + entry.getCategoryId() + "/" + entry.getRelId() + ".html");
-                searchTree.add(search);
-            }
         }
     }
 }

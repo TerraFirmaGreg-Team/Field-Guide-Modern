@@ -37,7 +37,7 @@ public class HtmlRenderer {
     public void buildBookHtml(Context context) throws Exception {
 
         // copy files from assets/static to outputDir
-        copyStaticFiles(context);
+        copyStaticFiles(context.getOutputRootDir());
 
         // Home page
         buildHomePage(context);
@@ -47,9 +47,8 @@ public class HtmlRenderer {
 
         // Category pages
         for (BookCategory category : context.getCategories()) {
-            String categoryId = category.getId();
             // Category Page
-            buildCategoryPage(context, categoryId, category);
+            buildCategoryPage(context, category);
         }
 
         System.out.println("Static site generated successfully!");
@@ -69,16 +68,16 @@ public class HtmlRenderer {
     }
 
 
-    public void copyStaticFiles(Context context) throws IOException {
+    public void copyStaticFiles(String outputRootDir) throws IOException {
 
         // copy files from assets/static to outputDir
-        FileUtils.deleteDirectory(new File(context.getOutputRootDir() + "/static"));
-        FileUtils.copyDirectory(new File("assets/static"), new File(context.getOutputRootDir() + "/static"));
+        FileUtils.deleteDirectory(new File(outputRootDir + "/static"));
+        FileUtils.copyDirectory(new File("assets/static"), new File(outputRootDir + "/static"));
 
         // copy files from assets/textures to outputDir/_images
-        FileUtils.copyDirectory(new File("assets/textures"), new File(context.getOutputRootDir() + "/_images"));
+        FileUtils.copyDirectory(new File("assets/textures"), new File(outputRootDir + "/_images"));
         // Always copy the redirect, which defaults to en_us/
-        FileUtils.copyFile(new File("assets/templates/redirect.html"), new File(context.getOutputRootDir() + "/index.html"));
+        FileUtils.copyFile(new File("assets/templates/redirect.html"), new File(outputRootDir + "/index.html"));
     }
 
     public void buildHomePage(Context context) throws IOException, TemplateException {
@@ -146,7 +145,7 @@ public class HtmlRenderer {
         JsonUtils.writeFile(new File(context.getOutputLangDir() + "/search_index.json"), context.getSearchTree());
     }
 
-    public void buildCategoryPage(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
+    public void buildCategoryPage(Context context, BookCategory cat) throws IOException, TemplateException {
         LocalizationManager lm = context.getLocalizationManager();
         Map<String, Object> data = new HashMap<>();
         data.put("title", lm.translate(I18n.TITLE));
@@ -168,14 +167,14 @@ public class HtmlRenderer {
         data.put("current_category", cat);
 
         // 生成分类页面
-        String outputDir = Paths.get(context.getOutputLangDir(), categoryId).toString();
+        String outputDir = Paths.get(context.getOutputLangDir(), cat.getId()).toString();
         context.getHtmlRenderer().generatePage("category.ftl", outputDir, "index.html", data);
 
         // 生成该分类下的条目页面
-        buildEntryPages(context, categoryId, cat);
+        buildEntryPages(context, cat);
     }
 
-    private void buildEntryPages(Context context, String categoryId, BookCategory cat) throws IOException, TemplateException {
+    private void buildEntryPages(Context context, BookCategory cat) throws IOException, TemplateException {
         LocalizationManager lm = context.getLocalizationManager();
         for (BookEntry entry : cat.getEntries()) {
             Map<String, Object> data = new HashMap<>();
@@ -199,7 +198,7 @@ public class HtmlRenderer {
             data.put("current_entry", entry);
 
             // 生成条目页面
-            String outputFileName = categoryId + "/" + entry.getRelId() + ".html";
+            String outputFileName = cat.getId() + "/" + entry.getRelId() + ".html";
             context.getHtmlRenderer().generatePage("entry.ftl", context.getOutputLangDir(), outputFileName, data);
         }
     }
