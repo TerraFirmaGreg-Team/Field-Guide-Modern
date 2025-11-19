@@ -75,21 +75,21 @@ public class Main implements Callable<Integer>  {
 
         for (Language lang : Language.values()) {
             Book book = assetLoader.loadBook(FIELD_GUIDE, lang, fallback);
-            prepare(book, lang, localizationManager, textureRenderer, pageRenderer);
+            prepare(book, localizationManager, textureRenderer, pageRenderer);
             generateHtml(book, htmlRenderer);
         }
         return 0;
     }
 
-    public void prepare(Book book, Language lang, LocalizationManager localizationManager, TextureRenderer textureRenderer, PageRenderer pageRenderer) {
+    public void prepare(Book book, LocalizationManager localizationManager, TextureRenderer textureRenderer, PageRenderer pageRenderer) {
 
         // prepare
-        localizationManager.switchLanguage(lang);
+        localizationManager.switchLanguage(book.getLanguage());
         String name = localizationManager.translate(book.getName());
         book.setName(name);
         String landingText = localizationManager.translate(book.getLandingText());
         book.setLandingText(landingText);
-        log.info("Start parsing lang: {}, {} {} - {}", lang, name, book.getSubtitle(), landingText);
+        log.info("Start parsing lang: {}, {} {} - {}", book.getLanguage(), name, book.getSubtitle(), landingText);
 
         // render categories
         for (BookCategory category : book.getCategories()) {

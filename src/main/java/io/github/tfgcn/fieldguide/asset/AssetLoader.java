@@ -363,13 +363,14 @@ public class AssetLoader {
                 // fallback
                 path = Constants.getCategoryPath(category.getId());
                 asset = getAsset(path);
-                BookCategory localizedCategory = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
-                localizedCategory.setAssetSource(fallbackCategoryDir, asset);
-                book.addCategory(localizedCategory);
+                BookCategory fallbackCategory = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
+                fallbackCategory.setAssetSource(fallbackCategoryDir, asset);
+                book.addCategory(fallbackCategory);
             }
         }
 
         String entryDir = Constants.getEntryDir(lang.getKey());
+        String fallbackEntryDir = Constants.getEntryDir();
         for (BookEntry entry : fallback.getEntries()) {
             String path = Constants.getEntryPath(lang.getKey(), entry.getId());
             Asset asset = getAsset(path);
@@ -379,7 +380,11 @@ public class AssetLoader {
                 book.addEntry(localizedEntry);
             } else {
                 // fallback
-                book.addEntry(entry);
+                path = Constants.getEntryPath(entry.getId());
+                asset = getAsset(path);
+                BookEntry fallbackEntry = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
+                fallbackEntry.setAssetSource(fallbackEntryDir, asset);
+                book.addEntry(fallbackEntry);
             }
         }
 
