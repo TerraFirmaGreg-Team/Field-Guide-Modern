@@ -71,7 +71,8 @@ public class Block3DRenderer {
 
         // parallel
         camera.setParallel(-11 * SCALE, 11 * SCALE, -11 * SCALE, 11 * SCALE, -1000f, 1000f);
-        camera.lookAt(v3(32f, 32f, -16f), v3(8, 8, 8), Vector3f.UNIT_Y);
+        camera.lookAt(v3(32f, 32f, 32f), v3(8, 8, 8), Vector3f.UNIT_Y);
+        //camera.lookAt(v3(32f, 32f, -16f), v3(8, 8, 8), Vector3f.UNIT_Y);
 
         rootNode = new Node();
     }

@@ -19,7 +19,7 @@ public class LazyLocalizationManager implements LocalizationManager {
     private final Set<String> loadedNamespaces = new TreeSet<>();
 
     private Language currentLanguage = Language.EN_US;
-    private final Map<String, String> currentTranslations = new TreeMap<>();
+    private Map<String, String> currentTranslations = new TreeMap<>();
     private final Map<String, String> fallbackTranslations = new TreeMap<>();
 
     private final Set<String> essentialNamespaces;
@@ -79,6 +79,7 @@ public class LazyLocalizationManager implements LocalizationManager {
         String languageCode = lang.getKey();
         this.currentLanguage = lang;
         this.currentTranslations.clear();
+        this.currentTranslations = new TreeMap<>();
 
         log.info("Loading translations for {} namespaces in {}", loadedNamespaces.size(), languageCode);
 
