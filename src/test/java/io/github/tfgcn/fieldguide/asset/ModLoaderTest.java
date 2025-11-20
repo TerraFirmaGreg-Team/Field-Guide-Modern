@@ -20,7 +20,7 @@ public class ModLoaderTest {
     @Test
     void testLoader() throws IOException {
         Path path = Paths.get("Modpack-Modern", "mods");
-        ModLoader loader = new ModLoader();
-        loader.loadMods(path);
+        ModLoader loader = new ModLoader(path);
+        loader.getLoadedMods();
     }
 }

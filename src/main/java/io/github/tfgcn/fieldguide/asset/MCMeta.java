@@ -10,10 +10,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
+import static io.github.tfgcn.fieldguide.Constants.CACHE;
+
 @Slf4j
 public class MCMeta {
-    
-    public static final String CACHE = ".cache";
 
     private static final String VERSION_MANIFEST_URL = "https://piston-meta.mojang.com/mc/game/version_manifest.json";
     private static final String RESOURCES_URL = "https://resources.download.minecraft.net/";
@@ -36,7 +36,7 @@ public class MCMeta {
 
     @SuppressWarnings("unchecked")
     public static void loadCache(String mcVersion, String forgeVersion, List<Language> languages) {
-        log.info("Loading Cache");
+        log.debug("Loading Cache");
         try {
             Files.createDirectories(Paths.get(CACHE, "assets", "minecraft", "lang"));
         } catch (IOException e) {

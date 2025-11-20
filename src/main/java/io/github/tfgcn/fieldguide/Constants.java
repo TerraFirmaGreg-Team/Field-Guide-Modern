@@ -6,6 +6,7 @@ public final class Constants {
 
     public static final String TEMPLATE_DIR = "assets/templates";
 
+    public static final String CACHE = ".cache";
     public static final String MC_VERSION = "1.20.1";
     public static final String FORGE_VERSION = "47.4.6";
 

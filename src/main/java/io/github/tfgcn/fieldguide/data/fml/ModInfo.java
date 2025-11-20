@@ -1,15 +1,20 @@
 package io.github.tfgcn.fieldguide.data.fml;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.nio.file.Path;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ModInfo {
-    private final String modId;
-    private final String name;
-    private final List<Dependency> dependencies;
-    private final Path jarPath;
-    private final int loadOrder;
+    private String modId;
+    private String name;
+    private String version;
+    private List<Dependency> dependencies;
+    private Path jarPath;
+    private int loadOrder;
 }

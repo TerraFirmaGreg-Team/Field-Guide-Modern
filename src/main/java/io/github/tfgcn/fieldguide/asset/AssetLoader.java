@@ -2,6 +2,8 @@ package io.github.tfgcn.fieldguide.asset;
 
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import io.github.tfgcn.fieldguide.data.fml.ModInfo;
+import io.github.tfgcn.fieldguide.data.fml.ModLoader;
 import io.github.tfgcn.fieldguide.localization.Language;
 import io.github.tfgcn.fieldguide.data.gtceu.utils.ResourceHelper;
 import io.github.tfgcn.fieldguide.data.minecraft.tag.TagElement;
@@ -35,9 +37,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-import static io.github.tfgcn.fieldguide.asset.MCMeta.CACHE;
+import static io.github.tfgcn.fieldguide.Constants.CACHE;
 import static io.github.tfgcn.fieldguide.render.TextureRenderer.multiplyImageByColor;
 
 @Slf4j
@@ -163,11 +167,10 @@ public class AssetLoader {
         // download minecraft and forge
         MCMeta.loadCache(Constants.MC_VERSION, Constants.FORGE_VERSION, Language.asList());
 
-        addClientJar(sources);// 1- minecraft
-        addForgeJar(sources);// 2- forge
-        addModsJars(sources);// 3- Mod JARs
-        addResourcePacks(sources);// 4- Resource Packs
-        addKubejs(sources);// 5- KubeJS
+        addCacheFolder(sources);// 0- Cache
+        addModsJars(sources);// 1- Mod JARs
+        addResourcePacks(sources);// 2- Resource Packs
+        addKubejs(sources);// 3- KubeJS
 
         // Reverse the list
         int size = sources.size();
@@ -177,33 +180,11 @@ public class AssetLoader {
         log.info("Total sources: {}", size);
     }
 
-    private void addClientJar(List<AssetSource> sources) {
-        Path clientJar = Paths.get(CACHE, MCMeta.getClientJarName(Constants.MC_VERSION));
-        if (Files.exists(clientJar)) {
-            try {
-                sources.add(new JarAssetSource(clientJar));
-                log.info("Found Minecraft JAR");
-            } catch (IOException e) {
-                log.error("Error loading client JAR: {}", clientJar, e);
-            }
-
-            Path cachePath = Paths.get(CACHE, "assets");
-            if (Files.exists(cachePath)) {
-                sources.add(new FsAssetSource(Paths.get(CACHE), "file:cache"));
-                log.info("Found Cache directory");
-            }
-        }
-    }
-
-    private void addForgeJar(List<AssetSource> sources) {
-        Path forgeJar = Paths.get(CACHE, MCMeta.getForgeJarName(Constants.FORGE_VERSION));
-        if (Files.exists(forgeJar)) {
-            try {
-                sources.add(new JarAssetSource(forgeJar));
-                log.info("Found Forge JAR");
-            } catch (IOException e) {
-                log.error("Error loading Forge JAR: {}", forgeJar, e);
-            }
+    private void addCacheFolder(List<AssetSource> sources) {
+        Path cachePath = Paths.get(CACHE, "assets");
+        if (Files.exists(cachePath)) {
+            sources.add(new FsAssetSource(Paths.get(CACHE), "file:cache"));
+            log.info("Found Cache directory");
         }
     }
 
@@ -211,20 +192,33 @@ public class AssetLoader {
         Path modsPath = instanceRoot.resolve("mods");
         if (Files.exists(modsPath)) {
             log.info("Found Mods directory");
-            try (Stream<Path> jars = Files.list(modsPath)) {
-                List<Path> jarList = jars.filter(p -> p.toString().endsWith(".jar")).sorted().toList();
-
-                for (Path jar : jarList) {
-                    try {
-                        sources.add(new JarAssetSource(jar));
-                    } catch (IOException e) {
-                        log.error("Error loading JAR: {}", jar, e);
+            try {
+                ModLoader modLoader = new ModLoader(modsPath);
+                for (ModInfo mod : modLoader.getLoadedMods()) {
+                    if (hasAssets(mod.getJarPath())) {
+                        JarAssetSource source = new JarAssetSource(mod.getJarPath());
+                        sources.add(source);
+                    } else {
+                        log.debug("Ignore mod: {} {} @ {}", mod.getModId(), mod.getName(), mod.getJarPath());
                     }
                 }
             } catch (IOException e) {
                 log.error("Error scanning mods", e);
             }
         }
+    }
+
+    private boolean hasAssets(Path jar) throws IOException {
+        JarFile jarFile = new JarFile(jar.toFile());
+        Enumeration<? extends JarEntry> entries = jarFile.entries();
+        while (entries.hasMoreElements()) {
+            JarEntry jarEntry = entries.nextElement();
+            String name = jarEntry.getName();
+            if (name.startsWith("assets") || name.startsWith("data")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addResourcePacks(List<AssetSource> sources) {
