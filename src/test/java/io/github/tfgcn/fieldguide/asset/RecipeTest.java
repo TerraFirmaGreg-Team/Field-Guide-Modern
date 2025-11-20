@@ -35,6 +35,10 @@ public class RecipeTest {
             String recipeId = entry.getKey();
             Map<String, Object> map = entry.getValue();
             String type = (String) map.get("type");
+            if (type == null) {
+                log.warn("recipe type is null: {}", map);
+                continue;
+            }
             types.add(type);
 
             map.remove("__comment__");
