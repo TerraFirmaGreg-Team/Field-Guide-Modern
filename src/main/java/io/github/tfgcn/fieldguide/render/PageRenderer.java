@@ -754,11 +754,6 @@ public class PageRenderer {
             // 使用新方法生成多个GLB文件
             List<String> glbPaths = textureRenderer.generateMultiMultiblockGLB(page);
             
-            // 以下是原来添加图像的代码，现在注释掉
-            // TextureRenderer.MultiModelResult result = textureRenderer.getMultiModelResult(page);
-            // String imagePath = result.getImagePath();
-            // buffer.add(String.format(IMAGE_SINGLE, imagePath, "Block Visualization"));
-            
             // 添加GLB查看器
             if (!glbPaths.isEmpty()) {
                 String viewerId = generateUniqueViewerId("multimultiblock");
@@ -775,29 +770,31 @@ public class PageRenderer {
                 }
                 glbPathsJson.append("]");
                 
-                // 添加多方块GLB查看器，使用data-glb-viewers属性传递多个模型路径
-                buffer.add(String.format("<div class=\"glb-viewer-container\">\n" +
-                        "<div id=\"%s\" class=\"glb-viewer\"\n" +
-                        "data-glb-viewers=%s\n" +
-                        "data-viewer-type=\"multimultiblock\"\n" +
-                        "style=\"width: 100%%; height: 300px;\">\n" +
-                        "<div class=\"glb-viewer-loading\" style=\"display: flex; align-items: center; justify-content: center; height: 100%%; background: transparent;\">\n" +
-                        "<div style=\"text-align: center;\">\n" +
-                        "<svg class=\"glb-viewer-spinner\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\">\n" +
-                        "<circle cx=\"20\" cy=\"20\" r=\"15\" fill=\"none\" stroke=\"#888\" stroke-width=\"4\">\n" +
-                        "</circle>\n" +
-                        "</svg>\n" +
-                        "<div>Loading 3D Model...</div>\n" +
-                        "</div>\n" +
-                        "</div>\n" +
-                        "</div>\n" +
-                        "</div>", viewerId, glbPathsJson.toString()));
+                // 添加多方块GLB查看器，匹配期望的格式
+                buffer.add(String.format("""
+                    <div class="glb-viewer-container">
+                        <div id="%s" 
+                             class="glb-viewer"
+                             data-glb-viewers=%s
+                             data-viewer-type="multimultiblock"
+                             data-auto-rotate="true"
+                             data-auto-load="false">
+                            <div class="glb-viewer-loading">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading 3D model...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    """, 
+                    viewerId, 
+                    glbPathsJson.toString()));
             }
         } catch (Exception e) {
             // TODO 日志太多暂时移除 log.error("tfc:multimultiblock GLB processing failed", e);
             // FIXME for debug
             for (TFCMultiblockData multiblock : page.getMultiblocks()) {
-                formatWithTooltip(buffer, 
+                formatWithTooltip(buffer,
                         String.format("%s: <code>%s</code>", localizationManager.translate(I18n.MULTIBLOCK), JsonUtils.toJson(multiblock)),
                         localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
             }
