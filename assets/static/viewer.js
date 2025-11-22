@@ -28,7 +28,7 @@ class GLBViewer {
             enableShadows: true,
             autoRotate: false,
             rotationSpeed: 0.01,
-            minDistance: 5,
+            minDistance: 2,
             maxDistance: 50,
             ...options
         };
