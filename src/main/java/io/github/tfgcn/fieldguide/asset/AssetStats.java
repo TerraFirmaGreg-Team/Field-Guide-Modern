@@ -13,6 +13,7 @@ import java.util.TreeSet;
 @Data
 public class AssetStats {
     private Set<String> missingAssets = new TreeSet<>();
+    private Set<String> loadRecipes = new TreeSet<>();
     private Set<String> missingRecipes = new TreeSet<>();
     private Set<String> missingItems = new TreeSet<>();
     private Set<String> missingBlocks = new TreeSet<>();
@@ -24,10 +25,6 @@ public class AssetStats {
 
     public void addMissingAsset(String asset) {
         missingAssets.add(asset);
-    }
-
-    public void addMissingRecipe(String recipe) {
-        missingRecipes.add(recipe);
     }
 
     public void addMissingItem(String item) {
@@ -59,46 +56,47 @@ public class AssetStats {
     }
 
     public void print() {
-        System.out.println("Missing assets: " + missingAssets.size());
+        System.out.println("=== Missing assets: " + missingAssets.size());
         for (String asset : missingAssets) {
             System.out.println(asset);
         }
-        System.out.println("Missing recipes: " + missingRecipes.size());
+
+        System.out.println("=== Missing recipes: " + missingRecipes.size());
         for (String recipe : missingRecipes) {
             System.out.println(recipe);
         }
 
-        System.out.println("Missing items: " + missingItems.size());
+        System.out.println("=== Missing items: " + missingItems.size());
         for (String item : missingItems) {
             System.out.println(item);
         }
 
-        System.out.println("Missing blocks: " + missingBlocks.size());
+        System.out.println("=== Missing blocks: " + missingBlocks.size());
         for (String block : missingBlocks) {
             System.out.println(block);
         }
 
-        System.out.println("Missing fluids: " + missingFluids.size());
+        System.out.println("=== Missing fluids: " + missingFluids.size());
         for (String fluid : missingFluids) {
             System.out.println(fluid);
         }
 
-        System.out.println("Missing entities: " + missingEntities.size());
+        System.out.println("=== Missing entities: " + missingEntities.size());
         for (String entity : missingEntities) {
             System.out.println(entity);
         }
 
-        System.out.println("Missing lang: " + missingLang.size());
+        System.out.println("=== Missing lang: " + missingLang.size());
         for (String lang : missingLang) {
             System.out.println(lang);
         }
 
-        System.out.println("Missing models: " + missingModels.size());
+        System.out.println("=== Missing models: " + missingModels.size());
         for (String model : missingModels) {
             System.out.println(model);
         }
 
-        System.out.println("Missing textures: " + missingTextures.size());
+        System.out.println("=== Missing textures: " + missingTextures.size());
         for (String texture : missingTextures) {
             System.out.println(texture);
         }

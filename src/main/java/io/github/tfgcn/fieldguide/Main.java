@@ -80,6 +80,8 @@ public class Main implements Callable<Integer>  {
             prepare(book, localizationManager, textureRenderer, pageRenderer);
             generateHtml(book, htmlRenderer);
         }
+
+        assetLoader.getAssetStats().print();
         return 0;
     }
 

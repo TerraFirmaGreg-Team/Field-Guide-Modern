@@ -962,7 +962,7 @@ public class TextureRenderer {
         return state;
     }
 
-    public BufferedImage createBlockModelImage(String block, BlockModel model) throws Exception {
+    public BufferedImage createBlockModelImage(String block, BlockModel model) {
         String parent = model.getParent();
         if (parent != null && parent.indexOf(':') < 0) {
             parent = "minecraft:" + parent;
@@ -1017,6 +1017,12 @@ public class TextureRenderer {
             g.drawImage(overlay, 0, 0, null);
             g.dispose();
             return createBlockModelProjection(combined, combined, combined, false);
+        } else if (model.instanceOf("minecraft:air")) {
+            BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = img.createGraphics();
+            g.setColor(new Color(0, 0, 0, 0));
+            g.fillRect(0, 0, 16, 16);
+            return img;
         } else {
             try {
                 return singleBlock3DRenderer.render(model);

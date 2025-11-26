@@ -61,7 +61,8 @@ public class AssetLoader {
 
     private final Map<String, BufferedImage> registeredImage;
 
-    private AssetStats assetStats;
+    @Getter
+    private final AssetStats assetStats;
 
     public AssetLoader(Path instanceRoot) {
         this(instanceRoot, Paths.get("output"));
@@ -101,12 +102,10 @@ public class AssetLoader {
         blockModelCache.put("minecraft:builtin/generated", builtinGenerated);
         blockModelCache.put("minecraft:item/generated", itemGenerated);
         blockModelCache.put("forge:item/bucket", new BlockModel());
-        blockModelCache.put("forge:item/default", new BlockModel());
 
         itemModelCache.put("minecraft:item/generated", itemGenerated);
         itemModelCache.put("minecraft:builtin/generated", builtinGenerated);
         itemModelCache.put("forge:item/bucket", new BlockModel());
-        itemModelCache.put("forge:item/default", new BlockModel());
     }
 
     private void initGtceuIngots() {
@@ -778,13 +777,16 @@ public class AssetLoader {
     }
 
     public Map<String, Object> loadRecipe(String recipeId) {
+        assetStats.getLoadRecipes().add(recipeId);
         if (recipeCache.containsKey(recipeId)) {
             return recipeCache.get(recipeId);
         }
-        Asset asset = loadResource(recipeId, "recipes", "data", ".json");
+        AssetKey assetKey = new AssetKey(recipeId, "recipes", "data", ".json");
+        Asset asset = getAsset(assetKey.getResourcePath());
         if (asset == null) {
+            assetStats.getMissingRecipes().add(recipeId);
             log.error("Recipe not found: {}", recipeId);
-            throw new InternalException("Recipe not found: " + recipeId);
+            throw new AssetNotFoundException("Recipe not found: " + recipeId);
         }
 
         Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
