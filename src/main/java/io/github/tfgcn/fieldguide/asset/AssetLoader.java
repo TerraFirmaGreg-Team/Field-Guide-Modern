@@ -353,6 +353,10 @@ public class AssetLoader {
             BookEntry entry = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
             entry.setAssetSource(entryDir, asset);
 
+            if (Constants.EXCLUDES_ENTRIES.contains(entry.getId())) {
+                log.info("Excluding entry: {}", entry.getId());
+                continue;
+            }
             book.addEntry(entry);
         }
 
