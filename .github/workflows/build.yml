@@ -49,7 +49,7 @@ jobs:
       - name: Build Website
         run: |
           rm -rf output
-          java -jar build/libs/field-guide-tfg-*.jar -i Modpack-Modern -o output
+          java -jar build/libs/field-guide-*.jar -i Modpack-Modern -o output
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

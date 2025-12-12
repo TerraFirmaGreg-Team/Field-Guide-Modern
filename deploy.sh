@@ -25,7 +25,7 @@ cd ..
 rm -rf output
 
 # Build Field Guide TFG
-java -jar build/libs/field-guide-tfg*.jar -i Modpack-Modern -o output
+java -jar build/libs/field-guide*.jar -i Modpack-Modern -o output
 
 # Congratulation
 echo "✅ Build Success"

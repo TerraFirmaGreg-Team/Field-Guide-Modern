@@ -45,7 +45,7 @@ cd ..
 if exist output rmdir /s /q output
 
 :: Build Field Guide TFG
-for %%i in (build\libs\field-guide-tfg*.jar) do (
+for %%i in (build\libs\field-guide*.jar) do (
     java -jar "%%i" -i Modpack-Modern -o output
     goto :build_done
 )
