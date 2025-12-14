@@ -22,6 +22,10 @@ public final class Constants {
     public static final String BOOK_ENTRY_DIR = "assets/tfc/patchouli_books/%s/%s/entries";
     public static final String BOOK_ENTRY_PATH = "assets/tfc/patchouli_books/%s/%s/entries/%s.json";
 
+    public static final Set<String> EXCLUDES_CATEGORIES = Set.of(
+            "tfc_gurman.json"
+    );
+
     // these are excluded by kubejs/assets/tfg_exlucdes.zip
     public static final Set<String> EXCLUDES_ENTRIES = Set.of(
             "firmalife/more_fertilizer",

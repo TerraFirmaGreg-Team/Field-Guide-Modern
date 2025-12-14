@@ -351,6 +351,10 @@ public class AssetLoader {
             BookCategory category = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
             category.setAssetSource(categoryDir, asset);
 
+            if (Constants.EXCLUDES_CATEGORIES.contains(entry.getId())) {
+                log.debug("Excluding category: {}", entry.getId());
+                continue;
+            }
             book.addCategory(category);
         }
 

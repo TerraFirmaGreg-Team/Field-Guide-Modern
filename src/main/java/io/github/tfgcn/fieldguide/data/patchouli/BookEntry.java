@@ -149,7 +149,11 @@ public class BookEntry implements Comparable<BookEntry> {
             this.categoryId = this.category;
         }
 
-        this.relId = entryId.split("/")[1];
+        if (entryId.contains("/")) {
+            this.relId = entryId.split("/")[1];
+        } else {
+            this.relId = entryId;
+        }
     }
 
     public void addSearchContent(String content) {
