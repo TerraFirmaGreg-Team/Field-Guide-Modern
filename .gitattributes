@@ -1,0 +1,11 @@
+* text=off
+
+*.txt text
+*.js text
+*.html text
+*.css text
+*.png binary
+*.jpg binary
+
+*.bat text eol=crlf
+*.sh text eol=lf
