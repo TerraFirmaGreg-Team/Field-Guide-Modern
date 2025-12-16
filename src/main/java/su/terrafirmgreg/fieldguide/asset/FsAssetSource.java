@@ -19,8 +19,11 @@ import java.util.List;
  */
 public class FsAssetSource extends AssetSource {
 
+    private final Path absoluteRootPath;
+
     public FsAssetSource(Path rootPath, String sourceId) {
         super(rootPath, sourceId);
+        absoluteRootPath = rootPath.normalize().toAbsolutePath();
     }
     
     @Override
@@ -46,9 +49,9 @@ public class FsAssetSource extends AssetSource {
 
         Collection<File> files = FileUtils.listFiles(fullPath.toFile(), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
         for (File file : files) {
-            String relativePath = file.toPath().subpath(rootPath.getNameCount(), file.toPath().getNameCount()).toString();
-            relativePath = relativePath.replace("\\", "/");
-            assets.add(new Asset(relativePath, Files.newInputStream(file.toPath()), this));
+            Path relativePath = absoluteRootPath.relativize(file.toPath().toAbsolutePath());
+            String relativePathStr = relativePath.toString().replace("\\", "/");
+            assets.add(new Asset(relativePathStr, Files.newInputStream(file.toPath()), this));
         }
 
         return assets;

@@ -23,7 +23,7 @@ public final class Constants {
     public static final String BOOK_ENTRY_PATH = "assets/tfc/patchouli_books/%s/%s/entries/%s.json";
 
     public static final Set<String> EXCLUDES_CATEGORIES = Set.of(
-            "tfc_gurman.json"
+            "tfc_gurman"
     );
 
     // these are excluded by kubejs/assets/tfg_exlucdes.zip
@@ -44,16 +44,16 @@ public final class Constants {
             "sns/lunchbox",
             "sns/mob_net",
             // tfg_gurman does not put them in right place, ignore them for now
-            "gurman_beverages.json",
-            "gurman_borscht.json",
-            "gurman_cheese_making.json",
-            "gurman_croissants.json",
-            "gurman_intro.json",
-            "gurman_kvass.json",
-            "gurman_milking.json",
-            "gurman_pelmeni.json",
-            "gurman_pizza.json",
-            "gurman_ramen.json"
+            "gurman_beverages",
+            "gurman_borscht",
+            "gurman_cheese_making",
+            "gurman_croissants",
+            "gurman_intro",
+            "gurman_kvass",
+            "gurman_milking",
+            "gurman_pelmeni",
+            "gurman_pizza",
+            "gurman_ramen"
     );
 
     public static String getBookPath() {

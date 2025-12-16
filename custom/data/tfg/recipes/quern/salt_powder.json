@@ -1,1 +1,10 @@
-{"type":"tfc:quern","ingredient":{"tag":"forge:dusts/salt"},"result":{"item":"tfc:powder/salt","count":4}}
+{
+  "type": "tfc:quern",
+  "ingredient": {
+    "tag": "forge:dusts/salt"
+  },
+  "result": {
+    "item": "tfc:powder/salt",
+    "count": 4
+  }
+}
