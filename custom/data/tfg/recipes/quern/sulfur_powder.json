@@ -1,1 +1,10 @@
-{"type":"tfc:quern","ingredient":{"tag":"forge:dusts/sulfur"},"result":{"item":"tfc:powder/sulfur","count":4}}
+{
+  "type": "tfc:quern",
+  "ingredient": {
+    "tag": "forge:dusts/sulfur"
+  },
+  "result": {
+    "item": "tfc:powder/sulfur",
+    "count": 4
+  }
+}

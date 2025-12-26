@@ -1,1 +1,15 @@
-{"type":"tfc:knapping","knapping_type":"tfc:rock","outside_slot_required":false,"pattern":["XXXXX","   XX"],"ingredient":{"tag":"tfc:rock_knapping"},"result":{"item":"gtceu:stone_hoe_head"}}
+{
+  "type": "tfc:knapping",
+  "knapping_type": "tfc:rock",
+  "outside_slot_required": false,
+  "pattern": [
+    "XXXXX",
+    "   XX"
+  ],
+  "ingredient": {
+    "tag": "tfc:rock_knapping"
+  },
+  "result": {
+    "item": "gtceu:stone_hoe_head"
+  }
+}

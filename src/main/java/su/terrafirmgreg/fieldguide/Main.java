@@ -34,9 +34,8 @@ public class Main implements Callable<Integer>  {
             names = {"-i", "--tfg-dir"},
             required = true,
             description = {"The dir of TerraFirmaGreg modpack.",
-                    "Support environment TFG_DIR",
-                    "e.g. \"/Users/yanmaoyuan/games/tfg-0.11.7\""},
-            defaultValue = "${env:TFG_DIR}",
+                    "e.g. \"/Users/yanmaoyuan/games/tfg-0.11.10\""},
+            defaultValue = "./Modpack-Modern",
             showDefaultValue = CommandLine.Help.Visibility.ALWAYS
     )
     protected String inputDir;
