@@ -54,12 +54,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * First-pass runtime export: loads TFC's {@code field_guide} Patchouli book via
- * {@link PatchouliBookLoader} and writes a {@code manifest.json} summary so CI / local runs
- * can verify the loader sees the book.
+ * Legacy export pipeline (EMI layouts, recipe bundles, icons, lang merger, …).
  *
- * <p>The "stub" name is kept because no rendering happens yet (no HTML / textures / search
- * index); subsequent passes will hang off this same entry point.</p>
+ * <p>Default {@code /fieldguide export} now uses {@link FieldGuideExport#runExport} →
+ * {@code io.github.jmecn.fieldguideexport.export.GuideExportOrchestrator}. Enable this class
+ * with {@code -Dfieldguide.useLegacyExport=true}.</p>
  */
 public final class RuntimeExportStub {
 

@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Shared logic for {@code /fieldguide export}. */
+/** Shared logic for {@code /fieldguide export} (legacy forge mod — CI should use {@code field-guide-export} jar). */
 public final class FieldGuideExport {
 
     private FieldGuideExport() {}
@@ -24,9 +24,6 @@ public final class FieldGuideExport {
         }
     }
 
-    /**
-     * Invokes the same handler as {@code /fieldguide export} using the local player as command source.
-     */
     public static boolean runAsPlayerCommand(Minecraft client) {
         if (client.player == null) {
             return false;

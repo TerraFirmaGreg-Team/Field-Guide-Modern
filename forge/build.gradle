@@ -43,15 +43,6 @@ repositories {
     }
 }
 
-dependencies {
-    implementation project(':core')
-    jarJar(project(':core'))
-    compileOnly("maven.modrinth:patchouli:1.20.1-84.1-forge") { transitive = false }
-    compileOnly("dev.emi:emi-forge:${emi_version}") { transitive = false }
-    compileOnly("dev.latvian.mods:rhino-forge:${rhino_version}") { transitive = false }
-    compileOnly("dev.latvian.mods:kubejs-forge:${kubejs_version}") { transitive = false }
-}
-
 legacyForge {
     version = "${minecraft_version}-${forge_version}"
 
@@ -71,6 +62,15 @@ legacyForge {
             client()
         }
     }
+}
+
+dependencies {
+    implementation project(':core')
+    jarJar(project(':core'))
+    compileOnly("maven.modrinth:patchouli:1.20.1-84.1-forge") { transitive = false }
+    compileOnly("dev.emi:emi-forge:${emi_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:rhino-forge:${rhino_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:kubejs-forge:${kubejs_version}") { transitive = false }
 }
 
 tasks.withType(JavaCompile).configureEach {

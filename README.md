@@ -22,14 +22,14 @@ Multi-module project for the TFG Patchouli field guide website.
 
 ## Modpack pin
 
-Use the **latest stable release tag** from [Modpack-Modern releases](https://github.com/TerraFirmaGreg-Team/Modpack-Modern/releases) (semver `x.y.z`), not the `dev` branch. CI runs `scripts/checkout-modpack-latest-release.sh` on each job.
+Use the **latest stable release tag** from [Modpack-Modern releases](https://github.com/TerraFirmaGreg-Team/Modpack-Modern/releases) (semver `x.y.z`), not the `dev` branch. CI runs `scripts/ci-checkout-modpack.sh` (shallow clone).
 
 ```bash
-bash scripts/checkout-modpack-latest-release.sh
+bash scripts/ci-checkout-modpack.sh
 cd Modpack-Modern && java -jar pakku.jar fetch && cd ..
 ```
 
-To pin a specific version locally or in CI: `MODPACK_TAG=0.12.7 bash scripts/checkout-modpack-latest-release.sh`
+Pin modpack: `MODPACK_TAG=0.12.7 bash scripts/ci-checkout-modpack.sh`. Export mod versions: `ci/build.env` (`FGE_VERSION`, `MWE_VERSION`).
 
 ## Build
 
@@ -49,9 +49,11 @@ SKIP_BUILD=1 ./deploy.sh       # reuse cli/build/libs/field-guide-tfg-*.jar
 SKIP_PAKKU=1 ./deploy.sh       # skip mod download
 ```
 
-Windows: `deploy.bat` (same env vars). CI: `.github/workflows/build.yml`.
+Windows: `deploy.bat` (same env vars).
 
-Manual in-game export: `/fieldguide export`.
+**CI** (`.github/workflows/build.yml`): Modpack-Modern release → install [field-guide-export](https://github.com/jmecn/field-guide-export) + [minecraft-web-export](https://github.com/jmecn/minecraft-web-export) → HeadlessMC + `minecraftWebExport.runExportAndExit` → `export/guide-export/` → `:cli:jar` → GitHub Pages.
+
+Manual in-game export (legacy forge mod): `/fieldguide export`. Standalone export mods: `/fieldguideexport run`.
 
 Runtime export writes `forge/build/guide-export/` (default **`closure`** — only book-referenced assets; use `-Dfieldguide.exportMode=full` for the full mirror):
 
