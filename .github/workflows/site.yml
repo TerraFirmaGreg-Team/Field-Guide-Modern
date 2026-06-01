@@ -1,4 +1,4 @@
-name: Experiment headless MC client
+name: Build Field Guide Site
 
 on:
   push:
