@@ -18,6 +18,7 @@ import team.terrafirmgreg.fieldguide.render.IconMarkup;
 import team.terrafirmgreg.fieldguide.render.PageRenderer;
 import team.terrafirmgreg.fieldguide.render.TextFormatter;
 import team.terrafirmgreg.fieldguide.render.TextureRenderer;
+import team.terrafirmgreg.fieldguide.site.emi.EmiRecipeIndex;
 
 import org.apache.commons.io.FileUtils;
 
@@ -55,6 +56,12 @@ public class SiteGenerator implements Callable<Integer> {
     )
     List<String> locales;
 
+    @CommandLine.Option(
+            names = {"--emi-dir"},
+            description = "EMI export bundle root (bundle.json + recipes/); default: <export-dir>/../emi"
+    )
+    String emiDir;
+
     public static void main(String[] args) {
         int code = new CommandLine(new SiteGenerator()).execute(args);
         System.exit(code);
@@ -70,9 +77,13 @@ public class SiteGenerator implements Callable<Integer> {
         ExportModelLoader models = bundle.getAssets().getModels();
         models.setOutputDir(output);
 
+        Path emiRoot = resolveEmiRoot(export);
+        EmiRecipeIndex emiIndex = EmiRecipeIndex.load(emiRoot);
+
         ExportLocalizationManager l10n = new ExportLocalizationManager(bundle.getLangs());
         TextureRenderer textureRenderer = new TextureRenderer(models, l10n, bundle.getIcons());
-        PageRenderer pageRenderer = new PageRenderer(models, l10n, textureRenderer, bundle.getRecipeImages());
+        PageRenderer pageRenderer = new PageRenderer(
+                models, l10n, textureRenderer, bundle.getRecipeImages(), emiIndex);
         SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString());
 
         siteRenderer.copyStaticFiles();
@@ -91,6 +102,17 @@ public class SiteGenerator implements Callable<Integer> {
 
         log.info("Site generation complete: {}", output);
         return 0;
+    }
+
+    private Path resolveEmiRoot(Path export) {
+        if (emiDir != null && !emiDir.isBlank()) {
+            return Paths.get(emiDir).toAbsolutePath().normalize();
+        }
+        Path sibling = export.getParent().resolve("emi");
+        if (Files.isDirectory(sibling)) {
+            return sibling;
+        }
+        return sibling;
     }
 
     private List<Language> resolveLanguages(ExportBundle bundle) {

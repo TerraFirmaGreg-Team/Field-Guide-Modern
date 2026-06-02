@@ -16,6 +16,7 @@ import team.terrafirmgreg.fieldguide.localization.LocalizationManager;
 import team.terrafirmgreg.fieldguide.render.components.CraftingRecipe;
 import team.terrafirmgreg.fieldguide.render.components.KnappingRecipe;
 import team.terrafirmgreg.fieldguide.render.components.KnappingType;
+import team.terrafirmgreg.fieldguide.site.emi.EmiRecipeIndex;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
@@ -62,11 +63,12 @@ public class PageRenderer {
     private final TextureRenderer textureRenderer;
     private final LocalizationManager localizationManager;
     private final RecipeImageCatalog recipeImages;
+    private final EmiRecipeIndex emiRecipes;
 
     private int id = 0;
 
     public PageRenderer(ExportModelLoader loader, LocalizationManager localizationManager, TextureRenderer textureRenderer) {
-        this(loader, localizationManager, textureRenderer, null);
+        this(loader, localizationManager, textureRenderer, null, null);
     }
 
     public PageRenderer(
@@ -74,10 +76,20 @@ public class PageRenderer {
             LocalizationManager localizationManager,
             TextureRenderer textureRenderer,
             RecipeImageCatalog recipeImages) {
+        this(loader, localizationManager, textureRenderer, recipeImages, null);
+    }
+
+    public PageRenderer(
+            ExportModelLoader loader,
+            LocalizationManager localizationManager,
+            TextureRenderer textureRenderer,
+            RecipeImageCatalog recipeImages,
+            EmiRecipeIndex emiRecipes) {
         this.assetLoader = loader;
         this.localizationManager = localizationManager;
         this.textureRenderer = textureRenderer;
         this.recipeImages = recipeImages;
+        this.emiRecipes = emiRecipes;
     }
 
     public void renderPage(BookEntry entry, BookPage page) {
@@ -255,9 +267,22 @@ public class PageRenderer {
         if (recipeId == null || recipeId.isEmpty()) {
             return;
         }
+        if (emiRecipes != null && !emiRecipes.isEmpty() && !emiRecipes.contains(recipeId)) {
+            log.debug("Recipe not in EMI export, using in-game-only fallback: {}", recipeId);
+            String text = String.format(
+                    "%s: <code>%s</code>",
+                    localizationManager.translate(I18n.RECIPE),
+                    escapeHtmlText(recipeId));
+            formatWithTooltip(buffer, text, localizationManager.translate(I18n.RECIPE_ONLY_IN_GAME));
+            return;
+        }
         buffer.add(String.format(
                 "<div class=\"emi-recipe my-2\" data-recipe-id=\"%s\"></div>",
                 escapeHtmlAttr(recipeId)));
+    }
+
+    private static String escapeHtmlText(String value) {
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private static String escapeHtmlAttr(String value) {

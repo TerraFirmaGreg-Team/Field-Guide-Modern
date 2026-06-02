@@ -28,7 +28,8 @@
     var baseUrl = emiBundleBaseUrl();
     var rendererOpts = {
       baseUrl: baseUrl,
-      injectIconStylesheets: true,
+      /* Handbook already loads assets/icons/icons.css; avoid EMI bundle CSS overriding page icons */
+      injectIconStylesheets: false,
       locale: pageLocale(),
     };
 

@@ -18,7 +18,11 @@ if [[ -z "$SITE_JAR" ]]; then
 fi
 
 rm -rf "$SITE_OUTPUT_DIR"
-java -jar "$SITE_JAR" -e "$EXPORT_GUIDE" -o "$SITE_OUTPUT_DIR"
+emi_args=()
+if [[ -d "${EXPORT_ROOT}/emi" ]]; then
+  emi_args=(--emi-dir "${EXPORT_ROOT}/emi")
+fi
+java -jar "$SITE_JAR" -e "$EXPORT_GUIDE" -o "$SITE_OUTPUT_DIR" "${emi_args[@]}"
 
 if [[ -d "${EXPORT_ROOT}/emi" ]]; then
   rm -rf "${SITE_OUTPUT_DIR}/emi"

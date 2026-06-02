@@ -2,6 +2,7 @@
 <meta name="emi-renderer-version" content="${emiRendererVersion}">
 <meta name="emi-bundle-root" content="${emiBundleRoot}/">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emi-recipe-renderer@${emiRendererVersion}/dist/emi.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="${emiBundleRoot}/icons/icons.css" crossorigin="anonymous" data-emi-bundle-icons="true">
 <script>
 (function () {
   var version = document.querySelector('meta[name="emi-renderer-version"]').content;

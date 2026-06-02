@@ -42,15 +42,25 @@ img.recipe-preview {
     vertical-align: middle;
 }
 
-.icon-carousel > span {
+/* Handbook carousels only — do not break EMI recipe slot carousels */
+.icon-carousel:not(.emi-slot-carousel) > span {
     display: none;
 }
 
-.icon-carousel > span.icon-carousel-active,
-.icon-carousel > .icon-slot-32 > span.icon-carousel-active,
-.icon-carousel > .icon-slot-48 > span.icon-carousel-active,
-.icon-carousel > .icon-slot-64 > span.icon-carousel-active {
+.icon-carousel:not(.emi-slot-carousel) > span.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .icon-slot-32 > span.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .icon-slot-48 > span.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .icon-slot-64 > span.icon-carousel-active {
     display: inline-block;
+}
+
+/* EMI recipe cards: center the whole card in the entry column (not slot icons) */
+.emi-recipe {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Category cards: uniform 32×32 */
@@ -65,11 +75,14 @@ img.recipe-preview {
     vertical-align: middle;
 }
 
+/* Unified handbook atlas: 32×32 cells (assets/icons/index.json cellSize) */
 .icon-slot-32 > .icon-atlas {
     width: 32px !important;
     height: 32px !important;
+    transform: none;
 }
 
+/* Legacy 16×16 item/fluid atlases (generated/icons/items|fluids) */
 .icon-slot-32 > .item-icon-atlas,
 .icon-slot-32 > .fluid-icon-atlas {
     width: 16px !important;
@@ -94,35 +107,38 @@ img.recipe-preview {
     flex-shrink: 0;
 }
 
-/* Entry header: 48×48 */
+/* Entry header: 48×48 slot; 32px atlas cells use ~1.2× (1.5× clips sprite edges) */
 .icon-slot-48 {
     width: 48px;
     height: 48px;
     overflow: hidden;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     vertical-align: middle;
 }
 
 .icon-slot-48 > .icon-atlas {
     width: 32px !important;
     height: 32px !important;
-    transform: scale(1.5);
-    transform-origin: top left;
+    transform: scale(1.2);
+    transform-origin: center center;
 }
 
 .icon-slot-48 > .item-icon-atlas,
 .icon-slot-48 > .fluid-icon-atlas {
     width: 16px !important;
     height: 16px !important;
-    transform: scale(3);
-    transform-origin: top left;
+    transform: scale(2.4);
+    transform-origin: center center;
 }
 
 .icon-slot-48 > .block-item-icon-atlas {
     width: 64px !important;
     height: 64px !important;
-    transform: scale(0.75);
-    transform-origin: top left;
+    transform: scale(0.6);
+    transform-origin: center center;
 }
 
 /* Recipe slots: 64×64 */
