@@ -14,12 +14,30 @@
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
 
+  /** Bootstrap + EMI use resolved light/dark (auto → system). */
+  const resolvedTheme = () => {
+    const bs = document.documentElement.getAttribute('data-bs-theme')
+    if (bs === 'light' || bs === 'dark') {
+      return bs
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  const notifyHandbookThemeChange = () => {
+    const theme = resolvedTheme()
+    window.dispatchEvent(new CustomEvent('handbook-theme-change', { detail: { theme } }))
+    if (typeof globalThis.syncHandbookEmiTheme === 'function') {
+      globalThis.syncHandbookEmiTheme(theme)
+    }
+  }
+
   const setTheme = theme => {
     if (theme === 'auto') {
       document.documentElement.setAttribute('data-bs-theme', (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
     } else {
       document.documentElement.setAttribute('data-bs-theme', theme)
     }
+    notifyHandbookThemeChange()
   }
 
   setTheme(getPreferredTheme())

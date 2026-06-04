@@ -1,9 +1,12 @@
 /**
  * Mounts {@code .emi-recipe} placeholders using emi-recipe-renderer (CDN).
  * Expects {@code <meta name="emi-bundle-root">} from entry.ftl and export {@code emi/} beside the site root.
+ * Theme follows Bootstrap {@code data-bs-theme} (see theme-switcher.js).
  */
 (function () {
   'use strict';
+
+  var handbookEmiRenderer = null;
 
   function emiBundleBaseUrl() {
     var meta = document.querySelector('meta[name="emi-bundle-root"]');
@@ -22,6 +25,48 @@
     return match ? match[1].toLowerCase() : 'en_us';
   }
 
+  /** Resolved light/dark for EMI (matches data-bs-theme after theme-switcher runs). */
+  function pageEmiTheme() {
+    var bs = document.documentElement.getAttribute('data-bs-theme');
+    if (bs === 'light' || bs === 'dark') {
+      return bs;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  }
+
+  function applyEmiThemeToRenderer(renderer, theme) {
+    if (!renderer) {
+      return;
+    }
+    if (typeof renderer.setTheme === 'function' && (theme === 'light' || theme === 'dark')) {
+      renderer.setTheme(theme);
+      return;
+    }
+    if (typeof globalThis.applyEmiTheme === 'function') {
+      globalThis.applyEmiTheme(theme, { themeRoot: document.documentElement });
+    }
+  }
+
+  function wireHandbookEmiTheme(renderer) {
+    handbookEmiRenderer = renderer;
+    window.addEventListener('handbook-theme-change', function (event) {
+      var theme = event && event.detail && event.detail.theme;
+      if (theme === 'light' || theme === 'dark') {
+        applyEmiThemeToRenderer(handbookEmiRenderer, theme);
+      }
+    });
+  }
+
+  globalThis.syncHandbookEmiTheme = function (theme) {
+    if (theme !== 'light' && theme !== 'dark') {
+      theme = pageEmiTheme();
+    }
+    applyEmiThemeToRenderer(handbookEmiRenderer, theme);
+  };
+
   async function init() {
     var Renderer = globalThis.EmiRecipeRenderer;
     if (!Renderer || typeof Renderer.mountAll !== 'function') {
@@ -35,45 +80,35 @@
       /* Handbook already loads assets/icons/icons.css; avoid EMI bundle CSS overriding page icons */
       injectIconStylesheets: false,
       locale: pageLocale(),
+      theme: pageEmiTheme(),
+      themeRoot: document.documentElement,
     };
 
     var renderer;
-    var bundleIndex;
     try {
       renderer = new Renderer(rendererOpts);
-      bundleIndex = await renderer.loadIndex();
-      if (typeof renderer.ensureRegistryLabels === 'function') {
-        await renderer.ensureRegistryLabels();
-      }
-      if (typeof renderer.ensureItemNameKeys === 'function') {
-        await renderer.ensureItemNameKeys();
-      }
-      var recipeEls = document.querySelectorAll('.emi-recipe[data-recipe-id]');
-      for (var i = 0; i < recipeEls.length; i++) {
-        var el = recipeEls[i];
-        var recipeId = (el.dataset.recipeId || '').trim();
-        if (!recipeId) {
-          continue;
-        }
-        try {
-          await Renderer._mountOne(renderer, bundleIndex, el, recipeId);
-        } catch (mountErr) {
-          console.warn('handbook-emi: recipe mount failed', recipeId, mountErr);
-        }
-      }
+      await Renderer.mountAll({
+        baseUrl: rendererOpts.baseUrl,
+        injectIconStylesheets: rendererOpts.injectIconStylesheets,
+        locale: rendererOpts.locale,
+        theme: rendererOpts.theme,
+        themeRoot: rendererOpts.themeRoot,
+        renderer: renderer,
+        root: document,
+      });
+      wireHandbookEmiTheme(renderer);
     } catch (err) {
-      console.error('handbook-emi: EMI init failed', err);
+      console.error('handbook-emi: mountAll failed', err);
       return;
     }
 
-    var tagRenderer = renderer || new Renderer(rendererOpts);
     document.querySelectorAll('.emi-handbook-tag[data-tag-id]').forEach(function (el) {
       el.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
         var tagId = el.getAttribute('data-tag-id');
         if (tagId && typeof globalThis.showEmiTagPopover === 'function') {
-          globalThis.showEmiTagPopover(tagId, el, tagRenderer);
+          globalThis.showEmiTagPopover(tagId, el, renderer);
         }
       });
     });

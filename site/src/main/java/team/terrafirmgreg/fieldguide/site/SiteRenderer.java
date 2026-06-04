@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class SiteRenderer {
 
     /** Keep in sync with {@code site/package.json} → {@code emi-recipe-renderer}. */
-    public static final String EMI_RENDERER_VERSION = "0.5.5";
+    public static final String EMI_RENDERER_VERSION = "0.6.4";
 
     private static final Pattern SEARCH_STRIP_PATTERN = Pattern.compile("\\$\\([^)]*\\)");
 
