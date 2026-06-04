@@ -141,6 +141,10 @@ jobs:
       - name: Setup HeadlessMC
         run: bash scripts/ci-setup-hmc.sh
 
+      - name: Resolve export languages (Field-Guide-Modern Language enum)
+        id: export_languages
+        run: bash scripts/ci-resolve-export-languages.sh
+
       - name: Launch modpack and export
         env:
           ALSOFT_DRIVERS: "null"
@@ -160,6 +164,7 @@ jobs:
             -DminecraftWebExport.exportWorldDelayTicks=${{ env.EXPORT_WORLD_DELAY_TICKS }}
             -DminecraftWebExport.exportTimeoutSeconds=${{ env.EXPORT_TIMEOUT_SECONDS }}
             -Dfieldguide.exportMode=${{ env.FIELDGUIDE_EXPORT_MODE }}
+            -Dfieldguide.exportLanguages=${{ steps.export_languages.outputs.export_languages }}
         run: bash scripts/ci-launch-mc-export.sh
 
       - name: Save emi-export world cache

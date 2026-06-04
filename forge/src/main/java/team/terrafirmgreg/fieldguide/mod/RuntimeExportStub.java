@@ -20,6 +20,7 @@ import team.terrafirmgreg.fieldguide.export.scan.PatchouliMultiblockExporter;
 import team.terrafirmgreg.fieldguide.export.render.IconItemOrdering;
 import team.terrafirmgreg.fieldguide.export.render.ItemIconRendererExporter;
 import team.terrafirmgreg.fieldguide.export.FieldGuideExportLanguages;
+import team.terrafirmgreg.fieldguide.localization.ExportLanguages;
 import team.terrafirmgreg.fieldguide.export.render.EmiBundleManifestWriter;
 import team.terrafirmgreg.fieldguide.export.render.EmiRecipeLayoutExporter;
 import team.terrafirmgreg.fieldguide.export.render.EmiRecipeResolver;
@@ -720,7 +721,7 @@ public final class RuntimeExportStub {
             TagClosureExpander.Expansion tagExpansion) throws IOException {
         Set<String> languages = FieldGuideExportLanguages.resolve();
         if (languages == null) {
-            languages = new LinkedHashSet<>(FieldGuideExportLanguages.SUPPORTED);
+            languages = new LinkedHashSet<>(ExportLanguages.allKeys());
         }
 
         Set<String> emiKeys = null;

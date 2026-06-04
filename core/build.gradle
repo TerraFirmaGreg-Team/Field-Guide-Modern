@@ -53,6 +53,13 @@ test {
     reports.html.required = false
 }
 
+tasks.register('printExportLanguages', JavaExec) {
+    group = 'field guide'
+    description = 'Print comma-separated export locale codes from Language enum (CI / -Dfieldguide.exportLanguages)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'team.terrafirmgreg.fieldguide.localization.ExportLanguages'
+}
+
 jar {
     archiveBaseName = 'field-guide-core'
 }
