@@ -1,5 +1,8 @@
 package team.terrafirmgreg.fieldguide.localization;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,8 +57,20 @@ public final class ExportLanguages {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    /** CLI entry for CI: {@code ./gradlew :core:printExportLanguages}. */
-    public static void main(String[] args) {
-        System.out.print(toCsv(allKeys()));
+    /**
+     * CLI for CI: write locale list to a file (preferred) or stdout.
+     * {@code ./gradlew :core:writeExportLanguagesFile}
+     */
+    public static void main(String[] args) throws Exception {
+        String csv = toCsv(allKeys());
+        if (args.length > 0) {
+            Path out = Path.of(args[0]);
+            if (out.getParent() != null) {
+                Files.createDirectories(out.getParent());
+            }
+            Files.writeString(out, csv, StandardCharsets.UTF_8);
+            return;
+        }
+        System.out.print(csv);
     }
 }

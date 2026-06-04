@@ -74,6 +74,20 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
 
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper
+            ~/.gradle/caches
+          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '**/*.gradle', 'gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Resolve export languages (Field-Guide-Modern Language enum)
+        id: export_languages
+        run: bash scripts/ci-resolve-export-languages.sh
+
       - name: Install xvfb + OpenGL + OpenAL Soft
         run: |
           sudo DEBIAN_FRONTEND=noninteractive apt-get update
@@ -140,10 +154,6 @@ jobs:
 
       - name: Setup HeadlessMC
         run: bash scripts/ci-setup-hmc.sh
-
-      - name: Resolve export languages (Field-Guide-Modern Language enum)
-        id: export_languages
-        run: bash scripts/ci-resolve-export-languages.sh
 
       - name: Launch modpack and export
         env:

@@ -53,9 +53,17 @@ test {
     reports.html.required = false
 }
 
+tasks.register('writeExportLanguagesFile', JavaExec) {
+    group = 'field guide'
+    description = 'Write export locale codes from Language enum to build/export-languages.txt (CI → -Dfieldguide.exportLanguages)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'team.terrafirmgreg.fieldguide.localization.ExportLanguages'
+    args = [layout.buildDirectory.file('export-languages.txt').get().asFile.absolutePath]
+}
+
 tasks.register('printExportLanguages', JavaExec) {
     group = 'field guide'
-    description = 'Print comma-separated export locale codes from Language enum (CI / -Dfieldguide.exportLanguages)'
+    description = 'Print comma-separated export locale codes from Language enum'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'team.terrafirmgreg.fieldguide.localization.ExportLanguages'
 }
