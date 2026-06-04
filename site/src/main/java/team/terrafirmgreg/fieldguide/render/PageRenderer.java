@@ -64,6 +64,8 @@ public class PageRenderer {
     private final LocalizationManager localizationManager;
     private final RecipeImageCatalog recipeImages;
     private final EmiRecipeIndex emiRecipes;
+    /** Handbook recipe id → EMI recipe id for {@code data-recipe-id}. */
+    private final Map<String, String> recipeMountIds;
 
     private int id = 0;
 
@@ -85,11 +87,22 @@ public class PageRenderer {
             TextureRenderer textureRenderer,
             RecipeImageCatalog recipeImages,
             EmiRecipeIndex emiRecipes) {
+        this(loader, localizationManager, textureRenderer, recipeImages, emiRecipes, Map.of());
+    }
+
+    public PageRenderer(
+            ExportModelLoader loader,
+            LocalizationManager localizationManager,
+            TextureRenderer textureRenderer,
+            RecipeImageCatalog recipeImages,
+            EmiRecipeIndex emiRecipes,
+            Map<String, String> recipeMountIds) {
         this.assetLoader = loader;
         this.localizationManager = localizationManager;
         this.textureRenderer = textureRenderer;
         this.recipeImages = recipeImages;
         this.emiRecipes = emiRecipes;
+        this.recipeMountIds = recipeMountIds == null ? Map.of() : Map.copyOf(recipeMountIds);
     }
 
     public void renderPage(BookEntry entry, BookPage page) {
@@ -267,8 +280,9 @@ public class PageRenderer {
         if (recipeId == null || recipeId.isEmpty()) {
             return;
         }
-        if (emiRecipes != null && !emiRecipes.isEmpty() && !emiRecipes.contains(recipeId)) {
-            log.debug("Recipe not in EMI export, using in-game-only fallback: {}", recipeId);
+        String mountId = recipeMountIds.getOrDefault(recipeId, recipeId);
+        if (emiRecipes != null && !emiRecipes.isEmpty() && !emiRecipes.contains(mountId)) {
+            log.debug("Recipe not in EMI export, using in-game-only fallback: {} (mount={})", recipeId, mountId);
             String text = String.format(
                     "%s: <code>%s</code>",
                     localizationManager.translate(I18n.RECIPE),
@@ -278,7 +292,7 @@ public class PageRenderer {
         }
         buffer.add(String.format(
                 "<div class=\"emi-recipe my-2\" data-recipe-id=\"%s\"></div>",
-                escapeHtmlAttr(recipeId)));
+                escapeHtmlAttr(mountId)));
     }
 
     private static String escapeHtmlText(String value) {

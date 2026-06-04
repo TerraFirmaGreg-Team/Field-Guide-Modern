@@ -90,7 +90,7 @@ public class SiteGenerator implements Callable<Integer> {
         ExportLocalizationManager l10n = new ExportLocalizationManager(bundle.getLangs());
         TextureRenderer textureRenderer = new TextureRenderer(models, l10n, bundle.getIcons());
         PageRenderer pageRenderer = new PageRenderer(
-                models, l10n, textureRenderer, bundle.getRecipeImages(), emiIndex);
+                models, l10n, textureRenderer, bundle.getRecipeImages(), emiIndex, bundle.getRecipeMountIds());
         SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl);
 
         siteRenderer.copyStaticFiles();
