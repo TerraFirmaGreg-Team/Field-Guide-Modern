@@ -1,70 +1,48 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Env: set SKIP_BUILD=1 to reuse cli\build\libs\field-guide-tfg-*.jar
-::      set SKIP_PAKKU=1 to skip pakku fetch
+:: Build static site from guide-export/ via :site (requires prior game export).
+:: Env: EXPORT_GUIDE (default export\guide-export), SITE_OUTPUT (default output), SKIP_BUILD=1
 
-git pull
-if %errorlevel% neq 0 (
-    echo ❌ Git pull failed
+set "EXPORT_GUIDE=%EXPORT_GUIDE%"
+if not defined EXPORT_GUIDE set "EXPORT_GUIDE=export\guide-export"
+set "SITE_OUTPUT=%SITE_OUTPUT%"
+if not defined SITE_OUTPUT set "SITE_OUTPUT=output"
+
+if not exist "%EXPORT_GUIDE%\manifest.json" (
+    echo ❌ Missing %EXPORT_GUIDE%\manifest.json — run export first
     exit /b 1
-)
-
-git submodule sync
-if %errorlevel% neq 0 (
-    echo ❌ Git submodule sync failed
-    exit /b 1
-)
-
-git submodule update --force --init --depth=1 Modpack-Modern
-if %errorlevel% neq 0 (
-    echo ❌ Git submodule update failed
-    exit /b 1
-)
-
-if not "%SKIP_PAKKU%"=="1" (
-    cd Modpack-Modern
-    if %errorlevel% neq 0 (
-        echo ❌ Cannot enter Modpack-Modern directory
-        exit /b 1
-    )
-    java -jar pakku.jar fetch
-    if %errorlevel% neq 0 (
-        echo ❌ pakku.jar Fetch failed
-        exit /b 1
-    )
-    cd ..
-) else (
-    echo SKIP_PAKKU=1 — using existing Modpack-Modern mods
 )
 
 if not "%SKIP_BUILD%"=="1" (
-    call gradlew :cli:jar
+    call gradlew :site:jar
     if %errorlevel% neq 0 (
-        echo ❌ Gradle :cli:jar failed
+        echo ❌ Gradle :site:jar failed
         exit /b 1
     )
 ) else (
-    echo SKIP_BUILD=1 — looking for existing CLI jar
+    echo SKIP_BUILD=1 — looking for existing site jar
 )
 
-set "CLI_JAR="
-for %%i in (cli\build\libs\field-guide-tfg-*.jar) do set "CLI_JAR=%%i"
-if not defined CLI_JAR (
-    for %%i in (cli\build\libs\field-guide-*.jar) do set "CLI_JAR=%%i"
-)
-if not defined CLI_JAR (
-    echo ❌ No CLI jar under cli\build\libs\ — run: gradlew :cli:jar
+set "SITE_JAR="
+for %%i in (site\build\libs\field-guide-site-*.jar) do set "SITE_JAR=%%i"
+if not defined SITE_JAR (
+    echo ❌ No site jar under site\build\libs\ — run: gradlew :site:jar
     exit /b 1
 )
-if "%SKIP_BUILD%"=="1" echo Using !CLI_JAR!
+if "%SKIP_BUILD%"=="1" echo Using !SITE_JAR!
 
-if exist output rmdir /s /q output
+if exist "%SITE_OUTPUT%" rmdir /s /q "%SITE_OUTPUT%"
 
-java -jar "!CLI_JAR!" -i Modpack-Modern -o output
+java -jar "!SITE_JAR!" -e "%EXPORT_GUIDE%" -o "%SITE_OUTPUT%"
 if %errorlevel% neq 0 (
-    echo ❌ Field Guide build failed
+    echo ❌ Site build failed
     exit /b 1
 )
 
-echo ✅ Build Success
+if exist "export\emi" (
+    if exist "%SITE_OUTPUT%\emi" rmdir /s /q "%SITE_OUTPUT%\emi"
+    xcopy /E /I /Y "export\emi" "%SITE_OUTPUT%\emi" >nul
+)
+
+echo ✅ Site built at %SITE_OUTPUT%

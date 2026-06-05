@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 运行 modpack-export 容器（挂载 Modpack-Modern、.cache、export；可选挂载新 forge/cli jar）
+# 运行 modpack-export 容器（挂载 Modpack-Modern、.cache、export；可选挂载新 forge jar）
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -33,7 +33,6 @@ usage() {
   echo "  FG_JVM_HEAP=6G          可选，默认不设 -Xmx（与 CI 一致，MaxRAMPercentage=70）"
   echo "  FG_CONTAINER_MEMORY=10g  容器内存上限（Podman/Docker）"
   echo "  FIELD_GUIDE_JAR=/path/to/field-guide-forge.jar  覆盖 modpack mods 内 jar"
-  echo "  CLI_JAR=/path/to/cli.jar                        挂载到容器 /workspace/cli.jar"
   echo "  FG_MC_ASSETS_DIR=...  挂载到 /workspace/.cache/.minecraft/assets（默认 .cache/.minecraft/assets）"
   echo "  IMAGE=modpack-export:<tag>  覆盖镜像名"
 }
@@ -83,12 +82,6 @@ if [ -n "${FIELD_GUIDE_JAR:-}" ]; then
   [ -f "$FIELD_GUIDE_JAR" ] || { echo "错误：FIELD_GUIDE_JAR 不存在"; exit 1; }
   MOUNTS+=(-v "$FIELD_GUIDE_JAR:/workspace/Modpack-Modern/mods/field-guide-forge.jar:ro")
   echo "挂载 field-guide jar: $FIELD_GUIDE_JAR"
-fi
-
-if [ -n "${CLI_JAR:-}" ]; then
-  [ -f "$CLI_JAR" ] || { echo "错误：CLI_JAR 不存在"; exit 1; }
-  MOUNTS+=(-v "$CLI_JAR:/workspace/cli.jar:ro")
-  echo "挂载 cli jar: $CLI_JAR → /workspace/cli.jar"
 fi
 
 proxy_export_env

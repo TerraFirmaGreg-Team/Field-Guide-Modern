@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  * stats and dispatch later (type, flag, advancement, anchor). The raw JSON is kept on
  * {@link #raw} so subsequent page-type-specific code (text, crafting, multiblock, ...) can
  * read its specific fields without forcing the loader to know every Patchouli page type up
- * front. This mirrors {@code cli/.../patchouli/BookPage} but without lombok.</p>
+ * front. Minimal POJO for runtime Patchouli loading (no lombok).</p>
  *
  * @see <a href="https://vazkiimods.github.io/Patchouli/docs/patchouli-basics/page-types/">Default Page types</a>
  */

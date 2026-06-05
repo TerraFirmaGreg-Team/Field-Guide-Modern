@@ -23,6 +23,5 @@ plugins {
 rootProject.name = 'field-guide-modern'
 
 include 'core'
-include 'cli'
 include 'site'
 include 'forge'

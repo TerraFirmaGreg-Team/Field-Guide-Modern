@@ -10,7 +10,7 @@ import java.util.Map;
  * One Patchouli entry, loaded from
  * {@code assets/<ns>/patchouli_books/<book>/<lang>/entries/<category>/<entry>.json}.
  *
- * <p>Mirrors {@code cli/.../patchouli/BookEntry} with only the fields the runtime loader
+ * <p>Minimal {@code BookEntry} with only the fields the runtime loader
  * needs for the first pass. Page list is read as raw JSON so the loader can attach the
  * source JsonObject before page-type-specific code runs.</p>
  */

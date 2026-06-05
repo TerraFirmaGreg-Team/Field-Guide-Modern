@@ -7,7 +7,7 @@
 | 镜像 | JRE、xvfb、`.cache`、field-guide jar、entrypoint |
 | **挂载** | `Modpack-Modern/`（先跑 `scripts/checkout-modpack-latest-release.sh` 对齐最新 release） |
 | **挂载** | `.cache/`、`export/` |
-| 可选挂载 | `FIELD_GUIDE_JAR`、`CLI_JAR` |
+| 可选挂载 | `FIELD_GUIDE_JAR` |
 
 ## 流程
 
