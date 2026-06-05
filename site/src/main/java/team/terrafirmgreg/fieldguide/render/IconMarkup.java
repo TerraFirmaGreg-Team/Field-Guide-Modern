@@ -15,10 +15,6 @@ public final class IconMarkup {
 
     private IconMarkup() {}
 
-    public static String recipeItem(ItemImageResult icon) {
-        return img(icon, "recipe-item");
-    }
-
     public static String inline(ItemImageResult icon) {
         return img(icon, null);
     }
@@ -104,7 +100,6 @@ public final class IconMarkup {
 
     private static String slotClass(String scaleContext) {
         return switch (scaleContext) {
-            case "recipe" -> "icon-slot-64";
             case "title" -> "icon-slot-48";
             case "card" -> "icon-slot-32";
             default -> "";
@@ -114,9 +109,6 @@ public final class IconMarkup {
     private static String scaleContext(String extraClass) {
         if (extraClass == null) {
             return "";
-        }
-        if (extraClass.contains("recipe-item")) {
-            return "recipe";
         }
         if (extraClass.contains("icon-title")) {
             return "title";

@@ -111,13 +111,12 @@ public class SiteRenderer {
     }
 
     private static final List<String> SITE_IMAGES = List.of(
-            "fluid.png",
             "placeholder_16.png",
             "placeholder_64.png",
             "splash.png");
 
     /**
-     * Site UI images ({@code assets/textures} → {@code _images/}): splash, placeholders, fluid mask.
+     * Site UI images ({@code assets/textures} → {@code _images/}): splash and placeholders.
      * Recipe frames (crafting/knapping) removed — EMI renders recipe cards.
      */
     private void copySiteImages() throws IOException {
