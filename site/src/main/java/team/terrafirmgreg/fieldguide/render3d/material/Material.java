@@ -1,8 +1,6 @@
 package team.terrafirmgreg.fieldguide.render3d.material;
 
 import team.terrafirmgreg.fieldguide.render3d.math.Vector4f;
-import team.terrafirmgreg.fieldguide.render3d.shader.DefaultShader;
-import team.terrafirmgreg.fieldguide.render3d.shader.Shader;
 
 /**
  * 材质
@@ -14,9 +12,6 @@ public class Material {
 
     // 渲染状态
     private RenderState renderState;
-    
-    // 着色器
-    private Shader shader;
 
     private boolean isUseVertexColor;   // 是否使用顶点色
     
@@ -48,10 +43,6 @@ public class Material {
         diffuseMap = null;
         specularMap = null;
         normalMap = null;
-        
-        // 设置默认着色器
-        shader = new DefaultShader();
-        shader.setMaterial(this);
     }
 
     public RenderState getRenderState() {
@@ -60,17 +51,6 @@ public class Material {
 
     public void setRenderState(RenderState renderState) {
         this.renderState = renderState;
-    }
-
-    public Shader getShader() {
-        return shader;
-    }
-    
-    public void setShader(Shader shader) {
-        if (shader != null) {
-            shader.setMaterial(this);
-            this.shader = shader;
-        }
     }
 
     public boolean isUseVertexColor() {

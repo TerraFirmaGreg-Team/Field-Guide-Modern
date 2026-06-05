@@ -6,12 +6,10 @@ import team.terrafirmgreg.fieldguide.render3d.material.Texture;
 import team.terrafirmgreg.fieldguide.render3d.math.Transform;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector2f;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector3f;
-import team.terrafirmgreg.fieldguide.render3d.renderer.Image;
 import team.terrafirmgreg.fieldguide.render3d.scene.Geometry;
 import team.terrafirmgreg.fieldguide.render3d.scene.Mesh;
 import team.terrafirmgreg.fieldguide.render3d.scene.Node;
 import team.terrafirmgreg.fieldguide.render3d.scene.Vertex;
-import team.terrafirmgreg.fieldguide.render3d.animation.AnimatedTexture;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
@@ -87,7 +85,6 @@ public class GlTFExporter {
     private List<Map<String, Object>> images;
     private List<Map<String, Object>> nodes;
     private List<Map<String, Object>> scenes;
-    private List<Map<String, Object>> animations;
 
     // 二进制数据
     private ByteArrayOutputStream binaryData;
@@ -134,7 +131,6 @@ public class GlTFExporter {
         images = new ArrayList<>();
         nodes = new ArrayList<>();
         scenes = new ArrayList<>();
-        animations = new ArrayList<>();
         binaryData = new ByteArrayOutputStream();
         materialIndexMap = new HashMap<>();
         imageIndexMap = new HashMap<>();
@@ -323,68 +319,12 @@ public class GlTFExporter {
     }
     
     /**
-     * 处理动画纹理
-     * 由于 glTF 2.0 标准不支持材质动画，我们只导出第一帧作为静态纹理
-     */
-    private void processAnimatedTexture(AnimatedTexture animatedTexture) throws IOException {
-        if (!animatedTexture.isAnimated()) {
-            return;
-        }
-        
-        log.info("Processing animated texture: {} with {} frames (exporting first frame only)", 
-            animatedTexture.getTexturePath(), animatedTexture.getFrameCount());
-        
-        // 只导出第一帧作为静态纹理
-        BufferedImage firstFrame = animatedTexture.getFrames().get(0);
-        String frameName = animatedTexture.getTexturePath() + "_first_frame";
-        
-        // 为第一帧创建一个纹理
-        int imageIndex = processImageFromBufferedImage(firstFrame, frameName);
-        
-        // 创建纹理引用
-        Map<String, Object> texture = new LinkedHashMap<>();
-        texture.put("name", frameName);
-        texture.put("source", imageIndex);
-        texture.put("sampler", createNearestSampler());
-        
-        textures.add(texture);
-        
-        log.info("Exported first frame of animated texture: {}", frameName);
-    }
-    
-
-    
-    /**
      * 添加缓冲区视图（辅助方法）
      */
     private int addBufferView(byte[] data, String name) throws IOException {
         return createBufferView(data, 0); // target=0 for generic data
     }
     
-    /**
-     * 从BufferedImage处理图像
-     */
-    private int processImageFromBufferedImage(BufferedImage image, String imageName) throws IOException {
-        // 转换图像为PNG字节数组
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", baos);
-        byte[] imageData = baos.toByteArray();
-        
-        // 添加到缓冲区
-        int bufferViewIndex = addBufferView(imageData, imageName + "_data");
-        
-        // 创建图像
-        Map<String, Object> gltfImage = new LinkedHashMap<>();
-        gltfImage.put("name", imageName);
-        gltfImage.put("bufferView", bufferViewIndex);
-        gltfImage.put("mimeType", "image/png");
-        
-        int imageIndex = images.size();
-        images.add(gltfImage);
-        
-        return imageIndex;
-    }
-
     private int createDefaultMaterial() {
         Map<String, Object> material = new LinkedHashMap<>();
         material.put("name", "default");
@@ -619,12 +559,6 @@ public class GlTFExporter {
         gltf.put("nodes", nodes);
         gltf.put("scenes", scenes);
         gltf.put("scene", 0);
-        
-        // 添加动画数据（如果有）
-        if (!animations.isEmpty()) {
-            gltf.put("animations", animations);
-            log.info("Added {} animations to glTF", animations.size());
-        }
     }
 
     private Map<String, Object> createAsset() {
@@ -807,12 +741,8 @@ public class GlTFExporter {
      * 从Texture创建PNG二进制数据
      */
     private byte[] createPNGFromTexture(Texture texture) throws IOException {
-        Image imageObj = texture.getImage();
-        BufferedImage image = imageObj.getSrcImage();
-        
-        // 写入PNG到字节数组
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", baos);
+        ImageIO.write(texture.getImage(), "png", baos);
         return baos.toByteArray();
     }
 }

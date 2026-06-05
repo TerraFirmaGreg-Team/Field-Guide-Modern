@@ -368,14 +368,9 @@ public class PageRenderer {
 
     private void parseMultiblockPage(List<String> buffer, PageMultiblock page) {
         try {
-            String src = textureRenderer.getMultiBlockImage(page);
-            
-            // 只添加GLB 3D模型查看器，不要2D图片
-            if (src != null && src.endsWith(".png")) {
-                String glbPath = src.substring(0, src.length() - 4) + ".glb";
+            String glbPath = textureRenderer.generateMultiblockGLB(page);
+            if (glbPath != null && glbPath.endsWith(".glb")) {
                 String viewerId = generateUniqueViewerId("multiblock");
-                
-                // 添加GLB查看器div（手动加载模式）
                 buffer.add(String.format("""
                     <div class="glb-viewer-container">
                         <div id="%s" 
@@ -391,8 +386,8 @@ public class PageRenderer {
                             </div>
                         </div>
                     </div>
-                    """, 
-                    viewerId, 
+                    """,
+                    viewerId,
                     glbPath));
             }
         } catch (Exception e) {
@@ -411,57 +406,8 @@ public class PageRenderer {
         }
     }
     
-    /**
-     * 将 PNG 路径转换为 GLB 路径
-     */
-    private String convertToGLBPath(String pngPath) {
-        return pngPath.substring(0, pngPath.length() - 4) + ".glb";
-    }
-    
-    /**
-     * 生成唯一的查看器 ID
-     */
     private String generateUniqueViewerId(String prefix) {
         return String.format("glb-viewer-%s-%d-%d", prefix, System.currentTimeMillis(), id++);
-    }
-    
-    /**
-     * 添加 GLB 查看器到缓冲区
-     */
-    private void addGLBViewer(List<String> buffer, String viewerId, String glbPath) {
-        buffer.add(String.format("""
-            <div class="glb-viewer-container">
-                <div id="%s" class="glb-viewer" 
-                     data-glb-viewer="../../%s"
-                     data-viewer-type="multiblock"
-                     data-auto-rotate="true"
-                     style="width: 100%%; height: 100%%;">
-                    <div class="glb-viewer-loading" style="display: flex; align-items: center; justify-content: center; height: 100%%; background: transparent;">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading 3D model...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """, 
-            viewerId,
-            glbPath));
-    }
-    
-    /**
-     * 处理多方块页面错误
-     */
-    private void handleMultiblockError(List<String> buffer, PageMultiblock page) {
-        if (page.getMultiblockId() != null) {
-            formatWithTooltip(buffer,
-                    String.format("%s: <code>%s</code>", localizationManager.translate(I18n.MULTIBLOCK), page.getMultiblockId()),
-                    localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
-        } else {
-            // FIXME for debug
-            formatWithTooltip(buffer,
-                    String.format("%s: <code>%s</code>", localizationManager.translate(I18n.MULTIBLOCK), JsonUtils.toJson(page.getMultiblock())),
-                    localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
-        }
     }
 
     private void parseMultiMultiblockPage(List<String> buffer, PageMultiMultiblock page) {

@@ -21,7 +21,7 @@ public final class BlockstateRefResolver {
     }
 
     /**
-     * Model / blockstate id suitable for {@link team.terrafirmgreg.fieldguide.render.Multiblock3DRenderer}.
+     * Model / blockstate id suitable for {@link team.terrafirmgreg.fieldguide.render.MultiblockSceneBuilder}.
      */
     public String resolveModelId(String ref) {
         if (ref == null || ref.isBlank()) {

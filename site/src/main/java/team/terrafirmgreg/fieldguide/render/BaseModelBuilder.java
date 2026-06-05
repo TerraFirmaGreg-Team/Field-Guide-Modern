@@ -14,13 +14,9 @@ import team.terrafirmgreg.fieldguide.render3d.math.Quaternion;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector2f;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector3f;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector4f;
-import team.terrafirmgreg.fieldguide.render3d.renderer.Image;
 import team.terrafirmgreg.fieldguide.render3d.scene.Geometry;
 import team.terrafirmgreg.fieldguide.render3d.scene.Mesh;
 import team.terrafirmgreg.fieldguide.render3d.scene.Node;
-import team.terrafirmgreg.fieldguide.render3d.shader.UnshadedShader;
-import team.terrafirmgreg.fieldguide.render3d.animation.AnimatedTexture;
-import team.terrafirmgreg.fieldguide.render3d.animation.AnimatedMaterial;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
@@ -55,7 +51,6 @@ public class BaseModelBuilder {
 
     protected ExportModelLoader assetLoader;
     protected Map<String, Material> materialCache = new HashMap<>();
-    protected Map<String, AnimatedTexture> animatedTextureCache = new HashMap<>();
 
     public BaseModelBuilder(ExportModelLoader assetLoader) {
         this.assetLoader = assetLoader;
@@ -166,7 +161,7 @@ public class BaseModelBuilder {
             Mesh mesh = group.createMesh();
             if (mesh != null) {
                 Geometry geometry = new Geometry(mesh);
-                Material material = createAnimatedMaterial(group.texture, overlayTexture);
+                Material material = makeMaterial(group.texture, overlayTexture);
                 geometry.setMaterial(material);
 
                 // 应用旋转和位移
@@ -393,155 +388,6 @@ public class BaseModelBuilder {
         return materialCache.computeIfAbsent(cacheKey, it -> createMaterial(texture, overlayTexture));
     }
     
-    /**
-     * 创建动画材质（如果检测到动画纹理）
-     */
-    protected Material createAnimatedMaterial(String texture, String overlayTexture) {
-        // 检测基础纹理是否为动画
-        AnimatedTexture baseAnimated = getOrCreateAnimatedTexture(texture);
-        AnimatedTexture overlayAnimated = overlayTexture != null ? getOrCreateAnimatedTexture(overlayTexture) : null;
-        
-        // 如果有动画纹理，创建动画材质
-        if (baseAnimated.isAnimated() || (overlayAnimated != null && overlayAnimated.isAnimated())) {
-            return createAnimatedMaterialInternal(baseAnimated, overlayAnimated);
-        }
-        
-        // 否则创建普通材质
-        return createMaterial(texture, overlayTexture);
-    }
-    
-    /**
-     * 获取或创建动画纹理
-     */
-    private AnimatedTexture getOrCreateAnimatedTexture(String texture) {
-        return animatedTextureCache.computeIfAbsent(texture, t -> {
-            ExportAssetKey assetKey = new ExportAssetKey(texture, "textures", "assets", ".png");
-            BufferedImage img = assetLoader.loadTexture(assetKey);
-            
-            AnimatedTexture animatedTexture = new AnimatedTexture();
-            animatedTexture.setTexturePath(texture);
-            animatedTexture.setAnimated(AnimatedTexture.isAnimationAtlas(img));
-            
-            if (animatedTexture.isAnimated()) {
-                animatedTexture.setFrameCount(AnimatedTexture.calculateFrameCount(img));
-                animatedTexture.setFrames(AnimatedTexture.extractFrames(img));
-                log.info("Created animated texture: {} with {} frames", texture, animatedTexture.getFrameCount());
-            } else {
-                animatedTexture.setFrameCount(1);
-                animatedTexture.setFrames(List.of(img));
-            }
-            
-            return animatedTexture;
-        });
-    }
-    
-    /**
-     * 创建动画材质内部实现
-     */
-    private Material createAnimatedMaterialInternal(AnimatedTexture baseAnimated, AnimatedTexture overlayAnimated) {
-        // 如果有overlay，需要合并动画帧
-        if (overlayAnimated != null && overlayAnimated.isAnimated()) {
-            return createCombinedAnimatedMaterial(baseAnimated, overlayAnimated);
-        } else {
-            return createSingleAnimatedMaterial(baseAnimated, overlayAnimated);
-        }
-    }
-    
-    /**
-     * 创建单个动画材质
-     */
-    private Material createSingleAnimatedMaterial(AnimatedTexture baseAnimated, AnimatedTexture overlayAnimated) {
-        AnimatedMaterial material = new AnimatedMaterial(baseAnimated);
-        
-        // 检测是否为玻璃材质，设置相应的混合模式
-        boolean isGlassTexture = isGlassTexture(baseAnimated.getTexturePath()) || 
-                                 (overlayAnimated != null && isGlassTexture(overlayAnimated.getTexturePath()));
-        if (isGlassTexture) {
-            // 玻璃材质使用ALPHA_BLEND模式，不使用Alpha测试
-            material.getRenderState().setBlendMode(RenderState.BlendMode.ALPHA_BLEND);
-            log.debug("Detected glass animated texture: {}, using ALPHA_BLEND", baseAnimated.getTexturePath());
-        } else {
-            // 非玻璃材质使用Alpha测试和MASK模式
-            material.getRenderState().setAlphaTest(true);
-            material.getRenderState().setAlphaFalloff(0.1f);
-            material.getRenderState().setBlendMode(RenderState.BlendMode.OFF);
-        }
-        
-        material.setUseVertexColor(true);
-        material.setShader(new UnshadedShader());
-        
-        // 如果有静态overlay，合并到第一帧
-        if (overlayAnimated != null && !overlayAnimated.isAnimated() && !overlayAnimated.getFrames().isEmpty()) {
-            BufferedImage overlayFrame = overlayAnimated.getFrames().get(0);
-            List<BufferedImage> combinedFrames = combineFramesWithOverlay(
-                baseAnimated.getFrames(), overlayFrame);
-            baseAnimated.setFrames(combinedFrames);
-        }
-        
-        // 设置纹理
-        if (!baseAnimated.getFrames().isEmpty()) {
-            Image image =
-                new Image(baseAnimated.getFrames().get(0));
-            Texture diffuseMap = new Texture(image);
-            diffuseMap.setName(baseAnimated.getTexturePath());
-            diffuseMap.setMagFilter(Texture.MagFilter.NEAREST);
-            material.setDiffuseMap(diffuseMap);
-        }
-        
-        return material;
-    }
-    
-    /**
-     * 创建组合动画材质（两个动画纹理）
-     */
-    private Material createCombinedAnimatedMaterial(AnimatedTexture baseAnimated, AnimatedTexture overlayAnimated) {
-        // 合并两个动画的帧数（取最大值）
-        int maxFrames = Math.max(baseAnimated.getFrameCount(), overlayAnimated.getFrameCount());
-        List<BufferedImage> combinedFrames = combineAnimatedFrames(
-            baseAnimated.getFrames(), overlayAnimated.getFrames(), maxFrames);
-        
-        baseAnimated.setFrames(combinedFrames);
-        baseAnimated.setFrameCount(maxFrames);
-        
-        return createSingleAnimatedMaterial(baseAnimated, null);
-    }
-    
-    /**
-     * 合并静态overlay到所有帧
-     */
-    private List<BufferedImage> combineFramesWithOverlay(List<BufferedImage> frames, BufferedImage overlay) {
-        return frames.stream().map(frame -> {
-            BufferedImage combined = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = combined.createGraphics();
-            g.drawImage(frame, 0, 0, null);
-            g.drawImage(overlay, 0, 0, null);
-            g.dispose();
-            return combined;
-        }).collect(java.util.stream.Collectors.toList());
-    }
-    
-    /**
-     * 合并两个动画的帧
-     */
-    private List<BufferedImage> combineAnimatedFrames(List<BufferedImage> baseFrames, List<BufferedImage> overlayFrames, int totalFrames) {
-        List<BufferedImage> combined = new ArrayList<>();
-        
-        for (int i = 0; i < totalFrames; i++) {
-            BufferedImage baseFrame = baseFrames.get(i % baseFrames.size());
-            BufferedImage overlayFrame = overlayFrames.get(i % overlayFrames.size());
-            
-            BufferedImage combinedFrame = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = combinedFrame.createGraphics();
-            g.drawImage(baseFrame, 0, 0, null);
-            g.drawImage(overlayFrame, 0, 0, null);
-            g.dispose();
-            
-            combined.add(combinedFrame);
-        }
-        
-        return combined;
-    }
-
     protected Material createMaterial(String texture, String overlayTexture) {
         // 直接在内存中生成纹理，不再保存到文件系统
         String fileName = texture.replace("assets/minecraft/textures/", "").replace(".png", "").replace(":", "_");
@@ -553,11 +399,7 @@ public class BaseModelBuilder {
         
         BufferedImage img = generateCombinedImage(texture, overlayTexture);
 
-        Image image = new Image(img);
-        Texture diffuseMap = new Texture(image);
-        // 使用唯一的文件路径设置纹理名称，包含overlay信息
-        diffuseMap.setName(fileName);
-        diffuseMap.setMagFilter(Texture.MagFilter.NEAREST);
+        Texture diffuseMap = new Texture(img, fileName);
 
         Material material = new Material();
         
@@ -575,7 +417,6 @@ public class BaseModelBuilder {
         }
         
         material.setUseVertexColor(true);
-        material.setShader(new UnshadedShader());
         material.setDiffuseMap(diffuseMap);
 
         return material;

@@ -21,8 +21,6 @@ dependencies {
     implementation 'info.picocli:picocli:4.7.1'
     implementation 'commons-io:commons-io:2.20.0'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
-    implementation 'gov.nist.math:jama:1.0.3'
-    implementation 'com.madgag:animated-gif-lib:1.4'
     implementation 'org.freemarker:freemarker:2.3.32'
     implementation 'ch.qos.logback:logback-classic:1.5.13'
 
