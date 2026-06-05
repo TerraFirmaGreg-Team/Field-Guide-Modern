@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build static site from guide-export/ via :site jar; copy emi/ bundle beside output.
+# Build static site from guide-export/ via fat jar; copy emi/ bundle beside output.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,11 +9,11 @@ EXPORT_ROOT="${EXPORT_ROOT:?EXPORT_ROOT required}"
 
 cd "$ROOT"
 chmod +x gradlew
-./gradlew :site:jar --no-daemon
+./gradlew jar --no-daemon
 
-SITE_JAR=$(ls -t site/build/libs/field-guide-site-*.jar 2>/dev/null | head -1)
+SITE_JAR=$(ls -t build/libs/field-guide-site-*.jar 2>/dev/null | head -1)
 if [[ -z "$SITE_JAR" ]]; then
-  echo "::error::Site jar not found under site/build/libs/"
+  echo "::error::Site jar not found under build/libs/"
   exit 1
 fi
 

@@ -1,4 +1,4 @@
-<#-- EMI recipe cards: npm package emi-recipe-renderer, loaded from jsDelivr (see site/package.json). -->
+<#-- EMI recipe cards: npm package emi-recipe-renderer, loaded from jsDelivr (see package.json). -->
 <meta name="emi-renderer-version" content="${emiRendererVersion}">
 <meta name="emi-bundle-root" content="${emiBundleRoot}/">
 <meta name="emi-locale" content="${current_lang.key}">

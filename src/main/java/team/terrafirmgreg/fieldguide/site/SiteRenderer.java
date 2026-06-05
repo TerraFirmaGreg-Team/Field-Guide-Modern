@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SiteRenderer {
 
-    /** Keep in sync with {@code site/package.json} → {@code emi-recipe-renderer}. */
+    /** Keep in sync with {@code package.json} → {@code emi-recipe-renderer}. */
     public static final String EMI_RENDERER_VERSION = "0.6.5";
 
     /**

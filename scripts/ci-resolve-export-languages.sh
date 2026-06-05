@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Write export locale list from :core Language enum, then read it as one string for CI / JVM.
+# Write export locale list from Language enum, then read it as one string for CI / JVM.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,13 +7,13 @@ cd "$ROOT"
 
 chmod +x gradlew
 
-lang_file="$ROOT/core/build/export-languages.txt"
+lang_file="$ROOT/build/export-languages.txt"
 
 # Gradle logs go to the terminal; the locale list is written to a file only.
-./gradlew :core:writeExportLanguagesFile --no-daemon -q --console=plain >/dev/null
+./gradlew writeExportLanguagesFile --no-daemon -q --console=plain >/dev/null
 
 if [[ ! -s "$lang_file" ]]; then
-  echo "::error::Missing $lang_file after :core:writeExportLanguagesFile" >&2
+  echo "::error::Missing $lang_file after writeExportLanguagesFile" >&2
   exit 1
 fi
 

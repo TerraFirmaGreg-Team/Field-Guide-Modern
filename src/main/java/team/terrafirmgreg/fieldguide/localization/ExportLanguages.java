@@ -59,7 +59,7 @@ public final class ExportLanguages {
 
     /**
      * CLI for CI: write locale list to a file (preferred) or stdout.
-     * {@code ./gradlew :core:writeExportLanguagesFile}
+     * {@code ./gradlew writeExportLanguagesFile}
      */
     public static void main(String[] args) throws Exception {
         String csv = toCsv(allKeys());
