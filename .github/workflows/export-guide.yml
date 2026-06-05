@@ -1,5 +1,3 @@
-# Game export (FGE + MWE) → artifacts for :site. Typical run ~5–8 min on warm cache.
-# dev/main push (except docs) → Export; success triggers Deploy Pages via workflow_run.
 name: Export handbook bundle
 
 on:
@@ -43,97 +41,32 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout Field Guide
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Load CI config
-        run: bash scripts/ci-load-config.sh
-
-      - name: Checkout Modpack-Modern
-        id: modpack
-        env:
-          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
-        run: bash scripts/ci-checkout-modpack.sh
-
-      - name: Prepare bundle id
+      - name: Prepare export
         id: metadata
         env:
-          MODPACK_TAG: ${{ steps.modpack.outputs.modpack_tag }}
-        run: bash scripts/ci-prepare-bundle-id.sh
+          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
+        run: bash scripts/ci.sh prepare-export
 
-      - name: Log versions
-        run: |
-          echo "bundle_id=${{ steps.metadata.outputs.bundle_id }}"
-          echo "Modpack-Modern @ ${{ steps.metadata.outputs.modpack_tag }}"
-          echo "FGE ${FGE_VERSION} / MWE ${MWE_VERSION}"
-
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+          cache: gradle
 
-      - name: Cache Gradle wrapper
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/wrapper
-            ~/.gradle/caches
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '**/*.gradle', 'gradle.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
-
-      - name: Resolve export languages (Field-Guide-Modern Language enum)
+      - name: Export languages
         id: export_languages
-        run: bash scripts/ci-resolve-export-languages.sh
+        run: bash scripts/ci.sh export-languages
 
-      - name: Install xvfb + OpenGL + OpenAL Soft
-        run: |
-          sudo DEBIAN_FRONTEND=noninteractive apt-get update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            xvfb x11-xserver-utils \
-            libgl1 libgl1-mesa-dri \
-            libopenal1
-
-      - name: Restore pakku-fetched mods
-        id: pakku-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            Modpack-Modern/mods
-            Modpack-Modern/resourcepacks
-            Modpack-Modern/shaderpacks
-          key: pakku-${{ hashFiles('Modpack-Modern/pakku-lock.json') }}
-          restore-keys: |
-            pakku-
-
-      - name: Fetch modpack mods (pakku)
-        if: steps.pakku-restore.outputs.cache-hit != 'true'
+      - name: Fetch mods
         working-directory: ${{ env.MODPACK_DIR }}
         run: java -jar pakku.jar fetch
 
-      - name: Save pakku cache
-        if: success() && steps.pakku-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            Modpack-Modern/mods
-            Modpack-Modern/resourcepacks
-            Modpack-Modern/shaderpacks
-          key: ${{ steps.pakku-restore.outputs.cache-primary-key }}
-
-      - name: Install field-guide-export
-        env:
-          FGE_TAG: ${{ github.event.inputs.fge_version || env.FGE_VERSION }}
-        run: bash scripts/ci-install-fge.sh
-
-      - name: Install minecraft-web-export
-        env:
-          MWE_TAG: ${{ github.event.inputs.mwe_version || env.MWE_VERSION }}
-        run: bash scripts/ci-install-mwe.sh
-
-      - name: Restore HeadlessMC .minecraft
+      - name: Restore HMC cache
         id: hmc-restore
         uses: actions/cache/restore@v4
         with:
@@ -143,19 +76,21 @@ jobs:
             hmc-${{ env.MC_VERSION }}-forge-
             hmc-${{ env.MC_VERSION }}-
 
-      - name: Restore emi-export world save
+      - name: Restore world cache
         id: world-restore
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.MODPACK_DIR }}/saves/emi-export
           key: emi-export-${{ env.MC_VERSION }}-${{ hashFiles(format('{0}/pakku-lock.json', env.MODPACK_DIR)) }}
-          restore-keys: |
-            emi-export-${{ env.MC_VERSION }}-
+          restore-keys: emi-export-${{ env.MC_VERSION }}-
 
-      - name: Setup HeadlessMC
-        run: bash scripts/ci-setup-hmc.sh
+      - name: Prepare game
+        env:
+          FGE_TAG: ${{ github.event.inputs.fge_version || env.FGE_VERSION }}
+          MWE_TAG: ${{ github.event.inputs.mwe_version || env.MWE_VERSION }}
+        run: bash scripts/ci.sh prepare-game
 
-      - name: Launch modpack and export
+      - name: Run export
         env:
           ALSOFT_DRIVERS: "null"
           EXPORT_WARMUP: ${{ github.event.inputs.export_warmup_ticks || env.EXPORT_WARMUP_TICKS }}
@@ -174,45 +109,34 @@ jobs:
             -DminecraftWebExport.exportWorldDelayTicks=${{ env.EXPORT_WORLD_DELAY_TICKS }}
             -DminecraftWebExport.exportTimeoutSeconds=${{ env.EXPORT_TIMEOUT_SECONDS }}
             -Dfieldguide.exportLanguages=${{ steps.export_languages.outputs.export_languages }}
-        run: bash scripts/ci-launch-mc-export.sh
+        run: bash scripts/ci.sh launch-export
 
-      - name: Save emi-export world cache
+      - name: Save world cache
         if: success() && steps.world-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.MODPACK_DIR }}/saves/emi-export
           key: ${{ steps.world-restore.outputs.cache-primary-key }}
 
-      - name: Save HeadlessMC .minecraft
+      - name: Save HMC cache
         if: success() && steps.hmc-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.RUNNER_HOME }}/.minecraft
           key: ${{ steps.hmc-restore.outputs.cache-primary-key }}
 
-      - name: Write export metadata
+      - name: Package export
         env:
           BUNDLE_ID: ${{ steps.metadata.outputs.bundle_id }}
           MODPACK_TAG: ${{ steps.metadata.outputs.modpack_tag }}
-        run: bash scripts/ci-write-export-meta.sh
+        run: bash scripts/ci.sh finalize-export
 
-      - name: Upload export metadata
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: export-meta
-          path: export-meta/
-          retention-days: 90
-
-      - name: Tar export bundle
-        run: |
-          ARCHIVE="guide-export-${{ steps.metadata.outputs.bundle_id }}.tar.gz"
-          tar -czf "$ARCHIVE" -C "${{ env.EXPORT_ROOT }}" guide-export emi
-          ls -lh "$ARCHIVE"
-
-      - name: Upload export bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: guide-export-${{ steps.metadata.outputs.bundle_id }}
-          path: guide-export-${{ steps.metadata.outputs.bundle_id }}.tar.gz
+          name: handbook-export
+          path: |
+            export-meta/
+            guide-export-${{ steps.metadata.outputs.bundle_id }}.tar.gz
           retention-days: 90
           compression-level: 0
