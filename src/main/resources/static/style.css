@@ -32,7 +32,7 @@
 }
 
 img.icon-title {
-    height: 48px;
+    height: calc(var(--handbook-icon-title) * 1px);
     image-rendering: pixelated;
 }
 
@@ -46,6 +46,11 @@ img.entry-card-icon {
 }
 
 /* Handbook icon atlas sprites (see assets/icons/icons.css) */
+:root {
+    --handbook-icon-cell: 32;
+    --handbook-icon-title: 48;
+    --handbook-icon-slot-scale: calc(var(--handbook-icon-title) / var(--handbook-icon-cell));
+}
 .icon-carousel {
     position: relative;
     display: inline-block;
@@ -85,11 +90,21 @@ img.entry-card-icon {
     vertical-align: middle;
 }
 
-/* Unified handbook atlas: 32×32 cells (assets/icons/index.json cellSize) */
-.icon-slot-32 > .icon-atlas {
-    width: 32px !important;
-    height: 32px !important;
+/* Unified handbook atlas: slot scales sprite via icons.css --sprite-* / --atlas-* vars */
+.icon-slot-32 > .icon-atlas,
+.icon-slot-48 > .icon-atlas {
+    --slot-scale: 1;
+    width: calc(var(--cell) * var(--slot-scale) * 1px) !important;
+    height: calc(var(--cell) * var(--slot-scale) * 1px) !important;
+    background-size: calc(var(--atlas-w) * var(--slot-scale) * 1px) calc(var(--atlas-h) * var(--slot-scale) * 1px) !important;
+    background-position: calc(var(--sprite-x) * var(--slot-scale) * -1px) calc(var(--sprite-y) * var(--slot-scale) * -1px) !important;
     transform: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.icon-slot-32 > .icon-atlas {
+    --slot-scale: 1;
 }
 
 /* Legacy 16×16 item/fluid atlases (generated/icons/items|fluids) */
@@ -117,10 +132,10 @@ img.entry-card-icon {
     flex-shrink: 0;
 }
 
-/* Entry page title: 48×48 (32px atlas cell × 1.5) */
+/* Entry page title: 48×48 — same technique as img.icon-title, no transform clip */
 .icon-slot-48 {
-    width: 48px;
-    height: 48px;
+    width: calc(var(--handbook-icon-title) * 1px);
+    height: calc(var(--handbook-icon-title) * 1px);
     overflow: hidden;
     display: inline-flex;
     align-items: center;
@@ -130,10 +145,7 @@ img.entry-card-icon {
 }
 
 .icon-slot-48 > .icon-atlas {
-    width: 32px !important;
-    height: 32px !important;
-    transform: scale(1.5);
-    transform-origin: center center;
+    --slot-scale: var(--handbook-icon-slot-scale);
 }
 
 .icon-slot-48 > .item-icon-atlas,
