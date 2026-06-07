@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Reads {@code assets/icons/index.json} (handbook atlas from field-guide-export).
+ * Reads {@code assets/icons/index.json} (field-guide atlas from field-guide-export).
  */
 @Slf4j
 public class IconCatalog implements IconLookup {
@@ -28,6 +28,8 @@ public class IconCatalog implements IconLookup {
     private final MissingIconReport missingReport;
 
     public static final String MISSING_ICON_ID = "fieldguide:missing_icon";
+    /** CSS class for field-guide sprites; must not collide with EMI {@code .icon-atlas}. */
+    public static final String FIELD_GUIDE_ICON_CSS_CLASS = "field-guide-icon-atlas";
 
     private IconCatalog(
             Path exportRoot,
@@ -148,7 +150,7 @@ public class IconCatalog implements IconLookup {
 
     private static String cssClassFor(String kind) {
         return switch (kind) {
-            case UNIFIED_KIND -> "icon-atlas";
+            case UNIFIED_KIND -> FIELD_GUIDE_ICON_CSS_CLASS;
             case "items" -> "item-icon-atlas";
             case "block-items" -> "block-item-icon-atlas";
             case "fluids" -> "fluid-icon-atlas";

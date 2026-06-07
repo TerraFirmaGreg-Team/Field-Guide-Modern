@@ -144,14 +144,30 @@ public class SiteRenderer {
     public void copyHandbookIcons(Path exportRoot) throws IOException {
         Path srcIcons = exportRoot.resolve("assets/icons");
         if (!Files.isDirectory(srcIcons)) {
-            throw new IOException("Missing handbook icons at " + srcIcons.toAbsolutePath());
+            throw new IOException("Missing field-guide icons at " + srcIcons.toAbsolutePath());
         }
         Path destIcons = Paths.get(outputRootDir, "assets", "icons");
         if (Files.exists(destIcons)) {
             FileUtils.deleteDirectory(destIcons.toFile());
         }
         FileUtils.copyDirectory(srcIcons.toFile(), destIcons.toFile());
-        log.info("Copied handbook icons to {}", destIcons);
+        rewriteFieldGuideIconCss(destIcons);
+        log.info("Copied field-guide icons to {}", destIcons);
+    }
+
+    /** MWE emits {@code .icon-atlas}; rename so EMI footer CSS cannot override field-guide sprites. */
+    private static void rewriteFieldGuideIconCss(Path iconsRoot) throws IOException {
+        Path css = iconsRoot.resolve("icons.css");
+        if (!Files.isRegularFile(css)) {
+            return;
+        }
+        String content = Files.readString(css);
+        if (!content.contains(".icon-atlas")) {
+            return;
+        }
+        content = content.replace(".icon-atlas {", ".field-guide-icon-atlas {");
+        content = content.replace(".icon-atlas[", ".field-guide-icon-atlas[");
+        Files.writeString(css, content);
     }
 
     private void copyResourceDir(String resourceName, Path dest) throws IOException {

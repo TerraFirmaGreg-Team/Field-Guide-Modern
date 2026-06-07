@@ -4,7 +4,7 @@ import team.terrafirmgreg.fieldguide.asset.ItemImageResult;
 import team.terrafirmgreg.fieldguide.export.IconRef;
 
 /**
- * HTML for handbook {@code *-icon-atlas} sprites (CSS under {@code assets/icons/}).
+ * HTML for field-guide {@code field-guide-icon-atlas} sprites (CSS under {@code assets/icons/}).
  */
 public final class IconMarkup {
 

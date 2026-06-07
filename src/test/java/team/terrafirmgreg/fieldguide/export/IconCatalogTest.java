@@ -26,7 +26,7 @@ class IconCatalogTest {
 
         IconCatalog catalog = IconCatalog.load(root);
         IconRef ref = catalog.resolveItem("minecraft:dirt").orElseThrow();
-        assertEquals("icon-atlas", ref.cssClass());
+        assertEquals(IconCatalog.FIELD_GUIDE_ICON_CSS_CLASS, ref.cssClass());
         assertEquals("icons", ref.atlasKind());
         assertEquals("minecraft:dirt", ref.registryId());
         assertEquals(32, ref.cellSize());
