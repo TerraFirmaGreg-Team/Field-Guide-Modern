@@ -410,12 +410,12 @@ verify_guide_export() {
     exit 1
   fi
 
-  if ! grep -q '--atlas-w:' "$guide/assets/icons/icons.css"; then
+  if ! grep -qF -- '--atlas-w:' "$guide/assets/icons/icons.css"; then
     echo "::error::icons.css missing sprite CSS variables (--atlas-w). Re-export with current minecraft-web-export."
     exit 1
   fi
 
-  if ! grep -q '--sprite-x:' "$guide/assets/icons/icons.css"; then
+  if ! grep -qF -- '--sprite-x:' "$guide/assets/icons/icons.css"; then
     echo "::error::icons.css missing sprite CSS variables (--sprite-x). Re-export with current minecraft-web-export."
     exit 1
   fi
