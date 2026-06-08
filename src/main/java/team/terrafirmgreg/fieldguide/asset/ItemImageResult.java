@@ -1,16 +1,86 @@
 package team.terrafirmgreg.fieldguide.asset;
 
 import lombok.Data;
+import team.terrafirmgreg.fieldguide.export.IconRef;
+
+import java.util.List;
 
 @Data
 public class ItemImageResult {
-    private final String path;
     private String name;
-    private final String key;// translation key
-    
+    private final String key;
+
+    /** Placeholder / direct PNG path (relative to language dir, no {@code ../}). */
+    private final String path;
+
+    /** Export atlas sprites via {@code *-icons.css}; single icon or carousel frames. */
+    private final List<IconRef> atlasIcons;
+
+    /** EMI tag slot ({@code data-tag-id}) when set. */
+    private final String emiTagId;
+
     public ItemImageResult(String path, String name, String key) {
+        this(path, name, key, null, null);
+    }
+
+    private ItemImageResult(String path, String name, String key, List<IconRef> atlasIcons, String emiTagId) {
         this.path = path;
         this.name = name;
         this.key = key;
+        this.atlasIcons = atlasIcons;
+        this.emiTagId = emiTagId;
     }
+
+    public static ItemImageResult legacy(String path, String name, String key) {
+        return new ItemImageResult(path, name, key, null, null);
+    }
+
+    public static ItemImageResult atlas(IconRef ref, String name, String key) {
+        return new ItemImageResult(null, name, key, List.of(ref), null);
+    }
+
+    public static ItemImageResult atlasCarousel(List<IconRef> refs, String name, String key) {
+        return new ItemImageResult(null, name, key, List.copyOf(refs), null);
+    }
+
+    public static ItemImageResult emiTag(String tagId, String name) {
+        return new ItemImageResult(null, name, null, null, tagId);
+    }
+
+    public boolean isEmiTag() {
+        return emiTagId != null && !emiTagId.isBlank() && !isAtlas();
+    }
+
+    public boolean hasTagClickId() {
+        return emiTagId != null && !emiTagId.isBlank();
+    }
+
+    public ItemImageResult withTagClickId(String tagId) {
+        return new ItemImageResult(path, name, key, atlasIcons, tagId);
+    }
+
+    public boolean isAtlas() {
+        return atlasIcons != null && !atlasIcons.isEmpty();
+    }
+
+    public boolean isCarousel() {
+        return atlasIcons != null && atlasIcons.size() > 1;
+    }
+
+    public List<IconRef> getAtlasIcons() {
+        return atlasIcons == null ? List.of() : atlasIcons;
+    }
+
+    public IconRef primaryAtlas() {
+        return getAtlasIcons().get(0);
+    }
+
+    /** Path for og:image / preview (site-root relative, e.g. {@code assets/icons/atlas-000.png}). */
+    public String previewPath() {
+        if (isAtlas()) {
+            return primaryAtlas().relativeAtlasPath();
+        }
+        return path;
+    }
+
 }

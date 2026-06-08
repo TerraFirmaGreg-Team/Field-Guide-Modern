@@ -1,0 +1,303 @@
+:root {
+    --table-bg-dark-color: #dfe2e5;
+    --table-bg-light-color: #f8f8f8;
+}
+
+#nav-primary {
+    background-color: var(--bs-gray-800);
+}
+
+.card-body > *:last-child {
+    margin-bottom: 0;
+}
+
+.card-body ul {
+    padding-left: 1.5rem;
+}
+
+.card-body li {
+    margin-bottom: 0.25rem;
+}
+
+.card-body li[class^="patchouli-li-"] {
+    list-style-type: circle;
+}
+
+.card-body li.patchouli-li-2 { margin-left: 1em; }
+.card-body li.patchouli-li-3 { margin-left: 2em; }
+.card-body li.patchouli-li-4 { margin-left: 3em; }
+
+.carousel-inner img {
+    margin: auto;
+}
+
+img.icon-title {
+    width: calc(var(--field-guide-icon-title) * 1px);
+    height: calc(var(--field-guide-icon-title) * 1px);
+    image-rendering: pixelated;
+}
+
+img.entry-card-icon {
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+.handbook-tag-click {
+    cursor: pointer;
+}
+
+/* Handbook icon atlas sprites (see assets/icons/icons.css) */
+:root {
+    --field-guide-icon-cell: 32;
+    --field-guide-icon-title: 48;
+    --field-guide-icon-recipe: 64;
+}
+.icon-carousel {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Handbook carousels only — do not break EMI recipe slot carousels */
+.icon-carousel:not(.emi-slot-carousel) > span {
+    display: none;
+}
+
+.icon-carousel:not(.emi-slot-carousel) > span.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .field-guide-icon-atlas.icon-slot-32.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .field-guide-icon-atlas.icon-slot-48.icon-carousel-active,
+.icon-carousel:not(.emi-slot-carousel) > .field-guide-icon-atlas.icon-slot-64.icon-carousel-active {
+    display: inline-block;
+}
+
+/* EMI recipe cards: center the whole card in the entry column (not slot icons) */
+.emi-recipe {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* EMI tag wrappers and legacy slot containers */
+.icon-slot-32 {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    overflow: hidden;
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.field-guide-icon-atlas.icon-slot-32 {
+    overflow: hidden;
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* Unified field-guide atlas: slot class on the sprite element scales via icons.css vars */
+.field-guide-icon-atlas.icon-slot-32[data-item] {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    background-size: calc(var(--atlas-w) * 1px) calc(var(--atlas-h) * 1px) !important;
+    background-position: calc(var(--sprite-x) * -1px) calc(var(--sprite-y) * -1px) !important;
+    transform: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.field-guide-icon-atlas.icon-slot-48[data-item] {
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    background-size: calc(var(--atlas-w) * var(--field-guide-icon-title) / var(--field-guide-icon-cell) * 1px)
+        calc(var(--atlas-h) * var(--field-guide-icon-title) / var(--field-guide-icon-cell) * 1px) !important;
+    background-position: calc(var(--sprite-x) * var(--field-guide-icon-title) / var(--field-guide-icon-cell) * -1px)
+        calc(var(--sprite-y) * var(--field-guide-icon-title) / var(--field-guide-icon-cell) * -1px) !important;
+    transform: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.field-guide-icon-atlas.icon-slot-64[data-item] {
+    width: 64px !important;
+    min-width: 64px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    background-size: calc(var(--atlas-w) * var(--field-guide-icon-recipe) / var(--field-guide-icon-cell) * 1px)
+        calc(var(--atlas-h) * var(--field-guide-icon-recipe) / var(--field-guide-icon-cell) * 1px) !important;
+    background-position: calc(var(--sprite-x) * var(--field-guide-icon-recipe) / var(--field-guide-icon-cell) * -1px)
+        calc(var(--sprite-y) * var(--field-guide-icon-recipe) / var(--field-guide-icon-cell) * -1px) !important;
+    transform: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.icon-carousel.entry-card-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Entry page title atlas: 48×48 slot on the sprite element itself */
+.field-guide-icon-atlas.icon-slot-48 {
+    overflow: hidden;
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* Recipe slots: 64×64 */
+.field-guide-icon-atlas.icon-slot-64 {
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@media only screen and (min-width: 500px) {
+    .carousel-control-next,
+    .carousel-control-prev {
+        filter: invert(100%);
+    }
+}
+
+/* Item Tooltips - used for patchouli:item_spotlight pages */
+
+.item-header img,
+.item-header .field-guide-icon-atlas.icon-slot-32,
+.item-header .handbook-tag-click {
+    float: left;
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+}
+
+.item-header a, .item-header h4, .item-header h5, .item-header p {
+    position: relative;
+    top: 2px;
+    left: 42px;
+}
+
+.item-header span {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+}
+
+.minecraft-gray     { color: #AAAAAA; }
+.minecraft-dark-red { color: #AA0000; }
+.minecraft-red      { color: #FF5555; }
+.minecraft-gold     { color: #FFAA00; }
+.minecraft-yellow   { color: #FFFF55; text-shadow: 0px 0px 4px #444; }
+.minecraft-white    { color: #FFFFFF; text-shadow: 0px 0px 4px #444; }
+
+html[data-bs-theme="dark"] .minecraft-yellow,
+html[data-bs-theme="dark"] .minecraft-white {
+    text-shadow: none;
+}
+
+/* Minecraft Font, for count/amount labels on items */
+
+@font-face {
+    font-family: Minecraft;
+    src: url("font.otf") format("opentype");
+}
+
+/* Tables */
+figure {
+    overflow-x: auto;
+    margin: 1.2em 0;
+    max-width: calc(100% + 16px);
+    padding: 0;
+}
+figure > table {
+    margin: 0;
+}
+
+table {
+    padding: 0;
+    word-break: initial;
+    margin: 0.8em 0;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    text-align: left;
+}
+table tr {
+    border: 1px solid #cccccc;
+    margin: 0;
+    padding: 0;
+}
+table thead, table tr:nth-child(2n) {
+    background-color: #eeeeee;
+}
+table thead, table tr {
+    break-inside: avoid;
+    break-after: auto;
+}
+table th {
+    font-weight: bold;
+    border: 1px solid #cccccc;
+    border-bottom: 0;
+    margin: 0;
+    padding: 2px 4px;
+}
+table td {
+    border: 1px solid #cccccc;
+    margin: 0;
+    padding: 2px 4px;
+}
+table th:first-child, table td:first-child { margin-top: 0; }
+table th:last-child, table td:last-child { margin-bottom: 0; }
+table tr th { border-bottom: 0; }
+
+
+.glb-viewer-container {
+    margin: 20px auto;
+    background: transparent;
+    height: 400px;
+    position: relative;
+    transition: all 0.3s ease;
+    width: 80%;
+    max-width: 600px;
+}
+
+.glb-viewer-container .glb-viewer {
+    width: 100%;
+    height: 100%;
+}
+
+.glb-viewer-container.drag-over {
+    border-color: #007bff;
+    background: #e3f2fd;
+    transform: scale(1.02);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .glb-viewer-container {
+        height: 300px;
+        width: 95%;
+    }
+}
+
+/* 深色主题支持 */
+[data-bs-theme="dark"] .glb-viewer-container {
+    background: transparent;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .glb-viewer-container.drag-over {
+    background: #1e3a5f;
+    border-color: #0d6efd;
+}

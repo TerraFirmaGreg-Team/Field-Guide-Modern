@@ -112,6 +112,10 @@ public class BookEntry implements Comparable<BookEntry> {
 
     private transient String iconPath = "";
     private transient String iconName = "";
+    /** Pre-rendered header icon HTML (atlas span or legacy img). */
+    private transient String iconHeaderHtml = "";
+    /** Pre-rendered card icon HTML for category listing. */
+    private transient String iconCardHtml = "";
 
     private transient AssetSource assetSource;
 

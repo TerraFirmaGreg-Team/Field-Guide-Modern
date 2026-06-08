@@ -23,7 +23,7 @@ public class BlockStateVariantMapAdapter extends TypeAdapter<Map<String, List<Va
             out.name(entry.getKey());
             List<Variant> variants = entry.getValue();
             if (variants.size() == 1) {
-                writeVariant(out, variants.getFirst());
+                writeVariant(out, variants.get(0));
             } else {
                 out.beginArray();
                 for (Variant variant : variants) {

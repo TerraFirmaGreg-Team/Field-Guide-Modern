@@ -1,19 +1,15 @@
 package team.terrafirmgreg.fieldguide.asset;
 
-import lombok.Data;
-
-/**
- * 物品堆结果类
- */
-@Data
 public class ItemStackResult {
-    public final String path;
-    public final String name;
+    public final ItemImageResult icon;
     public final int count;
-    
-    public ItemStackResult(String path, String name, int count) {
-        this.path = path;
-        this.name = name;
+
+    public ItemStackResult(ItemImageResult icon, int count) {
+        this.icon = icon;
         this.count = count;
+    }
+
+    public String getName() {
+        return icon.getName();
     }
 }

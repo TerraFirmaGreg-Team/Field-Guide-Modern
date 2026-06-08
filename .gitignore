@@ -1,6 +1,11 @@
 .cache/
-.gradle/
+/export/
+/.local/
+/.gradle/
+/.gradle-local/
+/HeadlessMC/
 output/
+build.json
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

@@ -1,0 +1,342 @@
+package team.terrafirmgreg.fieldguide.site;
+
+import freemarker.template.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import team.terrafirmgreg.fieldguide.Constants;
+import team.terrafirmgreg.fieldguide.data.patchouli.Book;
+import team.terrafirmgreg.fieldguide.data.patchouli.BookCategory;
+import team.terrafirmgreg.fieldguide.data.patchouli.BookEntry;
+import team.terrafirmgreg.fieldguide.gson.JsonUtils;
+import team.terrafirmgreg.fieldguide.asset.ItemImageResult;
+import team.terrafirmgreg.fieldguide.localization.I18n;
+import team.terrafirmgreg.fieldguide.localization.Language;
+import team.terrafirmgreg.fieldguide.localization.LocalizationManager;
+import team.terrafirmgreg.fieldguide.render.IconMarkup;
+import team.terrafirmgreg.fieldguide.render.TextureRenderer;
+
+import java.io.*;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.regex.Pattern;
+
+@Slf4j
+public class SiteRenderer {
+
+    /** Keep in sync with {@code package.json} → {@code emi-recipe-renderer}. */
+    public static final String EMI_RENDERER_VERSION = "0.6.5";
+
+    /**
+     * External recipe viewer base (path + trailing slash). EMI item/tag clicks open
+     * {@code ?lang=<locale>&item=<id>} or {@code &tag=<id>} here. Override via
+     * {@code --recipe-book-base-url} or {@code RECIPE_BOOK_BASE_URL} in CI.
+     */
+    public static final String DEFAULT_RECIPE_BOOK_BASE_URL = "https://www.jmecn.net/TFG-Recipe-Viewer/";
+
+    private static final Pattern SEARCH_STRIP_PATTERN = Pattern.compile("\\$\\([^)]*\\)");
+
+    private final Configuration cfg;
+    private final LocalizationManager localizationManager;
+    private final String outputRootDir;
+    private final String recipeBookBaseUrl;
+
+    public SiteRenderer(LocalizationManager localizationManager, String outputRootDir) throws IOException {
+        this(localizationManager, outputRootDir, DEFAULT_RECIPE_BOOK_BASE_URL);
+    }
+
+    public SiteRenderer(
+            LocalizationManager localizationManager,
+            String outputRootDir,
+            String recipeBookBaseUrl) throws IOException {
+        this.localizationManager = localizationManager;
+        this.outputRootDir = outputRootDir;
+        this.recipeBookBaseUrl = recipeBookBaseUrl == null ? "" : recipeBookBaseUrl.trim();
+
+        cfg = new Configuration(Configuration.VERSION_2_3_32);
+        cfg.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "templates");
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setAutoEscapingPolicy(Configuration.DISABLE_AUTO_ESCAPING_POLICY);
+        cfg.setLogTemplateExceptions(false);
+        cfg.setWrapUncheckedExceptions(true);
+        cfg.setFallbackOnNullLoopVariable(false);
+    }
+
+    public void generate(Book book, TextureRenderer textureRenderer) throws Exception {
+        buildHomePage(book.getCategories());
+        buildSearchPage(book.getCategories());
+        saveSearchData(collectSearchTree(book.getCategories()));
+
+        for (BookCategory category : book.getCategories()) {
+            buildCategoryPage(category, book.getCategories(), textureRenderer);
+        }
+        log.info("Static site generated under {}", outputRootDir);
+    }
+
+    private List<Map<String, String>> collectSearchTree(List<BookCategory> categories) {
+        List<Map<String, String>> searchData = new ArrayList<>();
+        for (BookCategory category : categories) {
+            for (BookEntry entry : category.getEntries()) {
+                searchData.addAll(entry.getSearchTree());
+            }
+        }
+        return searchData;
+    }
+
+    public void generatePage(String templateName, String outputFileName, Map<String, Object> data)
+            throws IOException, TemplateException {
+        Template template = cfg.getTemplate(templateName);
+        Path outputPath = Paths.get(outputRootDir, localizationManager.getCurrentLanguage().getKey(), outputFileName);
+        FileUtils.createParentDirectories(outputPath.toFile());
+        try (Writer out = new OutputStreamWriter(Files.newOutputStream(outputPath), StandardCharsets.UTF_8)) {
+            template.process(data, out);
+        }
+    }
+
+    public void copyStaticFiles() throws IOException {
+        Path staticOut = Paths.get(outputRootDir, "static");
+        FileUtils.deleteDirectory(staticOut.toFile());
+        copyResourceDir("static", staticOut);
+        copySiteImages();
+
+        Path redirectDest = Paths.get(outputRootDir, "index.html");
+        if (copyClasspathResource("templates/redirect.html", redirectDest)) {
+            log.debug("Wrote root redirect from classpath to {}", redirectDest);
+        }
+    }
+
+    private static final List<String> SITE_IMAGES = List.of(
+            "placeholder_16.png",
+            "placeholder_64.png",
+            "splash.png");
+
+    /**
+     * Site UI images ({@code assets/textures} → {@code _images/}): splash and placeholders.
+     * Recipe frames (crafting/knapping) removed — EMI renders recipe cards.
+     */
+    private void copySiteImages() throws IOException {
+        Path textures = Paths.get("assets/textures");
+        if (!Files.isDirectory(textures)) {
+            log.warn("Missing assets/textures — site placeholders/splash will be broken ({})", textures.toAbsolutePath());
+            return;
+        }
+        Path dest = Paths.get(outputRootDir, "_images");
+        Files.createDirectories(dest);
+        int copied = 0;
+        for (String name : SITE_IMAGES) {
+            Path src = textures.resolve(name);
+            if (!Files.isRegularFile(src)) {
+                log.warn("Missing site image: {}", src.toAbsolutePath());
+                continue;
+            }
+            Files.copy(src, dest.resolve(name), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            copied++;
+        }
+        log.info("Copied {} site image(s) to {}/_images", copied, outputRootDir);
+    }
+
+    /** Copies {@code guide-export/assets/icons/} to site {@code assets/icons/}. */
+    public void copyHandbookIcons(Path exportRoot) throws IOException {
+        Path srcIcons = exportRoot.resolve("assets/icons");
+        if (!Files.isDirectory(srcIcons)) {
+            throw new IOException("Missing field-guide icons at " + srcIcons.toAbsolutePath());
+        }
+        Path destIcons = Paths.get(outputRootDir, "assets", "icons");
+        if (Files.exists(destIcons)) {
+            FileUtils.deleteDirectory(destIcons.toFile());
+        }
+        FileUtils.copyDirectory(srcIcons.toFile(), destIcons.toFile());
+        rewriteFieldGuideIconCss(destIcons);
+        log.info("Copied field-guide icons to {}", destIcons);
+    }
+
+    /** MWE emits {@code .icon-atlas}; rename so EMI footer CSS cannot override field-guide sprites. */
+    private static void rewriteFieldGuideIconCss(Path iconsRoot) throws IOException {
+        Path css = iconsRoot.resolve("icons.css");
+        if (!Files.isRegularFile(css)) {
+            return;
+        }
+        String content = Files.readString(css);
+        if (!content.contains(".icon-atlas")) {
+            return;
+        }
+        content = content.replace(".icon-atlas {", ".field-guide-icon-atlas {");
+        content = content.replace(".icon-atlas[", ".field-guide-icon-atlas[");
+        Files.writeString(css, content);
+    }
+
+    private void copyResourceDir(String resourceName, Path dest) throws IOException {
+        URL url = getClass().getClassLoader().getResource(resourceName);
+        if (url == null) {
+            log.warn("Missing classpath resource: {}", resourceName);
+            return;
+        }
+        if ("file".equals(url.getProtocol())) {
+            try {
+                Path src = Paths.get(url.toURI());
+                if (Files.isDirectory(src)) {
+                    FileUtils.copyDirectory(src.toFile(), dest.toFile());
+                }
+            } catch (java.net.URISyntaxException e) {
+                throw new IOException("Bad file resource URL for " + resourceName, e);
+            }
+            return;
+        }
+        if ("jar".equals(url.getProtocol())) {
+            copyResourceTreeFromJar(url, resourceName, dest);
+            return;
+        }
+        log.warn("Unsupported classpath URL for {}: {}", resourceName, url);
+    }
+
+    /** Copies a single classpath file (works inside fat jars). */
+    private boolean copyClasspathResource(String resourceName, Path dest) throws IOException {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourceName)) {
+            if (in == null) {
+                return false;
+            }
+            Files.createDirectories(dest.getParent());
+            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        }
+    }
+
+    private static void copyResourceTreeFromJar(URL jarResourceUrl, String resourcePrefix, Path dest)
+            throws IOException {
+        if (!(jarResourceUrl.openConnection() instanceof JarURLConnection connection)) {
+            throw new IOException("Not a jar resource URL: " + jarResourceUrl);
+        }
+        String prefix = resourcePrefix.endsWith("/") ? resourcePrefix : resourcePrefix + "/";
+        try (JarFile jar = connection.getJarFile()) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                String name = entry.getName();
+                if (!name.startsWith(prefix) || entry.isDirectory()) {
+                    continue;
+                }
+                String relative = name.substring(prefix.length());
+                Path target = dest.resolve(relative);
+                Files.createDirectories(target.getParent());
+                try (InputStream in = jar.getInputStream(entry)) {
+                    Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
+    public void buildHomePage(List<BookCategory> categories) throws IOException, TemplateException {
+        Map<String, Object> data = basePageData("..");
+        data.put("text_index", localizationManager.translate(I18n.INDEX));
+        data.put("text_home", localizationManager.translate(I18n.HOME));
+        data.put("text_github", localizationManager.translate(I18n.GITHUB));
+        data.put("text_discord", localizationManager.translate(I18n.DISCORD));
+        data.put("text_categories", localizationManager.translate(I18n.CATEGORIES));
+        data.put("text_contents", localizationManager.translate(I18n.CONTENTS));
+        data.put("index", "#");
+        data.put("categories", categories);
+        generatePage("home.ftl", "index.html", data);
+    }
+
+    public void buildSearchPage(List<BookCategory> categories) throws IOException, TemplateException {
+        Map<String, Object> data = basePageData("..");
+        data.put("text_index", localizationManager.translate(I18n.INDEX));
+        data.put("text_contents", localizationManager.translate(I18n.CONTENTS));
+        data.put("text_github", localizationManager.translate(I18n.GITHUB));
+        data.put("text_discord", localizationManager.translate(I18n.DISCORD));
+        data.put("index", "./");
+        data.put("categories", categories);
+        generatePage("search.ftl", "search.html", data);
+    }
+
+    public void saveSearchData(List<Map<String, String>> searchTree) throws IOException {
+        for (Map<String, String> result : searchTree) {
+            result.put("content", searchStrip(result.get("content")));
+        }
+        JsonUtils.writeFile(
+                Paths.get(outputRootDir, localizationManager.getCurrentLanguage().getKey(), "search_index.json").toFile(),
+                searchTree);
+    }
+
+    public void buildCategoryPage(BookCategory cat, List<BookCategory> categories, TextureRenderer textureRenderer)
+            throws IOException, TemplateException {
+        for (BookEntry entry : cat.getEntries()) {
+            refreshCategoryCardIcon(entry, textureRenderer);
+        }
+        Map<String, Object> data = basePageData("..");
+        data.put("long_title", cat.getName() + " | " + localizationManager.translate(I18n.SHORT_TITLE));
+        data.put("short_description", cat.getName());
+        data.put("index", "./");
+        data.put("categories", categories);
+        data.put("current_category", cat);
+        generatePage("category.ftl", cat.getId() + ".html", data);
+        buildEntryPages(cat, categories);
+    }
+
+    /** Category pages live one level shallower than entry pages; card icons need {@code ../} not {@code ../../}. */
+    private void refreshCategoryCardIcon(BookEntry entry, TextureRenderer textureRenderer) {
+        try {
+            ItemImageResult itemSrc = textureRenderer.getItemImage(entry.getIcon(), false);
+            if (itemSrc != null) {
+                entry.setIconCardHtml(IconMarkup.img(itemSrc, "entry-card-icon me-2", "../"));
+            }
+        } catch (Exception e) {
+            log.warn("Category card icon skipped for {}: {}", entry.getId(), e.getMessage());
+        }
+    }
+
+    private void buildEntryPages(BookCategory cat, List<BookCategory> categories) throws IOException, TemplateException {
+        for (BookEntry entry : cat.getEntries()) {
+            Map<String, Object> data = basePageData("../..");
+            data.put("long_title", entry.getName() + " | " + localizationManager.translate(I18n.SHORT_TITLE));
+            data.put("short_description", entry.getName());
+            data.put("preview_image", cleanImagePath(entry.getIconPath()));
+            data.put("index", "../");
+            data.put("categories", categories);
+            data.put("current_category", cat);
+            data.put("current_entry", entry);
+            generatePage("entry.ftl", entry.getId() + ".html", data);
+        }
+    }
+
+    private Map<String, Object> basePageData(String root) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("handbookIconsRoot", handbookIconsRoot(root));
+        data.put("emiRendererVersion", EMI_RENDERER_VERSION);
+        data.put("emiBundleRoot", root + "/emi");
+        data.put("recipeBookBaseUrl", recipeBookBaseUrl);
+        data.put("title", localizationManager.translate(I18n.TITLE));
+        data.put("long_title", localizationManager.translate(I18n.TITLE) + " | " + Constants.MC_VERSION);
+        data.put("short_description", localizationManager.translate(I18n.HOME));
+        data.put("preview_image", "splash.png");
+        data.put("root", root);
+        data.put("text_index", localizationManager.translate(I18n.INDEX));
+        data.put("text_contents", localizationManager.translate(I18n.CONTENTS));
+        data.put("text_github", localizationManager.translate(I18n.GITHUB));
+        data.put("text_discord", localizationManager.translate(I18n.DISCORD));
+        data.put("current_lang", localizationManager.getCurrentLanguage());
+        data.put("languages", Language.asList());
+        return data;
+    }
+
+    public static String searchStrip(String input) {
+        return SEARCH_STRIP_PATTERN.matcher(input).replaceAll("");
+    }
+
+    /** {@code root} is the path from the page back to the site root (e.g. {@code ..} or {@code ../..}). */
+    private static String handbookIconsRoot(String root) {
+        return root + "/assets/icons";
+    }
+
+    private static String cleanImagePath(String iconPath) {
+        if (iconPath == null) {
+            return "";
+        }
+        return iconPath.replace("../../", "").replace("..\\..\\", "");
+    }
+}

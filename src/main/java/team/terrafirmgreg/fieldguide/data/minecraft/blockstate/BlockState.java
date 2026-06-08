@@ -82,7 +82,7 @@ public class BlockState {
      */
     public static Variant selectByWeight(List<Variant> variants) {
         if (variants.size() == 1) {
-            return variants.getFirst();
+            return variants.get(0);
         }
 
         // 计算总权重
@@ -101,7 +101,7 @@ public class BlockState {
         }
 
         // 如果权重计算有问题，返回第一个
-        return variants.getFirst();
+        return variants.get(0);
     }
 
     public List<Variant> getDefault() {

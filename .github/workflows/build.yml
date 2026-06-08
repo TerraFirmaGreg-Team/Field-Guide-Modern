@@ -1,78 +1,283 @@
-name: Build Project
+name: Build field guide
 
 on:
-  push:
-    branches: ["main"]
   schedule:
     - cron: "0 0 * * *"
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+  push:
+    branches: ["main"]
+    paths:
+      - "ci/**"
+      - "src/**"
+      - "gradle.properties"
+      - "settings.gradle"
+      - "build.gradle"
+      - "gradle/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+    inputs:
+      modpack_tag:
+        description: Modpack-Modern release tag
+        required: false
+        default: ""
+      fge_version:
+        description: field-guide-export release tag
+        required: false
+        default: ""
+      mwe_version:
+        description: minecraft-web-export release tag
+        required: false
+        default: ""
+      bundle_id:
+        description: Export bundle id (deploy only)
+        required: false
+        default: ""
+      export_warmup_ticks:
+        description: Ticks after EMI ready before export
+        required: false
+        default: ""
+      force_export:
+        description: Re-export guide bundle even if modpack/FGE/MWE unchanged
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
-  group: "build"
-  cancel-in-progress: false
+  group: field-guide-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      export_needed: ${{ steps.decision.outputs.export_needed }}
+      deploy_needed: ${{ steps.changes.outputs.deploy_needed }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v4
         with:
-          submodules: true
           fetch-depth: 1
 
-      - name: Update submodule to latest
-        run: |
-          git submodule update --init --remote --recursive
-          git submodule status
+      - name: Load config
+        run: bash ci/run.sh env
+
+      - name: Resolve bundle for cache probe
+        id: bundle
+        env:
+          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
+        run: bash ci/run.sh prepare-check-bundle
+
+      - name: Check build.json
+        id: changes
+        env:
+          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
+          FGE_TAG: ${{ github.event.inputs.fge_version }}
+          MWE_TAG: ${{ github.event.inputs.mwe_version }}
+          FORCE_EXPORT: ${{ github.event.inputs.force_export }}
+        run: bash ci/run.sh check-build-changes
+
+      - name: Probe export cache
+        id: export_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .export-cache-probe
+          key: ${{ steps.bundle.outputs.export_cache_key }}
+          lookup-only: true
+
+      - name: Finalize export decision
+        id: decision
+        env:
+          VERSION_EXPORT_NEEDED: ${{ steps.changes.outputs.export_needed }}
+          EXPORT_CACHE_HIT: ${{ steps.export_cache.outputs.cache-hit }}
+          EXPORT_CACHE_KEY: ${{ steps.bundle.outputs.export_cache_key }}
+        run: bash ci/run.sh finalize-export-decision
+
+  export:
+    needs: check
+    if: needs.check.outputs.export_needed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    outputs:
+      export_cache_key: ${{ steps.metadata.outputs.export_cache_key }}
+      bundle_id: ${{ steps.metadata.outputs.bundle_id }}
+    permissions:
+      contents: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Prepare export
+        id: metadata
+        env:
+          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
+          FGE_TAG: ${{ github.event.inputs.fge_version }}
+          MWE_TAG: ${{ github.event.inputs.mwe_version }}
+        run: bash ci/run.sh prepare-export
 
       - name: Setup Java
-        uses: actions/setup-java@v5.0.0
+        uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5.0.0
-        with:
-          cache-cleanup: always
-          cache-disabled: true
-
-      - name: Grant Execute Permission For Gradlew
-        run: chmod +x gradlew
+      - name: Export languages
+        id: export_languages
+        run: bash ci/run.sh export-languages
 
       - name: Fetch mods
-        run: |
-          cd Modpack-Modern
-          java -jar pakku.jar fetch
+        working-directory: ${{ env.MODPACK_DIR }}
+        run: java -jar pakku.jar fetch
 
-      - name: Build jar
-        run: ./gradlew clean build
-
-      - name: Build Website
-        run: |
-          rm -rf output
-          java -jar build/libs/field-guide-*.jar -i Modpack-Modern -o output
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Restore HMC cache
+        id: hmc-restore
+        uses: actions/cache/restore@v4
         with:
-          path: 'output'
+          path: ${{ env.RUNNER_HOME }}/.minecraft
+          key: hmc-${{ env.MC_VERSION }}-forge-${{ env.FORGE_BUILD }}
+          restore-keys: |
+            hmc-${{ env.MC_VERSION }}-forge-
+            hmc-${{ env.MC_VERSION }}-
+
+      - name: Restore world cache
+        id: world-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.MODPACK_DIR }}/saves/emi-export
+          key: emi-export-${{ env.MC_VERSION }}-${{ hashFiles(format('{0}/pakku-lock.json', env.MODPACK_DIR)) }}
+          restore-keys: emi-export-${{ env.MC_VERSION }}-
+
+      - name: Prepare game
+        run: bash ci/run.sh prepare-game
+
+      - name: Run export
+        env:
+          ALSOFT_DRIVERS: "null"
+          EXPORT_WARMUP: ${{ github.event.inputs.export_warmup_ticks || env.EXPORT_WARMUP_TICKS }}
+          MWE_JVM_FLAGS: >-
+            -Xmx12G
+            -Xms4G
+            -XX:+UseG1GC
+            -Djava.awt.headless=false
+            -Dmodernfix.config.mixin.feature.integrated_server_watchdog=false
+            -DminecraftWebExport.export.enabled=true
+            -DminecraftWebExport.runExportAndExit=true
+            -DminecraftWebExport.export.outputDir=${{ env.EXPORT_ROOT }}
+            -DminecraftWebExport.exportMode=scoped
+            -DminecraftWebExport.exportWorldName=emi-export
+            -DminecraftWebExport.exportWarmupTicks=${{ env.EXPORT_WARMUP }}
+            -DminecraftWebExport.exportWorldDelayTicks=${{ env.EXPORT_WORLD_DELAY_TICKS }}
+            -DminecraftWebExport.exportTimeoutSeconds=${{ env.EXPORT_TIMEOUT_SECONDS }}
+            -Dfieldguide.exportLanguages=${{ steps.export_languages.outputs.export_languages }}
+        run: bash ci/run.sh launch-export
+
+      - name: Save world cache
+        if: success() && steps.world-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.MODPACK_DIR }}/saves/emi-export
+          key: ${{ steps.world-restore.outputs.cache-primary-key }}
+
+      - name: Save HMC cache
+        if: success() && steps.hmc-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RUNNER_HOME }}/.minecraft
+          key: ${{ steps.hmc-restore.outputs.cache-primary-key }}
+
+      - name: Package export
+        env:
+          BUNDLE_ID: ${{ steps.metadata.outputs.bundle_id }}
+          MODPACK_TAG: ${{ steps.metadata.outputs.modpack_tag }}
+        run: bash ci/run.sh finalize-export
+
+      - name: Save export cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            export-meta/
+            guide-export-${{ steps.metadata.outputs.bundle_id }}.tar.gz
+          key: ${{ steps.metadata.outputs.export_cache_key }}
 
   deploy:
-    needs: build
+    needs: [check, export]
+    if: >-
+      always() &&
+      needs.export.result != 'failure' &&
+      needs.export.result != 'cancelled' &&
+      (
+        github.event_name == 'push' ||
+        needs.check.outputs.deploy_needed == 'true'
+      )
     runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      actions: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Deploy to GitHub Pages
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Load config
+        run: bash ci/run.sh env
+
+      - name: Resolve bundle
+        id: metadata
+        env:
+          BUNDLE_ID_INPUT: ${{ github.event.inputs.bundle_id }}
+          MODPACK_TAG: ${{ github.event.inputs.modpack_tag }}
+        run: bash ci/run.sh prepare-deploy
+
+      - name: Restore export cache
+        id: export_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            export-meta/
+            guide-export-${{ steps.metadata.outputs.bundle_id }}.tar.gz
+          key: ${{ needs.export.outputs.export_cache_key || steps.metadata.outputs.export_cache_key }}
+          fail-on-cache-miss: true
+
+      - name: Resolve versions
+        run: bash ci/run.sh print-versions
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Extract export bundle
+        run: bash ci/run.sh extract-bundle
+
+      - name: Build site
+        run: bash ci/run.sh build-site
+
+      - name: Record build versions
+        run: bash ci/run.sh record-build-versions
+
+      - name: Publish site release
+        run: bash ci/run.sh publish-site-release
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ env.SITE_OUTPUT_DIR }}
+
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4

@@ -1,6 +1,6 @@
 package team.terrafirmgreg.fieldguide.render;
 
-import team.terrafirmgreg.fieldguide.asset.AssetLoader;
+import team.terrafirmgreg.fieldguide.export.ExportModelLoader;
 import team.terrafirmgreg.fieldguide.data.minecraft.blockmodel.BlockModel;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,7 +9,7 @@ import java.util.List;
 @Slf4j
 public class BlockStateModelBuilder extends BaseModelBuilder {
 
-    public BlockStateModelBuilder(AssetLoader assetLoader) {
+    public BlockStateModelBuilder(ExportModelLoader assetLoader) {
         super(assetLoader);
     }
 

@@ -1,50 +1,35 @@
 plugins {
     id 'java'
-    id 'application'
 }
 
 group = 'team.terrafirmgreg'
-version = '1.0.0'
+version = project.findProperty('site_version') ?: '1.0.0'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
 repositories {
     mavenCentral()
-
-    maven { url = 'https://maven.blamejared.com' }
 }
 
 dependencies {
-    // 命令行工具
-    implementation 'info.picocli:picocli:4.7.1'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'com.google.guava:guava:32.1.2-jre'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
 
-    // common library
+    implementation 'info.picocli:picocli:4.7.1'
+    implementation 'commons-io:commons-io:2.20.0'
+    implementation 'org.freemarker:freemarker:2.3.32'
+    implementation 'ch.qos.logback:logback-classic:1.5.13'
+
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
-    implementation 'commons-io:commons-io:2.20.0'
-    implementation 'commons-codec:commons-codec:1.19.0'
-    implementation 'org.apache.commons:commons-lang3:3.18.0'
-    implementation 'com.google.guava:guava:32.1.2-jre'
-    implementation 'com.google.code.gson:gson:2.13.1'
-
-    // resolve forge mod dependencies
-    implementation 'net.vieiro:toml-java:13.4.2'
-    implementation 'org.jgrapht:jgrapht-core:1.5.2'
-
-    implementation 'gov.nist.math:jama:1.0.3'
-    implementation 'com.madgag:animated-gif-lib:1.4'
-    implementation 'org.freemarker:freemarker:2.3.32'
-
-    // logging
-    implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation 'ch.qos.logback:logback-classic:1.5.13'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testCompileOnly 'org.projectlombok:lombok:1.18.38'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -55,37 +40,39 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 test {
+    workingDir = projectDir
     useJUnitPlatform()
-
     testLogging {
-        events "passed", "skipped", "failed"
+        events 'passed', 'skipped', 'failed'
         showExceptions = true
-        exceptionFormat = "full"
-        showCauses = true
-        showStackTraces = true
+        exceptionFormat = 'full'
     }
-
     reports.html.required = false
+}
 
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+tasks.register('writeExportLanguagesFile', JavaExec) {
+    group = 'field guide'
+    description = 'Write export locale codes from Language enum to build/export-languages.txt (CI → -Dfieldguide.exportLanguages)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'team.terrafirmgreg.fieldguide.localization.ExportLanguages'
+    args = [layout.buildDirectory.file('export-languages.txt').get().asFile.absolutePath]
+}
+
+tasks.register('printExportLanguages', JavaExec) {
+    group = 'field guide'
+    description = 'Print comma-separated export locale codes from Language enum'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'team.terrafirmgreg.fieldguide.localization.ExportLanguages'
 }
 
 jar {
-    archiveBaseName = 'field-guide-tfg'
-    archiveVersion = version
-
+    archiveBaseName = 'field-guide-site'
     manifest {
-        attributes(
-                'Main-Class': 'team.terrafirmgreg.fieldguide.Main'
-        )
+        attributes('Main-Class': 'team.terrafirmgreg.fieldguide.site.SiteGenerator')
     }
-
+    dependsOn configurations.runtimeClasspath
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-test {
-    useJUnitPlatform()
 }

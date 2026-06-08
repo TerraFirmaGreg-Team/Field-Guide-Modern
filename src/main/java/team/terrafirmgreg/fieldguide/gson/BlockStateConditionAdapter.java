@@ -19,39 +19,35 @@ public class BlockStateConditionAdapter extends TypeAdapter<Condition> {
 
     @Override
     public void write(JsonWriter out, Condition value) throws IOException {
-        // 序列化，根据不同的子类来写
-        switch (value) {
-            case AndCondition and -> {
-                out.beginObject();
-                out.name("AND");
-                out.beginArray();
-                for (Condition condition : and.getAdd()) {
-                    this.write(out, condition);
-                }
-                out.endArray();
-                out.endObject();
+        if (value instanceof AndCondition and) {
+            out.beginObject();
+            out.name("AND");
+            out.beginArray();
+            for (Condition condition : and.getAdd()) {
+                this.write(out, condition);
             }
-            case OrCondition or -> {
-                out.beginObject();
-                out.name("OR");
-                out.beginArray();
-                for (Condition condition : or.getOr()) {
-                    this.write(out, condition);
-                }
-                out.endArray();
-                out.endObject();
+            out.endArray();
+            out.endObject();
+        } else if (value instanceof OrCondition or) {
+            out.beginObject();
+            out.name("OR");
+            out.beginArray();
+            for (Condition condition : or.getOr()) {
+                this.write(out, condition);
             }
-            case PropertyCondition property -> {
-                out.beginObject();
-                if (property.getConditions() != null) {
-                    for (Map.Entry<String, String> entry : property.getConditions().entrySet()) {
-                        out.name(entry.getKey());
-                        out.value(entry.getValue());
-                    }
+            out.endArray();
+            out.endObject();
+        } else if (value instanceof PropertyCondition property) {
+            out.beginObject();
+            if (property.getConditions() != null) {
+                for (Map.Entry<String, String> entry : property.getConditions().entrySet()) {
+                    out.name(entry.getKey());
+                    out.value(entry.getValue());
                 }
-                out.endObject();
             }
-            default -> throw new IllegalArgumentException("Unknown condition type: " + value.getClass());
+            out.endObject();
+        } else {
+            throw new IllegalArgumentException("Unknown condition type: " + value.getClass());
         }
     }
 

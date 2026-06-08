@@ -52,6 +52,7 @@ public class LexiconPageAdapter implements JsonDeserializer<BookPage> {
 		pageTypes.put("tfc:multimultiblock", PageMultiMultiblock.class);
 		pageTypes.put("tfc:table", PageTable.class);
 		pageTypes.put("tfc:table_small", PageTable.class);
+		pageTypes.put("tfc:sns/better_anvil_recipe", PageBetterAnvil.class);
 	}
 
 	@Override

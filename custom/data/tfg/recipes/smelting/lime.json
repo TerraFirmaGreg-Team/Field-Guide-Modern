@@ -1,9 +1,0 @@
-{
-  "type": "smelting",
-  "ingredient": {
-    "item": "tfc:powder/flux"
-  },
-  "result": {
-    "item": "tfc:powder/lime"
-  }
-}
