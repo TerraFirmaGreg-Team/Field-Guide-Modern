@@ -4,7 +4,12 @@
 set -euo pipefail
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CI_SCRIPTS="${CI_DIR}/scripts"
 FGM_ROOT="$(cd "$CI_DIR/.." && pwd)"
+
+ci_node() {
+  node "$CI_SCRIPTS/$1" "${@:2}"
+}
 
 # GitHub semver release resolution (git ls-remote; empty ci/build.env pin = latest tag).
 github_repo_git_url() {
@@ -142,7 +147,223 @@ load_config() {
       printf 'SITE_OUTPUT_DIR=%s\n' "${SITE_OUTPUT_DIR:-output}"
       printf 'RECIPE_BOOK_BASE_URL=%s\n' "${RECIPE_BOOK_BASE_URL:-}"
       printf 'EXPORT_ARTIFACT_NAME=%s\n' "${EXPORT_ARTIFACT_NAME:-field-guide}"
+      printf 'EXPORT_CACHE_KEY_PREFIX=%s\n' "${EXPORT_CACHE_KEY_PREFIX:-fge-export}"
+      printf 'SITE_RELEASE_ASSET_NAME=%s\n' "${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar}"
+      printf 'SITE_RELEASE_HASH_LENGTH=%s\n' "${SITE_RELEASE_HASH_LENGTH:-7}"
     } >> "$GITHUB_ENV"
+  fi
+}
+
+_normalize_version_ref() {
+  echo "${1#v}"
+}
+
+resolve_hmc_version() {
+  load_config
+  echo "${HMC_VERSION:?HMC_VERSION required}"
+}
+
+resolve_build_version_refs() {
+  load_config
+
+  if [[ -z "${MODPACK_TAG:-}" ]]; then
+    unset MODPACK_TAG
+  fi
+
+  BUILD_REF_MODPACK="$(_normalize_version_ref "$(resolve_modpack_tag)")" || return 1
+  BUILD_REF_FGE="$(_normalize_version_ref "$(resolve_fge_tag)")" || return 1
+  BUILD_REF_MWE="$(_normalize_version_ref "$(resolve_mwe_tag)")" || return 1
+  BUILD_REF_HMC="$(_normalize_version_ref "$(resolve_hmc_version)")" || return 1
+}
+
+resolve_build_json_url() {
+  if [[ -n "${BUILD_JSON_URL:-}" ]]; then
+    echo "$BUILD_JSON_URL"
+    return 0
+  fi
+  if [[ -n "${GITHUB_REPOSITORY:-}" ]]; then
+    echo "https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/build.json"
+    return 0
+  fi
+  return 1
+}
+
+fetch_recorded_build_json() {
+  local dest="${1:?dest path required}"
+  local url local_site
+
+  if url="$(resolve_build_json_url 2>/dev/null)"; then
+    if curl -fsSL --retry 2 --retry-delay 1 "$url" -o "$dest" 2>/dev/null; then
+      echo "Loaded published build.json from ${url}" >&2
+      return 0
+    fi
+    echo "No published build.json at ${url} — first deploy or site not ready" >&2
+  fi
+
+  local_site="${FGM_ROOT}/${SITE_OUTPUT_DIR:-output}/build.json"
+  if [[ -f "$local_site" ]]; then
+    cp "$local_site" "$dest"
+    echo "Using local ${local_site}" >&2
+    return 0
+  fi
+
+  echo '{}' > "$dest"
+}
+
+_write_build_versions_json() {
+  local out="${1:?output path required}"
+  local bundle_id="${BUNDLE_ID:?BUNDLE_ID required}"
+  local hash_len="${SITE_RELEASE_HASH_LENGTH:-7}"
+  resolve_build_version_refs || return 1
+  ci_node write-build-versions.mjs \
+    "$BUILD_REF_MODPACK" \
+    "$BUILD_REF_FGE" \
+    "$BUILD_REF_MWE" \
+    "$BUILD_REF_HMC" \
+    "$bundle_id" \
+    "$hash_len" \
+    "$out"
+}
+
+check_build_changes() {
+  local build_json
+  build_json="$(mktemp)"
+  resolve_build_version_refs || exit 1
+  fetch_recorded_build_json "$build_json"
+
+  ci_node check-build-changes.mjs \
+    "$build_json" \
+    "$BUILD_REF_MODPACK" \
+    "$BUILD_REF_FGE" \
+    "$BUILD_REF_MWE" \
+    "$BUILD_REF_HMC"
+  rm -f "$build_json"
+}
+
+record_build_versions() {
+  local site_dir="${FGM_ROOT}/${SITE_OUTPUT_DIR:-output}"
+  local build_json="${BUILD_JSON:-$site_dir/build.json}"
+  mkdir -p "$site_dir"
+  _write_build_versions_json "$build_json"
+  echo "Recorded build versions → ${build_json} (deployed with site)"
+  cat "$build_json"
+}
+
+publish_site_release() {
+  load_config
+
+  local site_dir="${FGM_ROOT}/${SITE_OUTPUT_DIR:-output}"
+  local build_json="$site_dir/build.json"
+  local asset_name="${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar}"
+  local archive="$FGM_ROOT/$asset_name"
+  local release_tag notes
+
+  if [[ ! -f "$build_json" ]]; then
+    echo "::error::Missing ${build_json} — run record-build-versions first" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$site_dir/index.html" ]]; then
+    echo "::error::Missing ${site_dir}/index.html — run build-site first" >&2
+    exit 1
+  fi
+
+  release_tag="$(ci_node read-release-tag.mjs "$build_json")"
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "::error::gh CLI required to publish site release" >&2
+    exit 1
+  fi
+
+  if [[ -z "${GH_TOKEN:-}" ]]; then
+    echo "::error::GH_TOKEN is required to publish site release" >&2
+    exit 1
+  fi
+
+  echo "::group::Package site release (${release_tag})"
+  rm -f "$archive"
+  tar -cf "$archive" -C "$site_dir" .
+  echo "Created ${archive} ($(du -h "$archive" | awk '{print $1}'))"
+  echo "::endgroup::"
+
+  if gh release view "$release_tag" --repo "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}" >/dev/null 2>&1; then
+    echo "Release ${release_tag} already exists — skipping upload"
+    rm -f "$archive"
+    return 0
+  fi
+
+  notes="$(mktemp)"
+  cp "$build_json" "$notes"
+
+  echo "::group::Create GitHub Release ${release_tag}"
+  gh release create "$release_tag" "$archive" \
+    --repo "${GITHUB_REPOSITORY}" \
+    --title "Field guide site ${release_tag}" \
+    --notes-file "$notes"
+  rm -f "$notes" "$archive"
+  echo "Published ${asset_name} → release ${release_tag}"
+  echo "::endgroup::"
+}
+
+export_cache_key() {
+  local bundle_id="${1:?bundle_id required}"
+  printf '%s-%s' "${EXPORT_CACHE_KEY_PREFIX:-fge-export}" "$bundle_id"
+}
+
+bundle_id_for_tag() {
+  printf 'fg-%s' "${1:?modpack tag required}"
+}
+
+_write_bundle_outputs() {
+  local tag="${1:?modpack tag required}"
+  local label="${2:-bundle}"
+  local id cache_key
+
+  id="$(bundle_id_for_tag "$tag")"
+  cache_key="$(export_cache_key "$id")"
+  export MODPACK_TAG="$tag"
+  export BUNDLE_ID="$id"
+
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    {
+      echo "bundle_id=${id}"
+      echo "modpack_tag=${tag}"
+      echo "export_cache_key=${cache_key}"
+    } >> "$GITHUB_OUTPUT"
+  fi
+  if [[ -n "${GITHUB_ENV:-}" ]]; then
+    printf 'BUNDLE_ID=%s\n' "$id" >> "$GITHUB_ENV"
+  fi
+  echo "${label} bundle_id=${id} export_cache_key=${cache_key}"
+}
+
+prepare_check_bundle() {
+  load_config
+  local tag="${MODPACK_TAG:-}"
+
+  if [[ -z "$tag" ]]; then
+    tag="$(resolve_modpack_tag)" || exit 1
+  fi
+  _write_bundle_outputs "$tag" "check"
+}
+
+finalize_export_decision() {
+  local export_needed=false
+
+  if [[ "${VERSION_EXPORT_NEEDED:-false}" == "true" ]]; then
+    export_needed=true
+    echo "Export required: version gate" >&2
+  elif [[ "${EXPORT_CACHE_HIT:-}" != "true" ]]; then
+    export_needed=true
+    echo "Export required: cache miss (${EXPORT_CACHE_KEY:-<unset>})" >&2
+  else
+    echo "Export skipped: versions unchanged and export cache hit" >&2
+  fi
+
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    echo "export_needed=${export_needed}" >> "$GITHUB_OUTPUT"
+  else
+    echo "export_needed=${export_needed}"
   fi
 }
 
@@ -253,16 +474,7 @@ prepare_export() {
 }
 
 prepare_bundle_id() {
-  local tag="${MODPACK_TAG:?MODPACK_TAG required}"
-  local id="fg-${tag}"
-
-  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-    {
-      echo "bundle_id=${id}"
-      echo "modpack_tag=${tag}"
-    } >> "$GITHUB_OUTPUT"
-  fi
-  echo "bundle_id=${id} (modpack @ ${tag})"
+  _write_bundle_outputs "${MODPACK_TAG:?MODPACK_TAG required}" "export"
 }
 
 export_languages() {
@@ -526,28 +738,37 @@ install_bundle() {
 }
 
 resolve_bundle_id() {
-  local id
+  local id tag
 
   if [[ -n "${BUNDLE_ID_INPUT:-}" ]]; then
     id="$BUNDLE_ID_INPUT"
   elif [[ -f "$FGM_ROOT/export-meta/bundle-id" ]]; then
     id="$(tr -d '\r\n' < "$FGM_ROOT/export-meta/bundle-id")"
   elif [[ -n "${MODPACK_TAG:-}" ]]; then
-    id="fg-${MODPACK_TAG}"
+    id="$(bundle_id_for_tag "$MODPACK_TAG")"
   else
     load_config
-    MODPACK_TAG="$(resolve_modpack_tag)"
-    if [[ -z "$MODPACK_TAG" ]]; then
+    tag="$(resolve_modpack_tag)"
+    if [[ -z "$tag" ]]; then
       echo "::error::Could not resolve modpack tag for bundle id" >&2
       exit 1
     fi
-    id="fg-${MODPACK_TAG}"
+    id="$(bundle_id_for_tag "$tag")"
+    export MODPACK_TAG="$tag"
   fi
 
+  export BUNDLE_ID="$id"
+
   if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-    echo "bundle_id=${id}" >> "$GITHUB_OUTPUT"
+    {
+      echo "bundle_id=${id}"
+      echo "export_cache_key=$(export_cache_key "$id")"
+    } >> "$GITHUB_OUTPUT"
   fi
-  echo "bundle_id=${id}"
+  if [[ -n "${GITHUB_ENV:-}" ]]; then
+    printf 'BUNDLE_ID=%s\n' "$id" >> "$GITHUB_ENV"
+  fi
+  echo "deploy bundle_id=${id} export_cache_key=$(export_cache_key "$id")"
 }
 
 extract_bundle() {
@@ -651,11 +872,14 @@ usage() {
 Usage: bash ci/run.sh <command>
 
 Workflow composites:
+  prepare-check-bundle, check-build-changes, finalize-export-decision
   prepare-export      env + modpack checkout + bundle id + resolve FGE/MWE tags
   prepare-game        xvfb deps + FGE/MWE jars + HeadlessMC
   finalize-export     export-meta + tar (needs BUNDLE_ID, MODPACK_TAG)
-  prepare-deploy      env + resolve bundle id
-  install-bundle      extract or fetch (ACQUIRE=extract|fetch, BUNDLE_ID)
+  prepare-deploy      env + resolve bundle id + export cache key
+  extract-bundle      restore export cache → EXPORT_ROOT (needs BUNDLE_ID)
+  record-build-versions, publish-site-release
+  install-bundle      extract or fetch (ACQUIRE=extract|fetch, BUNDLE_ID; local only)
 
 Granular (local debugging):
   env, print-versions, checkout-modpack, prepare-bundle-id, export-languages,
@@ -675,10 +899,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   case "$cmd" in
     env) load_config "$@" ;;
     print-versions) print_versions "$@" ;;
+    prepare-check-bundle) prepare_check_bundle "$@" ;;
+    check-build-changes) check_build_changes "$@" ;;
+    finalize-export-decision) finalize_export_decision "$@" ;;
     prepare-export) prepare_export "$@" ;;
     prepare-game) prepare_game "$@" ;;
     finalize-export) finalize_export "$@" ;;
     prepare-deploy) prepare_deploy "$@" ;;
+    record-build-versions) record_build_versions "$@" ;;
+    publish-site-release) publish_site_release "$@" ;;
     install-bundle) install_bundle "$@" ;;
     checkout-modpack) checkout_modpack "$@" ;;
     prepare-bundle-id) prepare_bundle_id "$@" ;;
