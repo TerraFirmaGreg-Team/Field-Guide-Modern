@@ -45,17 +45,18 @@ public class SiteRenderer {
     private final String outputRootDir;
     private final String recipeBookBaseUrl;
     private final String siteBaseUrl;
+    private final String defaultOgImageUrl;
     private final LinkedHashSet<String> sitemapUrls = new LinkedHashSet<>();
 
     public SiteRenderer(LocalizationManager localizationManager, String outputRootDir) throws IOException {
-        this(localizationManager, outputRootDir, DEFAULT_RECIPE_BOOK_BASE_URL, SiteSeo.DEFAULT_SITE_BASE_URL);
+        this(localizationManager, outputRootDir, DEFAULT_RECIPE_BOOK_BASE_URL, SiteSeo.DEFAULT_SITE_BASE_URL, SiteSeo.DEFAULT_OG_IMAGE_URL);
     }
 
     public SiteRenderer(
             LocalizationManager localizationManager,
             String outputRootDir,
             String recipeBookBaseUrl) throws IOException {
-        this(localizationManager, outputRootDir, recipeBookBaseUrl, SiteSeo.DEFAULT_SITE_BASE_URL);
+        this(localizationManager, outputRootDir, recipeBookBaseUrl, SiteSeo.DEFAULT_SITE_BASE_URL, SiteSeo.DEFAULT_OG_IMAGE_URL);
     }
 
     public SiteRenderer(
@@ -63,10 +64,20 @@ public class SiteRenderer {
             String outputRootDir,
             String recipeBookBaseUrl,
             String siteBaseUrl) throws IOException {
+        this(localizationManager, outputRootDir, recipeBookBaseUrl, siteBaseUrl, SiteSeo.DEFAULT_OG_IMAGE_URL);
+    }
+
+    public SiteRenderer(
+            LocalizationManager localizationManager,
+            String outputRootDir,
+            String recipeBookBaseUrl,
+            String siteBaseUrl,
+            String defaultOgImageUrl) throws IOException {
         this.localizationManager = localizationManager;
         this.outputRootDir = outputRootDir;
         this.recipeBookBaseUrl = recipeBookBaseUrl == null ? "" : recipeBookBaseUrl.trim();
         this.siteBaseUrl = SiteSeo.normalizeBaseUrl(siteBaseUrl);
+        this.defaultOgImageUrl = defaultOgImageUrl == null ? "" : defaultOgImageUrl.trim();
 
         cfg = new Configuration(Configuration.VERSION_2_3_32);
         cfg.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "templates");
@@ -270,7 +281,7 @@ public class SiteRenderer {
         data.put("text_contents", localizationManager.translate(I18n.CONTENTS));
         data.put("index", "#");
         data.put("categories", categories);
-        putSeoData(data, "index.html", "splash.png", true);
+        putSeoData(data, "index.html", true);
         generatePage("home.ftl", "index.html", data);
     }
 
@@ -282,7 +293,7 @@ public class SiteRenderer {
         data.put("text_discord", localizationManager.translate(I18n.DISCORD));
         data.put("index", "./");
         data.put("categories", categories);
-        putSeoData(data, "search.html", "splash.png", true);
+        putSeoData(data, "search.html", true);
         generatePage("search.ftl", "search.html", data);
     }
 
@@ -306,7 +317,7 @@ public class SiteRenderer {
         data.put("index", "./");
         data.put("categories", categories);
         data.put("current_category", cat);
-        putSeoData(data, cat.getId() + ".html", "splash.png", true);
+        putSeoData(data, cat.getId() + ".html", true);
         generatePage("category.ftl", cat.getId() + ".html", data);
         buildEntryPages(cat, categories);
     }
@@ -333,15 +344,32 @@ public class SiteRenderer {
             data.put("categories", categories);
             data.put("current_category", cat);
             data.put("current_entry", entry);
-            putSeoData(data, entry.getId() + ".html", entry.getIconPath(), false);
+            putSeoData(data, entry.getId() + ".html", entry.getIconPath());
             generatePage("entry.ftl", entry.getId() + ".html", data);
         }
     }
 
-    private void putSeoData(Map<String, Object> data, String outputFileName, String previewImage, boolean useImagesDir) {
+    private void putSeoData(Map<String, Object> data, String outputFileName, boolean useDefaultOgImage) {
+        putSeoData(data, outputFileName, null, useDefaultOgImage);
+    }
+
+    private void putSeoData(Map<String, Object> data, String outputFileName, String previewImage) {
+        putSeoData(data, outputFileName, previewImage, false);
+    }
+
+    private void putSeoData(
+            Map<String, Object> data,
+            String outputFileName,
+            String previewImage,
+            boolean useDefaultOgImage) {
         String localeKey = localizationManager.getCurrentLanguage().getKey();
         String canonical = SiteSeo.canonicalUrl(siteBaseUrl, localeKey, outputFileName);
-        String ogImage = SiteSeo.ogImageUrl(siteBaseUrl, previewImage, useImagesDir);
+        String ogImage = useDefaultOgImage
+                ? defaultOgImageUrl
+                : SiteSeo.ogImageUrl(siteBaseUrl, previewImage);
+        if (ogImage == null || ogImage.isBlank()) {
+            ogImage = defaultOgImageUrl;
+        }
         String title = String.valueOf(data.getOrDefault("long_title", ""));
         String description = String.valueOf(data.getOrDefault("short_description", ""));
         data.put("canonicalUrl", canonical);

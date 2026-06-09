@@ -24,10 +24,8 @@ class SiteSeoTest {
     }
 
     @Test
-    void ogImageUrlUsesImagesDirForSplash() {
-        assertEquals(
-                "https://wiki.terrafirmagreg.team/field-guide-modern/_images/splash.png",
-                SiteSeo.ogImageUrl(SiteSeo.DEFAULT_SITE_BASE_URL, "splash.png", true));
+    void defaultOgImageUrlPointsToWikiLogo() {
+        assertEquals("https://wiki.terrafirmagreg.team/logo.png", SiteSeo.DEFAULT_OG_IMAGE_URL);
     }
 
     @Test
@@ -35,7 +33,7 @@ class SiteSeoTest {
         assertEquals(
                 "https://wiki.terrafirmagreg.team/field-guide-modern/assets/icons/atlas-000.png",
                 SiteSeo.ogImageUrl(
-                        SiteSeo.DEFAULT_SITE_BASE_URL, "../../assets/icons/atlas-000.png", false));
+                        SiteSeo.DEFAULT_SITE_BASE_URL, "../../assets/icons/atlas-000.png"));
     }
 
     @Test

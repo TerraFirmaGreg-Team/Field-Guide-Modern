@@ -77,6 +77,13 @@ public class SiteGenerator implements Callable<Integer> {
     )
     String siteBaseUrl;
 
+    @CommandLine.Option(
+            names = {"--og-image-url"},
+            description = "Default Open Graph / Twitter image URL (wiki logo recommended)",
+            defaultValue = SiteSeo.DEFAULT_OG_IMAGE_URL
+    )
+    String ogImageUrl;
+
     public static void main(String[] args) {
         int code = new CommandLine(new SiteGenerator()).execute(args);
         System.exit(code);
@@ -104,7 +111,7 @@ public class SiteGenerator implements Callable<Integer> {
                 new TextureRenderer(models, l10n, bundle.getIcons(), multiblockResolver);
         PageRenderer pageRenderer = new PageRenderer(
                 models, l10n, textureRenderer, emiIndex, bundle.getRecipeMountIds());
-        SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl);
+        SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl, ogImageUrl);
 
         siteRenderer.copyStaticFiles();
         // Runtime assets: icons from export; GLBs + patchouli:image PNGs written during render.

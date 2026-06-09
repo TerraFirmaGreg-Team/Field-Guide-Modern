@@ -120,7 +120,7 @@ load_config() {
   export HMC_VERSION MODPACK_DIR MODPACK_REPO
   export FGE_REPO FGE_VERSION MWE_REPO MWE_VERSION
   export EXPORT_WARMUP_TICKS EXPORT_WORLD_DELAY_TICKS EXPORT_TIMEOUT_SECONDS
-  export EXPORT_ROOT EXPORT_GUIDE EXPORT_ROOT_DIR GUIDE_SUBDIR SITE_OUTPUT_DIR RECIPE_BOOK_BASE_URL SITE_BASE_URL
+  export EXPORT_ROOT EXPORT_GUIDE EXPORT_ROOT_DIR GUIDE_SUBDIR SITE_OUTPUT_DIR RECIPE_BOOK_BASE_URL SITE_BASE_URL OG_IMAGE_URL
   export EXPORT_ARTIFACT_NAME="${EXPORT_ARTIFACT_NAME:-field-guide}"
 
   if [[ -n "${GITHUB_ENV:-}" ]]; then
@@ -147,6 +147,7 @@ load_config() {
       printf 'SITE_OUTPUT_DIR=%s\n' "${SITE_OUTPUT_DIR:-output}"
       printf 'RECIPE_BOOK_BASE_URL=%s\n' "${RECIPE_BOOK_BASE_URL:-}"
       printf 'SITE_BASE_URL=%s\n' "${SITE_BASE_URL:-}"
+      printf 'OG_IMAGE_URL=%s\n' "${OG_IMAGE_URL:-}"
       printf 'EXPORT_ARTIFACT_NAME=%s\n' "${EXPORT_ARTIFACT_NAME:-field-guide}"
       printf 'EXPORT_CACHE_KEY_PREFIX=%s\n' "${EXPORT_CACHE_KEY_PREFIX:-fge-export}"
       printf 'SITE_RELEASE_ASSET_NAME=%s\n' "${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar.gz}"
@@ -1077,6 +1078,9 @@ build_site() {
   fi
   if [[ -n "${SITE_BASE_URL:-}" ]]; then
     site_args+=(--site-base-url "${SITE_BASE_URL}")
+  fi
+  if [[ -n "${OG_IMAGE_URL:-}" ]]; then
+    site_args+=(--og-image-url "${OG_IMAGE_URL}")
   fi
   java -jar "$site_jar" -e "$EXPORT_GUIDE" -o "$SITE_OUTPUT_DIR" "${site_args[@]}"
 

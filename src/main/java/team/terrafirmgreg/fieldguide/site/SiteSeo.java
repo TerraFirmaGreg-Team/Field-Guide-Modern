@@ -10,6 +10,9 @@ public final class SiteSeo {
 
     public static final String DEFAULT_SITE_BASE_URL = "https://wiki.terrafirmagreg.team/field-guide-modern";
 
+    /** Shared wiki logo for Open Graph / Twitter cards (avoid ultra-wide in-game splash art). */
+    public static final String DEFAULT_OG_IMAGE_URL = "https://wiki.terrafirmagreg.team/logo.png";
+
     private SiteSeo() {}
 
     public static String normalizeBaseUrl(String url) {
@@ -34,17 +37,13 @@ public final class SiteSeo {
         return base + "/" + localeKey + "/" + outputFileName;
     }
 
-    /** {@code useImagesDir} adds {@code _images/} prefix (home, category, search splash). */
-    public static String ogImageUrl(String siteBaseUrl, String previewImage, boolean useImagesDir) {
+    /** {@code previewImage} is site-root relative (e.g. {@code assets/icons/atlas-000.png}). */
+    public static String ogImageUrl(String siteBaseUrl, String previewImage) {
         String base = normalizeBaseUrl(siteBaseUrl);
         if (base.isEmpty() || previewImage == null || previewImage.isBlank()) {
             return "";
         }
-        String path = cleanAssetPath(previewImage);
-        if (useImagesDir && !path.startsWith("_images/")) {
-            path = "_images/" + path;
-        }
-        return base + "/" + path;
+        return base + "/" + cleanAssetPath(previewImage);
     }
 
     public static String webPageJsonLd(String title, String description, String url) {
