@@ -225,6 +225,28 @@ _write_build_versions_json() {
     "$out"
 }
 
+_kv_from_lines() {
+  local key="${1:?key required}"
+  local lines="${2:?lines required}"
+  printf '%s' "$lines" | grep -E "^${key}=" | tail -1 | cut -d= -f2-
+}
+
+_run_check_build_mjs() {
+  local build_json="${1:?build.json path required}"
+  local bundle_id="${2:?bundle id required}"
+  (
+    unset GITHUB_OUTPUT
+    ci_node check-build-changes.mjs \
+      "$build_json" \
+      "$bundle_id" \
+      "${SITE_RELEASE_HASH_LENGTH:-7}" \
+      "$BUILD_REF_MODPACK" \
+      "$BUILD_REF_FGE" \
+      "$BUILD_REF_MWE" \
+      "$BUILD_REF_HMC"
+  )
+}
+
 check_build_changes() {
   local build_json
   build_json="$(mktemp)"
@@ -233,11 +255,167 @@ check_build_changes() {
 
   ci_node check-build-changes.mjs \
     "$build_json" \
+    "${BUNDLE_ID:?BUNDLE_ID required — run prepare-check-bundle first}" \
+    "${SITE_RELEASE_HASH_LENGTH:-7}" \
     "$BUILD_REF_MODPACK" \
     "$BUILD_REF_FGE" \
     "$BUILD_REF_MWE" \
     "$BUILD_REF_HMC"
   rm -f "$build_json"
+}
+
+_resolve_expected_release_tag() {
+  local tmp release_tag
+  tmp="$(mktemp)"
+  _write_build_versions_json "$tmp" || return 1
+  release_tag="$(ci_node read-release-tag.mjs "$tmp")"
+  rm -f "$tmp"
+  printf '%s' "$release_tag"
+}
+
+_site_release_asset_exists() {
+  local release_tag="${1:?release tag required}"
+  local asset_name="${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar}"
+  gh release view "$release_tag" \
+    --repo "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}" \
+    --json assets \
+    --jq ".assets[].name" 2>/dev/null | grep -Fxq "$asset_name"
+}
+
+_probe_site_release() {
+  local release_tag="${1:?release tag required}"
+  local asset_name="${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar}"
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "::warning::gh CLI unavailable — cannot probe site release" >&2
+    echo "true"
+    return 0
+  fi
+  if [[ -z "${GH_TOKEN:-}" ]]; then
+    echo "::warning::GH_TOKEN unset — cannot probe site release" >&2
+    echo "true"
+    return 0
+  fi
+  if gh release view "$release_tag" --repo "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}" >/dev/null 2>&1; then
+    if _site_release_asset_exists "$release_tag"; then
+      echo "Site release probe hit: ${release_tag} (${asset_name})" >&2
+      echo "false"
+      return 0
+    fi
+    echo "Deploy required: release ${release_tag} exists but asset ${asset_name} is missing" >&2
+    echo "true"
+    return 0
+  fi
+  echo "Deploy required: site release ${release_tag} not found" >&2
+  echo "true"
+}
+
+probe_site_release() {
+  load_config
+
+  local release_tag="${EXPECTED_RELEASE_TAG:-}"
+  local probe_needed
+
+  if [[ -z "$release_tag" ]]; then
+    release_tag="$(_resolve_expected_release_tag)" || exit 1
+  fi
+
+  probe_needed="$(_probe_site_release "$release_tag")"
+
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    {
+      echo "release_tag=${release_tag}"
+      echo "release_probe_needed=${probe_needed}"
+    } >> "$GITHUB_OUTPUT"
+  else
+    echo "release_tag=${release_tag}"
+    echo "release_probe_needed=${probe_needed}"
+  fi
+}
+
+finalize_deploy_decision() {
+  local deploy_needed=false
+
+  if [[ "${VERSION_DEPLOY_NEEDED:-false}" == "true" ]]; then
+    deploy_needed=true
+    echo "Deploy required: version or build.json metadata gate" >&2
+  elif [[ "${RELEASE_PROBE_NEEDED:-false}" == "true" ]]; then
+    deploy_needed=true
+    echo "Deploy required: site release missing or incomplete (${EXPECTED_RELEASE_TAG:-})" >&2
+  else
+    echo "Deploy skipped: versions, build.json metadata, and site release all match" >&2
+  fi
+
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    echo "deploy_needed=${deploy_needed}" >> "$GITHUB_OUTPUT"
+  else
+    echo "deploy_needed=${deploy_needed}"
+  fi
+}
+
+check_gates() {
+  load_config
+
+  local tag="${MODPACK_TAG:-}"
+  local build_json mjs_out
+  local bundle_id cache_key fingerprint
+  local version_export_needed version_deploy_needed expected_release_tag release_probe_needed
+  local deploy_needed=false
+
+  if [[ -z "$tag" ]]; then
+    tag="$(resolve_modpack_tag)" || exit 1
+  fi
+  export MODPACK_TAG="$tag"
+  bundle_id="$(bundle_id_for_tag "$tag")"
+  export BUNDLE_ID="$bundle_id"
+  fingerprint="$(export_cache_fingerprint)" || exit 1
+  cache_key="$(export_cache_key "$bundle_id" "$fingerprint")"
+
+  build_json="$(mktemp)"
+  resolve_build_version_refs || exit 1
+  fetch_recorded_build_json "$build_json"
+  mjs_out="$(_run_check_build_mjs "$build_json" "$bundle_id")"
+  rm -f "$build_json"
+
+  version_export_needed="$(_kv_from_lines export_needed "$mjs_out")"
+  version_deploy_needed="$(_kv_from_lines version_deploy_needed "$mjs_out")"
+  expected_release_tag="$(_kv_from_lines expected_release_tag "$mjs_out")"
+
+  release_probe_needed="$(_probe_site_release "$expected_release_tag")"
+
+  if [[ "$version_deploy_needed" == "true" || "$release_probe_needed" == "true" || "${FORCE_EXPORT:-}" == "true" ]]; then
+    deploy_needed=true
+    if [[ "${FORCE_EXPORT:-}" == "true" ]]; then
+      echo "Deploy required: force_export" >&2
+    elif [[ "$version_deploy_needed" == "true" ]]; then
+      echo "Deploy required: version or build.json metadata gate" >&2
+    else
+      echo "Deploy required: site release missing or incomplete (${expected_release_tag})" >&2
+    fi
+  else
+    echo "Deploy skipped: versions, build.json metadata, and site release all match" >&2
+  fi
+
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    {
+      echo "bundle_id=${bundle_id}"
+      echo "modpack_tag=${tag}"
+      echo "export_cache_key=${cache_key}"
+      echo "version_export_needed=${version_export_needed}"
+      echo "expected_release_tag=${expected_release_tag}"
+      echo "deploy_needed=${deploy_needed}"
+    } >> "$GITHUB_OUTPUT"
+  else
+    echo "bundle_id=${bundle_id}"
+    echo "modpack_tag=${tag}"
+    echo "export_cache_key=${cache_key}"
+    echo "version_export_needed=${version_export_needed}"
+    echo "expected_release_tag=${expected_release_tag}"
+    echo "deploy_needed=${deploy_needed}"
+  fi
+
+  echo "check bundle_id=${bundle_id} export_cache_key=${cache_key}" >&2
+  echo "version_export_needed=${version_export_needed} deploy_needed=${deploy_needed}" >&2
 }
 
 record_build_versions() {
@@ -287,8 +465,18 @@ publish_site_release() {
   echo "::endgroup::"
 
   if gh release view "$release_tag" --repo "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}" >/dev/null 2>&1; then
-    echo "Release ${release_tag} already exists — skipping upload"
+    if _site_release_asset_exists "$release_tag"; then
+      echo "Release ${release_tag} already has ${asset_name} — skipping upload"
+      rm -f "$archive"
+      return 0
+    fi
+    echo "::group::Upload missing asset to release ${release_tag}"
+    gh release upload "$release_tag" "$archive" \
+      --repo "${GITHUB_REPOSITORY}" \
+      --clobber
     rm -f "$archive"
+    echo "Uploaded ${asset_name} → existing release ${release_tag}"
+    echo "::endgroup::"
     return 0
   fi
 
@@ -885,7 +1073,8 @@ usage() {
 Usage: bash ci/run.sh <command>
 
 Workflow composites:
-  prepare-check-bundle, check-build-changes, finalize-export-decision
+  check-gates, prepare-check-bundle, check-build-changes, finalize-export-decision,
+  probe-site-release, finalize-deploy-decision
   prepare-export      env + modpack checkout + bundle id + resolve FGE/MWE tags
   prepare-game        xvfb deps + FGE/MWE jars + HeadlessMC
   finalize-export     export-meta + tar (needs BUNDLE_ID, MODPACK_TAG)
@@ -912,9 +1101,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   case "$cmd" in
     env) load_config "$@" ;;
     print-versions) print_versions "$@" ;;
+    check-gates) check_gates "$@" ;;
     prepare-check-bundle) prepare_check_bundle "$@" ;;
     check-build-changes) check_build_changes "$@" ;;
     finalize-export-decision) finalize_export_decision "$@" ;;
+    probe-site-release) probe_site_release "$@" ;;
+    finalize-deploy-decision) finalize_deploy_decision "$@" ;;
     prepare-export) prepare_export "$@" ;;
     prepare-game) prepare_game "$@" ;;
     finalize-export) finalize_export "$@" ;;
