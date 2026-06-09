@@ -9,18 +9,33 @@ function getQuery() {
     return params.get('q') || '';
 }
 
-function getLang() {
+const LOCALE_PATTERN = /^[a-z]{2}_[a-z]{2}$/i;
+const DEFAULT_LANG = 'en_us';
+
+function getPathInfo() {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
-    return pathParts.length > 0 ? pathParts[isLocal() ? 0 : 1] : '';
+    const localeIndex = pathParts.findIndex((part) => LOCALE_PATTERN.test(part));
+    if (localeIndex === -1) {
+        // Unlikely in normal use (all content pages live under /{base}/{locale}/).
+        // Fall back to en_us and infer a single-segment site prefix when present.
+        const sitePrefix = pathParts.length === 1 && !pathParts[0].includes('.')
+            ? '/' + pathParts[0]
+            : '';
+        return { baseUrl: sitePrefix, lang: DEFAULT_LANG };
+    }
+    const lang = pathParts[localeIndex];
+    const baseUrl = localeIndex > 0
+        ? '/' + pathParts.slice(0, localeIndex).join('/')
+        : '';
+    return { baseUrl, lang };
 }
 
-// Detect if we're on GitHub Pages (production) or localhost (dev)
-function isLocal() {
-    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+function getLang() {
+    return getPathInfo().lang;
 }
 
 function getBaseUrl() {
-    return isLocal() ? '' : '/Field-Guide-Modern';
+    return getPathInfo().baseUrl;
 }
 
 function buildUrl(path) {
