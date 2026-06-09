@@ -5,6 +5,7 @@ export const VERSION_KEYS = [
   'field-guide-export',
   'minecraft-web-export',
   'headlessmc',
+  'field-guide-modern',
 ];
 
 export const EXPORT_VERSION_KEYS = [

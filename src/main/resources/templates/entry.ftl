@@ -3,13 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="title" content="${long_title}" />
-    <meta name="description" content="${short_description}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://terrafirmagreg-team.github.io/Field-Guide-Modern" />
-    <meta property="og:title" content="${long_title}" />
-    <meta property="og:description" content="${short_description}" />
-    <meta property="og:image" content="https://terrafirmagreg-team.github.io/Field-Guide-Modern/${preview_image}" />
+    <#include "includes/seo-head.ftl">
 
     <title>${long_title}</title>
 

@@ -120,7 +120,7 @@ load_config() {
   export HMC_VERSION MODPACK_DIR MODPACK_REPO
   export FGE_REPO FGE_VERSION MWE_REPO MWE_VERSION
   export EXPORT_WARMUP_TICKS EXPORT_WORLD_DELAY_TICKS EXPORT_TIMEOUT_SECONDS
-  export EXPORT_ROOT EXPORT_GUIDE EXPORT_ROOT_DIR GUIDE_SUBDIR SITE_OUTPUT_DIR RECIPE_BOOK_BASE_URL
+  export EXPORT_ROOT EXPORT_GUIDE EXPORT_ROOT_DIR GUIDE_SUBDIR SITE_OUTPUT_DIR RECIPE_BOOK_BASE_URL SITE_BASE_URL
   export EXPORT_ARTIFACT_NAME="${EXPORT_ARTIFACT_NAME:-field-guide}"
 
   if [[ -n "${GITHUB_ENV:-}" ]]; then
@@ -146,6 +146,7 @@ load_config() {
       printf 'EXPORT_GUIDE=%s\n' "$EXPORT_GUIDE"
       printf 'SITE_OUTPUT_DIR=%s\n' "${SITE_OUTPUT_DIR:-output}"
       printf 'RECIPE_BOOK_BASE_URL=%s\n' "${RECIPE_BOOK_BASE_URL:-}"
+      printf 'SITE_BASE_URL=%s\n' "${SITE_BASE_URL:-}"
       printf 'EXPORT_ARTIFACT_NAME=%s\n' "${EXPORT_ARTIFACT_NAME:-field-guide}"
       printf 'EXPORT_CACHE_KEY_PREFIX=%s\n' "${EXPORT_CACHE_KEY_PREFIX:-fge-export}"
       printf 'SITE_RELEASE_ASSET_NAME=%s\n' "${SITE_RELEASE_ASSET_NAME:-field-guide-site.tar.gz}"
@@ -163,6 +164,15 @@ resolve_hmc_version() {
   echo "${HMC_VERSION:?HMC_VERSION required}"
 }
 
+resolve_field_guide_modern_commit() {
+  local sha
+  if ! sha="$(git -C "$FGM_ROOT" rev-parse HEAD 2>/dev/null)"; then
+    echo "::error::Could not resolve Field-Guide-Modern commit (git rev-parse HEAD)" >&2
+    return 1
+  fi
+  printf '%s' "$sha"
+}
+
 resolve_build_version_refs() {
   load_config
 
@@ -174,6 +184,7 @@ resolve_build_version_refs() {
   BUILD_REF_FGE="$(_normalize_version_ref "$(resolve_fge_tag)")" || return 1
   BUILD_REF_MWE="$(_normalize_version_ref "$(resolve_mwe_tag)")" || return 1
   BUILD_REF_HMC="$(_normalize_version_ref "$(resolve_hmc_version)")" || return 1
+  BUILD_REF_FGM="$(_normalize_version_ref "$(resolve_field_guide_modern_commit)")" || return 1
 }
 
 resolve_build_json_url() {
@@ -220,6 +231,7 @@ _write_build_versions_json() {
     "$BUILD_REF_FGE" \
     "$BUILD_REF_MWE" \
     "$BUILD_REF_HMC" \
+    "$BUILD_REF_FGM" \
     "$bundle_id" \
     "$hash_len" \
     "$out"
@@ -243,7 +255,8 @@ _run_check_build_mjs() {
       "$BUILD_REF_MODPACK" \
       "$BUILD_REF_FGE" \
       "$BUILD_REF_MWE" \
-      "$BUILD_REF_HMC"
+      "$BUILD_REF_HMC" \
+      "$BUILD_REF_FGM"
   )
 }
 
@@ -260,7 +273,8 @@ check_build_changes() {
     "$BUILD_REF_MODPACK" \
     "$BUILD_REF_FGE" \
     "$BUILD_REF_MWE" \
-    "$BUILD_REF_HMC"
+    "$BUILD_REF_HMC" \
+    "$BUILD_REF_FGM"
   rm -f "$build_json"
 }
 
@@ -571,7 +585,7 @@ print_versions() {
     unset MODPACK_TAG
   fi
 
-  local modpack fge mwe
+  local modpack fge mwe fgm_commit
   modpack="${MODPACK_TAG:-$(resolve_modpack_tag)}"
   if [[ -z "$modpack" ]]; then
     echo "::error::Could not resolve Modpack-Modern release tag" >&2
@@ -580,6 +594,7 @@ print_versions() {
 
   fge="$(resolve_fge_tag)" || exit 1
   mwe="$(resolve_mwe_tag)" || exit 1
+  fgm_commit="$(resolve_field_guide_modern_commit)" || exit 1
 
   export MODPACK_TAG="$modpack"
   export FGE_TAG="$fge"
@@ -592,6 +607,7 @@ print_versions() {
       printf 'MWE_TAG=%s\n' "$mwe"
       printf 'FGE_VERSION=%s\n' "$fge"
       printf 'MWE_VERSION=%s\n' "$mwe"
+      printf 'FIELD_GUIDE_MODERN_COMMIT=%s\n' "$fgm_commit"
     } >> "$GITHUB_ENV"
   fi
 
@@ -600,6 +616,7 @@ print_versions() {
     "modpack_tag=${modpack}" \
     "field-guide-export=${fge}" \
     "minecraft-web-export=${mwe}" \
+    "field-guide-modern=${fgm_commit}" \
     "minecraft=${MC_VERSION} (assets ${MC_ASSET_INDEX})" \
     "forge_build=${FORGE_BUILD}" \
     "headlessmc=${HMC_VERSION}"
@@ -614,6 +631,7 @@ print_versions() {
       echo "| Modpack-Modern | \`${modpack}\` |"
       echo "| field-guide-export | \`${fge}\` |"
       echo "| minecraft-web-export | \`${mwe}\` |"
+      echo "| Field-Guide-Modern | \`${fgm_commit}\` |"
       echo "| Minecraft / Forge | \`${MC_VERSION}\` / \`${FORGE_BUILD}\` |"
       echo "| HeadlessMC | \`${HMC_VERSION}\` |"
     } >> "$GITHUB_STEP_SUMMARY"
@@ -1056,6 +1074,9 @@ build_site() {
   fi
   if [[ -n "${RECIPE_BOOK_BASE_URL:-}" ]]; then
     site_args+=(--recipe-book-base-url "${RECIPE_BOOK_BASE_URL}")
+  fi
+  if [[ -n "${SITE_BASE_URL:-}" ]]; then
+    site_args+=(--site-base-url "${SITE_BASE_URL}")
   fi
   java -jar "$site_jar" -e "$EXPORT_GUIDE" -o "$SITE_OUTPUT_DIR" "${site_args[@]}"
 

@@ -70,6 +70,13 @@ public class SiteGenerator implements Callable<Integer> {
     )
     String recipeBookBaseUrl;
 
+    @CommandLine.Option(
+            names = {"--site-base-url"},
+            description = "Public site base URL for canonical links, Open Graph, and sitemap (no trailing slash)",
+            defaultValue = SiteSeo.DEFAULT_SITE_BASE_URL
+    )
+    String siteBaseUrl;
+
     public static void main(String[] args) {
         int code = new CommandLine(new SiteGenerator()).execute(args);
         System.exit(code);
@@ -97,7 +104,7 @@ public class SiteGenerator implements Callable<Integer> {
                 new TextureRenderer(models, l10n, bundle.getIcons(), multiblockResolver);
         PageRenderer pageRenderer = new PageRenderer(
                 models, l10n, textureRenderer, emiIndex, bundle.getRecipeMountIds());
-        SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl);
+        SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl);
 
         siteRenderer.copyStaticFiles();
         // Runtime assets: icons from export; GLBs + patchouli:image PNGs written during render.
@@ -114,6 +121,8 @@ public class SiteGenerator implements Callable<Integer> {
             prepare(book, l10n, textureRenderer, pageRenderer);
             siteRenderer.generate(book, textureRenderer);
         }
+
+        siteRenderer.writeSeoFiles();
 
         log.info("Site generation complete: {}", output);
         return 0;

@@ -44,18 +44,29 @@ public class SiteRenderer {
     private final LocalizationManager localizationManager;
     private final String outputRootDir;
     private final String recipeBookBaseUrl;
+    private final String siteBaseUrl;
+    private final LinkedHashSet<String> sitemapUrls = new LinkedHashSet<>();
 
     public SiteRenderer(LocalizationManager localizationManager, String outputRootDir) throws IOException {
-        this(localizationManager, outputRootDir, DEFAULT_RECIPE_BOOK_BASE_URL);
+        this(localizationManager, outputRootDir, DEFAULT_RECIPE_BOOK_BASE_URL, SiteSeo.DEFAULT_SITE_BASE_URL);
     }
 
     public SiteRenderer(
             LocalizationManager localizationManager,
             String outputRootDir,
             String recipeBookBaseUrl) throws IOException {
+        this(localizationManager, outputRootDir, recipeBookBaseUrl, SiteSeo.DEFAULT_SITE_BASE_URL);
+    }
+
+    public SiteRenderer(
+            LocalizationManager localizationManager,
+            String outputRootDir,
+            String recipeBookBaseUrl,
+            String siteBaseUrl) throws IOException {
         this.localizationManager = localizationManager;
         this.outputRootDir = outputRootDir;
         this.recipeBookBaseUrl = recipeBookBaseUrl == null ? "" : recipeBookBaseUrl.trim();
+        this.siteBaseUrl = SiteSeo.normalizeBaseUrl(siteBaseUrl);
 
         cfg = new Configuration(Configuration.VERSION_2_3_32);
         cfg.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "templates");
@@ -91,11 +102,27 @@ public class SiteRenderer {
     public void generatePage(String templateName, String outputFileName, Map<String, Object> data)
             throws IOException, TemplateException {
         Template template = cfg.getTemplate(templateName);
-        Path outputPath = Paths.get(outputRootDir, localizationManager.getCurrentLanguage().getKey(), outputFileName);
+        String localeKey = localizationManager.getCurrentLanguage().getKey();
+        Path outputPath = Paths.get(outputRootDir, localeKey, outputFileName);
         FileUtils.createParentDirectories(outputPath.toFile());
         try (Writer out = new OutputStreamWriter(Files.newOutputStream(outputPath), StandardCharsets.UTF_8)) {
             template.process(data, out);
         }
+        String canonical = SiteSeo.canonicalUrl(siteBaseUrl, localeKey, outputFileName);
+        if (!canonical.isEmpty()) {
+            sitemapUrls.add(canonical);
+        }
+    }
+
+    public void writeSeoFiles() throws IOException {
+        if (siteBaseUrl.isEmpty()) {
+            log.warn("Site base URL not set — skipping sitemap.xml and robots.txt");
+            return;
+        }
+        Path root = Paths.get(outputRootDir);
+        Files.writeString(root.resolve("sitemap.xml"), SiteSeo.sitemapXml(sitemapUrls), StandardCharsets.UTF_8);
+        Files.writeString(root.resolve("robots.txt"), SiteSeo.robotsTxt(siteBaseUrl), StandardCharsets.UTF_8);
+        log.info("Wrote sitemap ({} URLs) and robots.txt under {}", sitemapUrls.size(), outputRootDir);
     }
 
     public void copyStaticFiles() throws IOException {
@@ -105,7 +132,10 @@ public class SiteRenderer {
         copySiteImages();
 
         Path redirectDest = Paths.get(outputRootDir, "index.html");
-        if (copyClasspathResource("templates/redirect.html", redirectDest)) {
+        if (!siteBaseUrl.isEmpty()) {
+            Files.writeString(redirectDest, SiteSeo.rootRedirectHtml(siteBaseUrl), StandardCharsets.UTF_8);
+            log.debug("Wrote SEO root redirect to {}", redirectDest);
+        } else if (copyClasspathResource("templates/redirect.html", redirectDest)) {
             log.debug("Wrote root redirect from classpath to {}", redirectDest);
         }
     }
@@ -240,6 +270,7 @@ public class SiteRenderer {
         data.put("text_contents", localizationManager.translate(I18n.CONTENTS));
         data.put("index", "#");
         data.put("categories", categories);
+        putSeoData(data, "index.html", "splash.png", true);
         generatePage("home.ftl", "index.html", data);
     }
 
@@ -251,6 +282,7 @@ public class SiteRenderer {
         data.put("text_discord", localizationManager.translate(I18n.DISCORD));
         data.put("index", "./");
         data.put("categories", categories);
+        putSeoData(data, "search.html", "splash.png", true);
         generatePage("search.ftl", "search.html", data);
     }
 
@@ -274,6 +306,7 @@ public class SiteRenderer {
         data.put("index", "./");
         data.put("categories", categories);
         data.put("current_category", cat);
+        putSeoData(data, cat.getId() + ".html", "splash.png", true);
         generatePage("category.ftl", cat.getId() + ".html", data);
         buildEntryPages(cat, categories);
     }
@@ -300,8 +333,20 @@ public class SiteRenderer {
             data.put("categories", categories);
             data.put("current_category", cat);
             data.put("current_entry", entry);
+            putSeoData(data, entry.getId() + ".html", entry.getIconPath(), false);
             generatePage("entry.ftl", entry.getId() + ".html", data);
         }
+    }
+
+    private void putSeoData(Map<String, Object> data, String outputFileName, String previewImage, boolean useImagesDir) {
+        String localeKey = localizationManager.getCurrentLanguage().getKey();
+        String canonical = SiteSeo.canonicalUrl(siteBaseUrl, localeKey, outputFileName);
+        String ogImage = SiteSeo.ogImageUrl(siteBaseUrl, previewImage, useImagesDir);
+        String title = String.valueOf(data.getOrDefault("long_title", ""));
+        String description = String.valueOf(data.getOrDefault("short_description", ""));
+        data.put("canonicalUrl", canonical);
+        data.put("ogImageUrl", ogImage);
+        data.put("jsonLd", SiteSeo.webPageJsonLd(title, description, canonical));
     }
 
     private Map<String, Object> basePageData(String root) {
