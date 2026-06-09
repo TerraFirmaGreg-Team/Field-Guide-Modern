@@ -1,5 +1,5 @@
 {
-    "title": "TerraFirmaCraft Field Guide",
+    "title": "TerraFirmaGreg Field Guide",
     "short_title": "TFC Field Guide",
     "index": "Index",
     "contents": "Contents",
@@ -8,7 +8,7 @@
     "github": "GitHub",
     "discord": "Discord",
     "categories": "Categories",
-    "home": "This is a translation of the TerraFirmaCraft Field Guide, which is viewable in game. Some parts of this field guide are only visible in-game, such as multiblock visualizations or some recipes.",
+    "home": "This is a translation of the TerraFirmaGreg Field Guide, which is viewable in game. Some parts of this field guide are only visible in-game, such as multiblock visualizations or some recipes.",
     "multiblock": "Multiblock",
     "multiblock_only_in_game": "View the field guide in Minecraft to see this multiblock.",
     "recipe": "Recipe",

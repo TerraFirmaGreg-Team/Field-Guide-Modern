@@ -53,7 +53,7 @@
               <br/>
             </div>
             <br/>
-            <img class="d-block w-200 mx-auto mb-3 img-fluid" src="${root}/_images/splash.png" alt="TerraFirmaCraft Field Guide Splash Image">
+            <img class="d-block w-200 mx-auto mb-3 img-fluid" src="${root}/_images/splash.png" alt="TerraFirmaGreg Field Guide Splash Image">
             <p>${text_home}</p>
             <p><strong>${text_categories}</strong></p>
             <div class="row row-cols-1 row-cols-md-2 g-3">
