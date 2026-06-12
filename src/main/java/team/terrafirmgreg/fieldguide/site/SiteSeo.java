@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 /** Canonical URLs, Open Graph helpers, and sitemap/robots output for the static handbook site. */
 public final class SiteSeo {
 
-    public static final String DEFAULT_SITE_BASE_URL = "https://wiki.terrafirmagreg.team/field-guide-modern";
+    public static final String DEFAULT_SITE_BASE_URL = "https://wiki.terrafirmagreg.team/modern/field-guide";
 
     /** Shared wiki logo for Open Graph / Twitter cards (avoid ultra-wide in-game splash art). */
     public static final String DEFAULT_OG_IMAGE_URL = "https://wiki.terrafirmagreg.team/logo.png";

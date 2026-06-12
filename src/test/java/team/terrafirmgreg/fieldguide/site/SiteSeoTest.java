@@ -12,14 +12,14 @@ class SiteSeoTest {
     @Test
     void canonicalUrlUsesTrailingSlashForIndex() {
         assertEquals(
-                "https://wiki.terrafirmagreg.team/field-guide-modern/en_us/",
+                "https://wiki.terrafirmagreg.team/modern/field-guide/en_us/",
                 SiteSeo.canonicalUrl(SiteSeo.DEFAULT_SITE_BASE_URL, "en_us", "index.html"));
     }
 
     @Test
     void canonicalUrlKeepsHtmlForEntryPages() {
         assertEquals(
-                "https://wiki.terrafirmagreg.team/field-guide-modern/zh_cn/getting_started.html",
+                "https://wiki.terrafirmagreg.team/modern/field-guide/zh_cn/getting_started.html",
                 SiteSeo.canonicalUrl(SiteSeo.DEFAULT_SITE_BASE_URL, "zh_cn", "getting_started.html"));
     }
 
@@ -31,7 +31,7 @@ class SiteSeoTest {
     @Test
     void ogImageUrlUsesAssetPathForEntryIcons() {
         assertEquals(
-                "https://wiki.terrafirmagreg.team/field-guide-modern/assets/icons/atlas-000.png",
+                "https://wiki.terrafirmagreg.team/modern/field-guide/assets/icons/atlas-000.png",
                 SiteSeo.ogImageUrl(
                         SiteSeo.DEFAULT_SITE_BASE_URL, "../../assets/icons/atlas-000.png"));
     }
@@ -50,6 +50,6 @@ class SiteSeoTest {
     @Test
     void robotsTxtReferencesSitemap() {
         String robots = SiteSeo.robotsTxt(SiteSeo.DEFAULT_SITE_BASE_URL);
-        assertTrue(robots.contains("Sitemap: https://wiki.terrafirmagreg.team/field-guide-modern/sitemap.xml"));
+        assertTrue(robots.contains("Sitemap: https://wiki.terrafirmagreg.team/modern/field-guide/sitemap.xml"));
     }
 }
