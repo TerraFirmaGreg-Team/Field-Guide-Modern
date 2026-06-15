@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-# Field-Guide-Modern CI — config, release resolution, export, deploy, site build.
-# Usage: bash ci/run.sh <command>
+
 set -euo pipefail
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +9,6 @@ ci_node() {
   node "$CI_SCRIPTS/$1" "${@:2}"
 }
 
-# GitHub semver release resolution (git ls-remote; empty ci/build.env pin = latest tag).
 github_repo_git_url() {
   local spec="${1:?repo required}"
   if [[ "$spec" == https://* ]]; then
@@ -106,7 +103,7 @@ load_config() {
   fi
 
   set -a
-  # shellcheck disable=SC1090
+  
   source "$env_file"
   set +a
 
@@ -510,7 +507,7 @@ publish_site_release() {
 
 export_cache_fingerprint() {
   resolve_build_version_refs || return 1
-  # Export gate: modpack + field-guide-export + minecraft-web-export
+  
   printf '%s:%s:%s' "$BUILD_REF_MODPACK" "$BUILD_REF_FGE" "$BUILD_REF_MWE" \
     | sha256sum | awk '{print substr($1,1,8)}'
 }

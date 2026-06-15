@@ -2,9 +2,6 @@ package team.terrafirmgreg.fieldguide.render3d.material;
 
 import team.terrafirmgreg.fieldguide.render3d.math.Vector4f;
 
-/**
- * Material payload consumed by {@link team.terrafirmgreg.fieldguide.export.GlTFExporter}.
- */
 public class Material {
 
     private final RenderState renderState = new RenderState();

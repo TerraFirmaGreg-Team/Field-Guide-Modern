@@ -9,8 +9,8 @@ import java.util.Map;
 public class BlockVariant {
     private String block;
     private Map<String, String> properties;
-    private Variant variant;// result
-    private List<Variant> variants;// result
+    private Variant variant;
+    private List<Variant> variants;
 
     public boolean hasProperties() {
         return properties != null && !properties.isEmpty();

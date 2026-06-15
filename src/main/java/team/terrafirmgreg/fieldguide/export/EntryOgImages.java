@@ -3,7 +3,6 @@ package team.terrafirmgreg.fieldguide.export;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Entry id → OG preview PNG path from guide-export {@code meta.json}. */
 public final class EntryOgImages {
 
     private EntryOgImages() {}

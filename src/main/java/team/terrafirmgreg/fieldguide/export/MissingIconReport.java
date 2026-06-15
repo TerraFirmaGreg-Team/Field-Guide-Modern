@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Collects registry ids with no generated icon during site build.
- */
 public class MissingIconReport {
 
     private final List<String> missing = new ArrayList<>();

@@ -37,7 +37,6 @@ public class LexiconPageAdapter implements JsonDeserializer<BookPage> {
 		pageTypes.put("patchouli:relations", PageRelations.class);
 		pageTypes.put("patchouli:quest", PageQuest.class);
 
-		// TFC
 		pageTypes.put("tfc:instant_barrel_recipe", PageBarrel.class);
 		pageTypes.put("tfc:sealed_barrel_recipe", PageBarrel.class);
 		pageTypes.put("tfc:heat_recipe", PageHeating.class);
@@ -57,8 +56,7 @@ public class LexiconPageAdapter implements JsonDeserializer<BookPage> {
 
 	@Override
 	public BookPage deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-		// As a shortcut, an element of the pages array that is a string (instead of an object like normal)
-		// will implicitly become a text page, with the text set to the content of the page.
+		
 		if (json instanceof JsonPrimitive prim && prim.isString()) {
 			PageText out = new PageText();
 			out.setText(prim.getAsString());
@@ -78,7 +76,7 @@ public class LexiconPageAdapter implements JsonDeserializer<BookPage> {
 		}
 		BookPage page = gson.fromJson(json, clazz);
 		if (flag) {
-			page.setType(type);// Add default domain to the type
+			page.setType(type);
 		}
 
 		page.setJsonObject(obj);

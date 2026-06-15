@@ -12,9 +12,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Reads {@code assets/icons/index.json} (field-guide atlas from field-guide-export).
- */
 @Slf4j
 public class IconCatalog implements IconLookup {
 
@@ -28,7 +25,7 @@ public class IconCatalog implements IconLookup {
     private final MissingIconReport missingReport;
 
     public static final String MISSING_ICON_ID = "fieldguide:missing_icon";
-    /** CSS class for field-guide sprites; must not collide with EMI {@code .icon-atlas}. */
+    
     public static final String FIELD_GUIDE_ICON_CSS_CLASS = "field-guide-icon-atlas";
 
     private IconCatalog(

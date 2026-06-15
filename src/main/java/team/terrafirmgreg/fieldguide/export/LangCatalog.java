@@ -13,9 +13,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Locales present in {@code lang/*.json} under guide-export.
- */
 @Slf4j
 @Getter
 public class LangCatalog {

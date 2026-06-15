@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Resolves handbook / Patchouli blockstate refs using export {@code meta.json} blockstates and tag members.
- */
 @Slf4j
 public final class BlockstateRefResolver {
 
@@ -20,9 +17,6 @@ public final class BlockstateRefResolver {
         this.tagMembers = tagMembers;
     }
 
-    /**
-     * Model / blockstate id suitable for {@link team.terrafirmgreg.fieldguide.render.MultiblockSceneBuilder}.
-     */
     public String resolveModelId(String ref) {
         if (ref == null || ref.isBlank()) {
             return ref;

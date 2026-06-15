@@ -10,31 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * // vanilla format, single item
- * {
- *   "type": "patchouli:spotlight",
- *   "item": {
- *     "item": "minecraft:diamond_sword"
- *   }
- * }
- *
- * // vanilla format, tag
- * {
- *   "type": "patchouli:spotlight",
- *   "item": {
- *     "tag": "minecraft:axes"
- *   }
- * }
- *
- * // patchouli string format, allowing interspersed items and tags
- * {
- *   "type": "patchouli:spotlight",
- *   "item": "minecraft:diamond_sword,tag:minecraft:axes,minecraft:diamond_shovel"
- * }
- *
- * @author yanmaoyuan
- */
 public class PageSpotlightItemAdapter extends TypeAdapter<List<PageSpotlightItem>> {
     @Override
     public void write(JsonWriter out, List<PageSpotlightItem> value) {

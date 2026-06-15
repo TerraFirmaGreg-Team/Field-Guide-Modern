@@ -7,11 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * desc:
- *
- * @author yanmaoyuan
- */
 @Data
 public class OrCondition implements Condition {
     @SerializedName("OR")

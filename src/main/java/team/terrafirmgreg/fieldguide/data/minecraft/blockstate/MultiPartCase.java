@@ -16,7 +16,7 @@ public class MultiPartCase {
     private List<Variant> apply;
 
     public boolean check(Map<String, String> properties) {
-        // 如果没有 when 条件，表示在所有方块状态中都适用
+        
         if (when == null) {
             return true;
         }

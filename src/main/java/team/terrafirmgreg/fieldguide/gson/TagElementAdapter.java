@@ -32,11 +32,11 @@ public class TagElementAdapter extends TypeAdapter<TagElement> {
 
         switch (in.peek()) {
             case STRING:
-                // "namespace:name" or "#namespace:name"
+                
                 tagElement.setId(in.nextString());
                 break;
             case BEGIN_OBJECT:
-                // {"id": "...", "required": true/false}
+                
                 in.beginObject();
                 while (in.hasNext()) {
                     String name = in.nextName();

@@ -23,12 +23,11 @@ import static team.terrafirmgreg.fieldguide.render.ImageTemplates.IMAGE_SINGLE;
 @Slf4j
 public class PageRenderer {
 
-
     private final ExportModelLoader assetLoader;
     private final TextureRenderer textureRenderer;
     private final LocalizationManager localizationManager;
     private final EmiRecipeIndex emiRecipes;
-    /** Handbook recipe id → EMI recipe id for {@code data-recipe-id}. */
+    
     private final Map<String, String> recipeMountIds;
     private final EntityRenderResolver entityRenders;
     private Map<String, String> bookMacros = Map.of();
@@ -135,7 +134,6 @@ public class PageRenderer {
         }
     }
 
-
     public void formatText(BookEntry entry, List<String> buffer, String text) {
         if (text != null && !text.isEmpty()) {
             TextFormatter.formatText(buffer, text, localizationManager, bookMacros);
@@ -153,9 +151,6 @@ public class PageRenderer {
         }
     }
 
-    /**
-     * 带图标的标题格式化
-     */
     public void formatTitleWithIcon(BookEntry entry, List<String> buffer, ItemImageResult icon, String title) {
         formatTitleWithIcon(entry, buffer, icon, title, "h5", null);
     }
@@ -203,18 +198,12 @@ public class PageRenderer {
         formatTitleWithIcon(entry, buffer, iconSrc, iconName, title, "h5", null);
     }
 
-    /**
-     * 居中对齐文本
-     */
     public void formatCenteredText(BookEntry entry, List<String> buffer, String text) {
         buffer.add("<div style=\"text-align: center;\">");
         formatText(entry, buffer, text);
         buffer.add("</div>");
     }
 
-    /**
-     * 带提示的文本
-     */
     public void formatWithTooltip(List<String> buffer, String text, String tooltip) {
         String html = String.format("""
             <div style="text-align: center;">
@@ -224,9 +213,6 @@ public class PageRenderer {
         buffer.add(html);
     }
 
-    /**
-     * 格式化配方
-     */
     public void formatRecipe(List<String> buffer, String recipeId) {
         if (recipeId == null || recipeId.isEmpty()) {
             return;
@@ -252,7 +238,6 @@ public class PageRenderer {
                 escapeHtmlAttr(mountId)));
     }
 
-    /** Same id shape as EMI export when Patchouli uses {@code mod:path/with/slashes}. */
     private static String tmrvRecipeId(String handbookRecipeId) {
         if (handbookRecipeId == null || handbookRecipeId.isBlank() || handbookRecipeId.indexOf(':') <= 0) {
             return null;
@@ -293,7 +278,6 @@ public class PageRenderer {
         }
     }
 
-    ///  patchouli:image
     private void renderImagePage(List<String> buffer, List<String> images) {
         List<Map.Entry<String, String>> processedImages = new ArrayList<>();
 
@@ -331,7 +315,6 @@ public class PageRenderer {
         }
     }
 
-    ///  spotlight
     private void parseSpotlightPage(BookEntry entry, List<String> buffer, PageSpotlight page) {
         List<PageSpotlightItem> items = page.getItem();
         if (items == null || items.isEmpty()) {
@@ -350,7 +333,7 @@ public class PageRenderer {
                 }
             }
         } catch (Exception e) {
-            // Fallback
+            
             formatTitle(entry, buffer, page.getTitle());
 
             int count = 0;
@@ -446,14 +429,13 @@ public class PageRenderer {
                     glbPath));
             }
         } catch (Exception e) {
-            // FIXME add me later log.error("Multiblock GLB processing failed, message: {}", e.getMessage());
-            // Fallback
+            
             if (page.getMultiblockId() != null) {
                 formatWithTooltip(buffer,
                         String.format("%s: <code>%s</code>", localizationManager.translate(I18n.MULTIBLOCK), page.getMultiblockId()),
                         localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
             } else {
-                // FIXME for debug
+                
                 formatWithTooltip(buffer,
                         String.format("%s: <code>%s</code>", localizationManager.translate(I18n.MULTIBLOCK), JsonUtils.toJson(page.getMultiblock())),
                         localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
@@ -467,15 +449,13 @@ public class PageRenderer {
 
     private void parseMultiMultiblockPage(List<String> buffer, PageMultiMultiblock page) {
         try {
-            // 使用新方法生成多个GLB文件
+            
             List<String> glbPaths = textureRenderer.generateMultiMultiblockGLB(page);
             
-            // 添加GLB查看器
             if (!glbPaths.isEmpty()) {
                 String viewerId = generateUniqueViewerId("multimultiblock");
                 StringBuilder glbPathsJson = new StringBuilder("[");
                 
-                // 构建GLB文件路径的JSON数组
                 for (int i = 0; i < glbPaths.size(); i++) {
                     if (i > 0) {
                         glbPathsJson.append(",");
@@ -486,7 +466,6 @@ public class PageRenderer {
                 }
                 glbPathsJson.append("]");
                 
-                // 添加多方块GLB查看器，匹配期望的格式
                 buffer.add(String.format("""
                     <div class="glb-viewer-container">
                         <div id="%s" 
@@ -506,12 +485,11 @@ public class PageRenderer {
                     viewerId, glbPathsJson));
             }
         } catch (Exception e) {
-            // TODO 日志太多暂时移除 log.error("tfc:multimultiblock GLB processing failed", e);
+            
             formatWithTooltip(buffer, localizationManager.translate(I18n.MULTIBLOCK), localizationManager.translate(I18n.MULTIBLOCK_ONLY_IN_GAME));
         }
     }
 
-    /// page_table
     private void parseTablePage(BookEntry entry, List<String> buffer, PageTable page) {
         try {
             formatTable(entry, buffer, page);
@@ -519,7 +497,6 @@ public class PageRenderer {
             log.error("Table formatting failed for page '{}': {}",
                     page.getTitle() != null ? page.getTitle() : "Unknown", e.getMessage(), e);
 
-            // 渲染一个错误提示，而不是让整个程序失败
             buffer.add("<div class=\"table-error\" style=\"color:#800;padding:15px;border:1px solid #800;border-radius:4px;margin:10px 0;background:#fee;\">");
             buffer.add("<strong>表格渲染错误</strong><br>");
             buffer.add("页面的表格数据格式有误，无法正常显示。请检查相关配置文件。");
@@ -527,23 +504,19 @@ public class PageRenderer {
         }
     }
 
-
     private void formatTable(BookEntry entry, List<String> buffer, PageTable data) {
         List<PageTableString> strings = data.getStrings();
         int configuredColumns = data.getColumns();
-        int totalColumns = configuredColumns + 1; // +1 for the first column
+        int totalColumns = configuredColumns + 1; 
         List<PageTableLegend> legend = data.getLegend();
 
-        // 记录原始数据信息
         log.debug("Table data: {} elements, {} configured columns, {} total columns",
                 strings.size(), configuredColumns, totalColumns);
 
-        // 检查数据完整性并处理不完整的情况
         if (strings.size() < totalColumns) {
             log.warn("Table data incomplete: expected at least {} elements, got {}. Filling with empty cells.",
                     totalColumns, strings.size());
 
-            // 填充缺失的元素为空
             List<PageTableString> paddedStrings = new ArrayList<>(strings);
             while (paddedStrings.size() < totalColumns) {
                 paddedStrings.add(new PageTableString());
@@ -555,7 +528,6 @@ public class PageRenderer {
             log.warn("Table data does not perfectly divide columns: {} elements with {} columns. Trimming excess.",
                     strings.size(), totalColumns);
 
-            // 移除多余的元素，使其能除尽（保留最接近的完整行数）
             int maxRows = strings.size() / totalColumns;
             if (maxRows < 2) {
                 log.error("Table has too few elements ({} rows) for proper display", maxRows);
@@ -566,7 +538,6 @@ public class PageRenderer {
                 return;
             }
 
-            // 保留完整的行，丢弃不完整的行
             int trimmedSize = maxRows * totalColumns;
             strings = new ArrayList<>(strings.subList(0, trimmedSize));
             log.info("Trimmed table data to {} elements ({} rows)", trimmedSize, maxRows);
@@ -585,7 +556,6 @@ public class PageRenderer {
             body.add(strings.subList(i * totalColumns, (i + 1) * totalColumns));
         }
 
-        // Title + text
         formatTitle(entry, buffer, data.getTitle());
         formatText(entry, buffer, data.getText());
 
@@ -593,7 +563,6 @@ public class PageRenderer {
             buffer.add("<div class=\"row\"><div class=\"col-md-9\">");
         }
 
-        // Build the HTML table
         buffer.add("<figure class=\"table-figure\"><table><thead><tr>");
         for (PageTableString header : headers) {
             buffer.add(getComponent(header, "th"));
@@ -611,8 +580,8 @@ public class PageRenderer {
         if (legend != null && !legend.isEmpty()) {
             buffer.add("</div><div class=\"col-md-3\"><h4>Legend</h4>");
             for (PageTableLegend it : legend) {
-                // These are just a color square followed by a name
-                String color = it.getColor().substring(2); // Remove the "2:" prefix
+                
+                String color = it.getColor().substring(2); 
                 String text = it.getText();
                 buffer.add(java.lang.String.format(
                         """
@@ -628,8 +597,8 @@ public class PageRenderer {
 
     private static String getComponent(PageTableString th, String key) {
         if (th.getFill() != null) {
-            // Solid fill
-            String color = th.getFill().substring(2); // Remove the "2:" prefix
+            
+            String color = th.getFill().substring(2); 
             return String.format("<%s style=\"background-color:#%s;\"></%s>", key, color, key);
         }
 
@@ -644,6 +613,5 @@ public class PageRenderer {
             return String.format("<%s><p>%s</p></%s>", key, text, key);
         }
     }
-
 
 }

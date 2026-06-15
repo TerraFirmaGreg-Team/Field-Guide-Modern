@@ -48,7 +48,6 @@ public class ResourceLocation implements Comparable<ResourceLocation> {
         return astring;
     }
 
-
     public String getPath() {
         return this.path;
     }
@@ -76,7 +75,6 @@ public class ResourceLocation implements Comparable<ResourceLocation> {
     public String toString() {
         return this.namespace + ":" + this.path;
     }
-
 
     public int compareTo(ResourceLocation other) {
         int i = this.path.compareTo(other.path);
@@ -111,7 +109,6 @@ public class ResourceLocation implements Comparable<ResourceLocation> {
     public String toLanguageKey(String type, String key) {
         return type + "." + this.toLanguageKey() + "." + key;
     }
-
 
     public static boolean isAllowedInResourceLocation(char character) {
         return character >= '0' && character <= '9' || character >= 'a' && character <= 'z' || character == '_' || character == ':' || character == '/' || character == '.' || character == '-';

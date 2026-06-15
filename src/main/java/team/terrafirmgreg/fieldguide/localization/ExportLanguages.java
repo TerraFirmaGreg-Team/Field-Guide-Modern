@@ -10,10 +10,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Export locale codes for handbook + EMI bundles. Canonical list is {@link Language}.
- * Override at runtime with {@code -Dfieldguide.exportLanguages=en_us,zh_cn} or {@code *} for all MC langs.
- */
 public final class ExportLanguages {
 
     private static final String PROPERTY = "fieldguide.exportLanguages";
@@ -39,9 +35,6 @@ public final class ExportLanguages {
         return out.toString();
     }
 
-    /**
-     * @return configured locales, all {@link Language} keys when property unset, or {@code null} for {@code *}
-     */
     public static Set<String> resolveConfigured() {
         String raw = System.getProperty(PROPERTY, "").trim();
         if (raw.isEmpty()) {
@@ -57,10 +50,6 @@ public final class ExportLanguages {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    /**
-     * CLI for CI: write locale list to a file (preferred) or stdout.
-     * {@code ./gradlew writeExportLanguagesFile}
-     */
     public static void main(String[] args) throws Exception {
         String csv = toCsv(allKeys());
         if (args.length > 0) {

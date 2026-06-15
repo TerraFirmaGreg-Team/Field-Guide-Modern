@@ -11,7 +11,7 @@ public class ShapedCraftingRecipe extends CraftingRecipe {
     private List<String> pattern;
     private Map<String, Ingredient> key;
     @SerializedName("input_row")
-    private Integer inputRow;// used for tfc
+    private Integer inputRow;
     @SerializedName("input_column")
-    private Integer inputColumn;// used for tfc
+    private Integer inputColumn;
 }

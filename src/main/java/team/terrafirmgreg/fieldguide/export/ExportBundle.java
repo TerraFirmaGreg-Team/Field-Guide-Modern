@@ -7,9 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-/**
- * Single entry point for opening a guide-export directory.
- */
 @Getter
 public class ExportBundle {
 

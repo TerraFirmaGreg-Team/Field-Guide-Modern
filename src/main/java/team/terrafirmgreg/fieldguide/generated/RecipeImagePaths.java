@@ -1,9 +1,5 @@
 package team.terrafirmgreg.fieldguide.generated;
 
-/**
- * Paths for pre-rendered EMI recipe previews under {@code generated/recipes/}.
- * Shared by export (EMI bundle) and :site (HTML).
- */
 public final class RecipeImagePaths {
 
     public static final String GENERATED_DIR = "generated/recipes";

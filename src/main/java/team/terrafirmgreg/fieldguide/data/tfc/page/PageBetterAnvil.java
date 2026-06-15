@@ -3,9 +3,6 @@ package team.terrafirmgreg.fieldguide.data.tfc.page;
 import team.terrafirmgreg.fieldguide.data.patchouli.page.IPageWithText;
 import lombok.Data;
 
-/**
- * SNS modpack page: four anvil recipes in a 2×2 grid ({@code recipe} … {@code recipe4}).
- */
 @Data
 public class PageBetterAnvil extends IPageWithText {
 

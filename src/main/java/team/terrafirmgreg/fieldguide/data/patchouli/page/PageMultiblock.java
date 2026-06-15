@@ -11,9 +11,6 @@ public class PageMultiblock extends IPageWithText {
     @SerializedName("multiblock_id")
     private String multiblockId;
 
-    /**
-     * @see <a href="https://vazkiimods.github.io/Patchouli/docs/patchouli-basics/multiblocks">Defining Multiblocks</a>
-     */
     private PageMultiblockData multiblock;
 
     @SerializedName("enable_visualize")

@@ -1,8 +1,5 @@
 package team.terrafirmgreg.fieldguide.export;
 
-/**
- * One exported entity preview PNG from {@code meta.json} {@code entityRenders.<entityId>}.
- */
 public record EntityRenderRecord(
         String entity,
         float scale,

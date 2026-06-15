@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Resolves {@code patchouli:entity} pages to exported preview PNG paths in {@code meta.json}.
- * Expects {@code entityRenders} as a map keyed by full entity id (including NBT).
- */
 @Slf4j
 public final class EntityRenderResolver {
 

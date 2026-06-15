@@ -24,7 +24,6 @@ public final class Constants {
             "tfc_gurman"
     );
 
-    // these are excluded by kubejs/assets/tfg_exlucdes.zip
     public static final Set<String> EXCLUDES_ENTRIES = Set.of(
             "firmalife/more_fertilizer",
             "firmalife/stainless_steel",
@@ -41,7 +40,7 @@ public final class Constants {
             "the_world/ores_and_minerals",
             "sns/lunchbox",
             "sns/mob_net",
-            // tfg_gurman does not put them in right place, ignore them for now
+            
             "gurman_beverages",
             "gurman_borscht",
             "gurman_cheese_making",

@@ -2,11 +2,6 @@ package team.terrafirmgreg.fieldguide.data.minecraft;
 
 import lombok.Getter;
 
-/**
- * desc:
- *
- * @author yanmaoyuan
- */
 @Getter
 public enum DyeColor {
     WHITE(0, "white", 0xF9FFFE),

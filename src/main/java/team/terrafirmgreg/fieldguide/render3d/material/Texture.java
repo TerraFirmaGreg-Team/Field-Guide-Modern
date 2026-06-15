@@ -4,9 +4,6 @@ import lombok.Getter;
 
 import java.awt.image.BufferedImage;
 
-/**
- * Diffuse map payload for GLB export ({@code name} + pixel data).
- */
 @Getter
 public class Texture {
 

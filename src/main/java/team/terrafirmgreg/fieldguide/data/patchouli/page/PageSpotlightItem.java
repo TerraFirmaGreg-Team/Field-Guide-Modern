@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageSpotlightItem {
-    private String type;// tag or item
+    private String type;
     private String text;
 }

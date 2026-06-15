@@ -10,13 +10,10 @@ public class ItemImageResult {
     private String name;
     private final String key;
 
-    /** Placeholder / direct PNG path (relative to language dir, no {@code ../}). */
     private final String path;
 
-    /** Export atlas sprites via {@code *-icons.css}; single icon or carousel frames. */
     private final List<IconRef> atlasIcons;
 
-    /** EMI tag slot ({@code data-tag-id}) when set. */
     private final String emiTagId;
 
     public ItemImageResult(String path, String name, String key) {
@@ -75,7 +72,6 @@ public class ItemImageResult {
         return getAtlasIcons().get(0);
     }
 
-    /** Path for og:image / preview (site-root relative, e.g. {@code assets/icons/atlas-000.png}). */
     public String previewPath() {
         if (isAtlas()) {
             return primaryAtlas().relativeAtlasPath();

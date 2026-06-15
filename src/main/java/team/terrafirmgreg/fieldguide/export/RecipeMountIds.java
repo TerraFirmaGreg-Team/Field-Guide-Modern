@@ -3,9 +3,6 @@ package team.terrafirmgreg.fieldguide.export;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Handbook recipe id → EMI mount id from guide-export {@code meta.json} refs.
- */
 public final class RecipeMountIds {
 
     private RecipeMountIds() {

@@ -48,10 +48,6 @@ public class BlockState {
             }
         }
 
-        // FIXME 改为扫描多个blockState文件
-//        if (defaultVariants != null && !defaultVariants.isEmpty()) {
-//            return defaultVariants;
-//        }
         log.warn("No variants found, state:{} in variants: {}", state, variants.keySet());
 
         if (hasMultipart()) {
@@ -77,18 +73,13 @@ public class BlockState {
         return list;
     }
 
-    /**
-     * 根据权重选择变体
-     */
     public static Variant selectByWeight(List<Variant> variants) {
         if (variants.size() == 1) {
             return variants.get(0);
         }
 
-        // 计算总权重
         int totalWeight = variants.stream().mapToInt(Variant::getWeight).sum();
 
-        // 随机选择
         Random random = new Random();
         int randomValue = random.nextInt(totalWeight);
         int currentWeight = 0;
@@ -100,7 +91,6 @@ public class BlockState {
             }
         }
 
-        // 如果权重计算有问题，返回第一个
         return variants.get(0);
     }
 

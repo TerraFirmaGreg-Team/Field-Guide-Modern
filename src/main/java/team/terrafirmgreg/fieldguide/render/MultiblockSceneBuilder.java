@@ -8,9 +8,6 @@ import java.util.Map;
 
 import static team.terrafirmgreg.fieldguide.render.BaseModelBuilder.v3;
 
-/**
- * Builds a scene graph ({@link Node}) from patchouli multiblock pattern + mapping for GLB export.
- */
 @Slf4j
 public class MultiblockSceneBuilder {
 

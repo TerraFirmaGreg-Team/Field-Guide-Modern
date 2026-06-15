@@ -6,14 +6,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * desc:
- *
- * @author yanmaoyuan
- */
 @Data
 public class PropertyCondition implements Condition {
-    private Map<String, String> conditions;// eg. "1|2|3|4", "!none"
+    private Map<String, String> conditions;
 
     @Override
     public boolean check(Map<String, String> properties) {
@@ -35,12 +30,12 @@ public class PropertyCondition implements Condition {
 
     private boolean checkPropertyValue(String propertyName, String expectedValue, String actualValue) {
         if (expectedValue.startsWith("!")) {
-            // 反转条件：实际值不能在列表中
+            
             String valueList = expectedValue.substring(1);
             Set<String> excludedValues = parseValueList(valueList);
             return !excludedValues.contains(actualValue);
         } else {
-            // 正常条件：实际值必须在列表中
+            
             Set<String> allowedValues = parseValueList(expectedValue);
             return allowedValues.contains(actualValue);
         }

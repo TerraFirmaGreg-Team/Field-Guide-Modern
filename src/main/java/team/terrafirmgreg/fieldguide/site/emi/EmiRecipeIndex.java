@@ -13,9 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-/**
- * Recipe ids from EMI bundle schema 2 ({@code recipes/<namespace>/*.json} with {@code id} field).
- */
 @Slf4j
 public final class EmiRecipeIndex {
 
@@ -104,10 +101,6 @@ public final class EmiRecipeIndex {
         }
     }
 
-    /**
-     * Inverse of export {@code pathSafe} when path segments contain no {@code _} themselves.
-     * Prefer {@code meta.id}; export normally always writes it.
-     */
     private static Optional<String> recipeIdFromCardPath(Path metaFile, Path namespaceDir) {
         String fileName = metaFile.getFileName().toString();
         if (!fileName.endsWith(".json")) {

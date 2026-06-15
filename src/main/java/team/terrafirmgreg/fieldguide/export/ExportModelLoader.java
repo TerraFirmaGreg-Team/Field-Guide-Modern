@@ -22,10 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Export-only asset/model loader: reads {@code guide-export/assets/} and {@code meta.json} blockstates.
- * No mod jars or datapack tag recursion.
- */
 @Slf4j
 @Getter
 public class ExportModelLoader {

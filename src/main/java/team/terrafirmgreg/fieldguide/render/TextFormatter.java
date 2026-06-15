@@ -12,11 +12,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Patchouli $(...) markup → HTML. Structural tags (p/br/li) use {@link #root};
- * inline tags (bold/link/color) use {@link #inlineStack} only — never mix the two
- * (see Patchouli {@code BookTextParser} / {@code SpanState}).
- */
 @Slf4j
 public class TextFormatter {
     private static final Map<String, String> VANILLA_COLORS = Map.ofEntries(
@@ -38,7 +33,6 @@ public class TextFormatter {
         Map.entry("f", "#FFFFFF")
     );
 
-    /** Patchouli {@code Book.DEFAULT_MACROS}. */
     private static final Map<String, String> DEFAULT_MACROS = Map.of(
         "$(list", "$(li",
         "/$", "$()",
@@ -109,7 +103,7 @@ public class TextFormatter {
     private final List<String> buffer;
     private final Map<String, String> keybindings;
     private String root;
-    /** Inline closers only — never structural tags like {@code </li>}. */
+    
     private final List<String> inlineStack;
     private final LocalizationManager localizationManager;
     private boolean externalLinkOpen;
@@ -137,7 +131,6 @@ public class TextFormatter {
         return merged;
     }
 
-    /** Patchouli {@code BookTextParser.expandMacros}. */
     public static String expandMacros(String text, Map<String, String> bookMacros) {
         if (text == null) {
             return "";
@@ -310,7 +303,6 @@ public class TextFormatter {
         appendKeybindSpan(resolvedKey, resolvedKey, "#666", true);
     }
 
-    /** Patchouli accepts {@code sneak} as an alias for {@code key.sneak}. */
     static String resolveKeybindKey(String keybindKey) {
         if (keybindKey.startsWith("key.")) {
             return keybindKey;
@@ -395,7 +387,6 @@ public class TextFormatter {
         return key;
     }
 
-    /** Close inline tags only (Patchouli reset / end of span cluster). */
     private void flushInlineStack() {
         for (int i = inlineStack.size() - 1; i >= 0; i--) {
             buffer.add(inlineStack.get(i));
@@ -403,7 +394,6 @@ public class TextFormatter {
         inlineStack.clear();
     }
 
-    /** Patchouli $(/l): end link without closing other inline tags. */
     private void closeLink() {
         if (closeInlineTag("</a>") && externalLinkOpen) {
             appendExternalLinkMarker();
@@ -419,7 +409,6 @@ public class TextFormatter {
         externalLinkOpen = false;
     }
 
-    /** Remove and emit a single inline closer from the stack. */
     private boolean closeInlineTag(String closer) {
         for (int i = inlineStack.size() - 1; i >= 0; i--) {
             if (closer.equals(inlineStack.get(i))) {

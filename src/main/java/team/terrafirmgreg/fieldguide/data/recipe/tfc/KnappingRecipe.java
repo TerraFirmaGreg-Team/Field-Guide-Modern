@@ -15,6 +15,6 @@ public class KnappingRecipe extends BaseRecipe {
     private List<String> pattern;
     @SerializedName("outside_slot_required")
     private Boolean outsideSlotRequired;
-    private Ingredient ingredient; // 用于岩石敲击
+    private Ingredient ingredient; 
     private RecipeResult result;
 }

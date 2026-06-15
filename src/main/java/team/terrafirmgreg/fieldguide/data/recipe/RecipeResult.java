@@ -11,7 +11,6 @@ public class RecipeResult {
     private Integer count;
     private List<Object> modifiers;
 
-    // 有些情况下，result可能是一个嵌套对象，比如stack
     private Stack stack;
 
     @Data

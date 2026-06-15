@@ -2,10 +2,6 @@ package team.terrafirmgreg.fieldguide.generated;
 
 import java.nio.file.Path;
 
-/**
- * Paths for the {@code emi/} static bundle consumed by {@code emi-recipe-renderer}.
- * All constants are relative to the modpack export root ({@code guide-export/}).
- */
 public final class EmiBundlePaths {
 
     public static final String ROOT = "emi";

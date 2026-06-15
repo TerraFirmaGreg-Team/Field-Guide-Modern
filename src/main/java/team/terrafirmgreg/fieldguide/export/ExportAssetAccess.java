@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Asset reads from export {@code assets/} plus resolved blockstates from {@code meta.json}.
- */
 @Getter
 public class ExportAssetAccess {
 

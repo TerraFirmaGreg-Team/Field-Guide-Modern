@@ -3,11 +3,6 @@ package team.terrafirmgreg.fieldguide.data.patchouli;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * desc:
- *
- * @author yanmaoyuan
- */
 public class ItemStackParser {
 
     public static String[] splitStacksFromSerializedIngredient(String ingredientSerialized) {

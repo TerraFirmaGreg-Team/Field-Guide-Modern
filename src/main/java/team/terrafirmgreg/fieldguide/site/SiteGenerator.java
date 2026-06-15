@@ -117,8 +117,7 @@ public class SiteGenerator implements Callable<Integer> {
         SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl, ogImageUrl);
 
         siteRenderer.copyStaticFiles();
-        // Runtime assets: icons from export; GLBs + patchouli:image PNGs written during render.
-        // EMI bundle is copied separately by ci/run.sh build-site (not part of guide-export assets/).
+        
         siteRenderer.copyHandbookIcons(export);
         siteRenderer.copyEntityPreviews(export);
 

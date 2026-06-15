@@ -53,7 +53,7 @@ public class BlockStateConditionAdapter extends TypeAdapter<Condition> {
 
     @Override
     public Condition read(JsonReader in) throws IOException {
-        // 读取一个JSON对象
+        
         in.beginObject();
         String firstKey = in.nextName();
         JsonToken token = in.peek();
@@ -103,7 +103,7 @@ public class BlockStateConditionAdapter extends TypeAdapter<Condition> {
         switch(in.peek()) {
             case STRING -> map.put(key, in.nextString());
             case BOOLEAN -> map.put(key, String.valueOf(in.nextBoolean()));
-            case NUMBER -> map.put(key, String.valueOf(in.nextInt()));// FIXME 如何判断是小数点还是整数？
+            case NUMBER -> map.put(key, String.valueOf(in.nextInt()));
             default -> log.info("Unknown token type: {}, {}", key, token);
         }
     }

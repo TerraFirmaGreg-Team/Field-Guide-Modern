@@ -28,14 +28,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SiteRenderer {
 
-    /** Keep in sync with {@code package.json} → {@code emi-recipe-renderer}. */
     public static final String EMI_RENDERER_VERSION = "0.6.5";
 
-    /**
-     * External recipe viewer base (path + trailing slash). EMI item/tag clicks open
-     * {@code ?lang=<locale>&item=<id>} or {@code &tag=<id>} here. Override via
-     * {@code --recipe-book-base-url} or {@code RECIPE_BOOK_BASE_URL} in CI.
-     */
     public static final String DEFAULT_RECIPE_BOOK_BASE_URL = "https://www.jmecn.net/TFG-Recipe-Viewer/";
 
     private static final Pattern SEARCH_STRIP_PATTERN = Pattern.compile("\\$\\([^)]*\\)");
@@ -156,10 +150,6 @@ public class SiteRenderer {
             "placeholder_64.png",
             "splash.png");
 
-    /**
-     * Site UI images ({@code assets/textures} → {@code _images/}): splash and placeholders.
-     * Recipe frames (crafting/knapping) removed — EMI renders recipe cards.
-     */
     private void copySiteImages() throws IOException {
         Path textures = Paths.get("assets/textures");
         if (!Files.isDirectory(textures)) {
@@ -181,7 +171,6 @@ public class SiteRenderer {
         log.info("Copied {} site image(s) to {}/_images", copied, outputRootDir);
     }
 
-    /** Copies {@code guide-export/assets/icons/} to site {@code assets/icons/}. */
     public void copyHandbookIcons(Path exportRoot) throws IOException {
         Path srcIcons = exportRoot.resolve("assets/icons");
         if (!Files.isDirectory(srcIcons)) {
@@ -196,7 +185,6 @@ public class SiteRenderer {
         log.info("Copied field-guide icons to {}", destIcons);
     }
 
-    /** Copies {@code guide-export/assets/entities/} to site {@code assets/entities/}. */
     public void copyEntityPreviews(Path exportRoot) throws IOException {
         Path srcEntities = exportRoot.resolve("assets/entities");
         if (!Files.isDirectory(srcEntities)) {
@@ -211,7 +199,6 @@ public class SiteRenderer {
         log.info("Copied entity previews to {}", destEntities);
     }
 
-    /** MWE emits {@code .icon-atlas}; rename so EMI footer CSS cannot override field-guide sprites. */
     private static void rewriteFieldGuideIconCss(Path iconsRoot) throws IOException {
         Path css = iconsRoot.resolve("icons.css");
         if (!Files.isRegularFile(css)) {
@@ -250,7 +237,6 @@ public class SiteRenderer {
         log.warn("Unsupported classpath URL for {}: {}", resourceName, url);
     }
 
-    /** Copies a single classpath file (works inside fat jars). */
     private boolean copyClasspathResource(String resourceName, Path dest) throws IOException {
         try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourceName)) {
             if (in == null) {
@@ -337,7 +323,6 @@ public class SiteRenderer {
         buildEntryPages(cat, categories);
     }
 
-    /** Category pages live one level shallower than entry pages; card icons need {@code ../} not {@code ../../}. */
     private void refreshCategoryCardIcon(BookEntry entry, TextureRenderer textureRenderer) {
         try {
             ItemImageResult itemSrc = textureRenderer.getItemImage(entry.getIcon(), false);
@@ -423,7 +408,6 @@ public class SiteRenderer {
         return SEARCH_STRIP_PATTERN.matcher(input).replaceAll("");
     }
 
-    /** {@code root} is the path from the page back to the site root (e.g. {@code ..} or {@code ../..}). */
     private static String handbookIconsRoot(String root) {
         return root + "/assets/icons";
     }

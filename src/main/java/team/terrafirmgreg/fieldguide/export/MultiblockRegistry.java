@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Resolves Patchouli multiblock ids from {@code meta.json} {@code multiblockDefs} (runtime registry).
- * Does not look up mods jars.
- */
 @Slf4j
 public class MultiblockRegistry {
 
@@ -157,9 +153,6 @@ public class MultiblockRegistry {
         return Optional.ofNullable(byId.get(id));
     }
 
-    /**
-     * Fallback when a Patchouli page embeds pattern/mapping directly (no registry id).
-     */
     public Optional<ResolvedMultiblock> resolveFromPage(
             String id,
             List<String> pattern,

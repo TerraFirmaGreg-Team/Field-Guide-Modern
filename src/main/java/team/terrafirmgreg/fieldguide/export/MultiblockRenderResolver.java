@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Builds renderable multiblock pages from Patchouli JSON plus export {@code multiblockDefs} / blockstates.
- */
 @Slf4j
 public final class MultiblockRenderResolver {
 

@@ -13,9 +13,6 @@ import team.terrafirmgreg.fieldguide.localization.Language;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Loads Patchouli book JSON from guide-export {@code assets/} tree.
- */
 @Slf4j
 public class ExportBookLoader {
 

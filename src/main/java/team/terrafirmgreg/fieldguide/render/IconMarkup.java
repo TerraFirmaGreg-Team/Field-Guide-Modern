@@ -3,12 +3,8 @@ package team.terrafirmgreg.fieldguide.render;
 import team.terrafirmgreg.fieldguide.asset.ItemImageResult;
 import team.terrafirmgreg.fieldguide.export.IconRef;
 
-/**
- * HTML for field-guide {@code field-guide-icon-atlas} sprites (CSS under {@code assets/icons/}).
- */
 public final class IconMarkup {
 
-    /** From {@code en_us/<category>/<entry>.html} to site root. */
     public static final String ASSET_ROOT = "../../";
 
     private static final int CAROUSEL_INTERVAL_MS = 800;
@@ -23,10 +19,6 @@ public final class IconMarkup {
         return img(icon, extraClass, ASSET_ROOT);
     }
 
-    /**
-     * @param assetRoot path from the HTML file to the site root (e.g. {@code ../} on category pages,
-     *                  {@code ../../} on entry pages)
-     */
     public static String img(ItemImageResult icon, String extraClass, String assetRoot) {
         if (icon == null) {
             return "";

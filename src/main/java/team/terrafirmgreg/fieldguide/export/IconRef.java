@@ -1,8 +1,5 @@
 package team.terrafirmgreg.fieldguide.export;
 
-/**
- * Reference into a generated icon atlas ({@code icons.css} + PNG pages).
- */
 public record IconRef(
         String atlasKind,
         String cssClass,
@@ -20,12 +17,10 @@ public record IconRef(
         return "atlas-%03d.png".formatted(page);
     }
 
-    /** Path relative to site root, e.g. {@code assets/icons/atlas-000.png}. */
     public String relativeAtlasPath() {
         return "assets/icons/" + atlasFileName();
     }
 
-    /** CSS for {@code <img src="...atlas.png" style="...">} sprite slice. */
     public String toImgStyle() {
         return "width:%dpx;height:%dpx;image-rendering:pixelated;image-rendering:crisp-edges;"
                 .formatted(cellSize, cellSize)

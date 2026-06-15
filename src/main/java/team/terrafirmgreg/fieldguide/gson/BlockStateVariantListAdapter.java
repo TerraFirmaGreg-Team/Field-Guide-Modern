@@ -20,10 +20,10 @@ public class BlockStateVariantListAdapter extends TypeAdapter<List<Variant>> {
         }
 
         if (value.size() == 1) {
-            // 如果只有一个元素，序列化为对象
+            
             writeVariant(out, value.get(0));
         } else {
-            // 如果有多个元素，序列化为数组
+            
             out.beginArray();
             for (Variant variant : value) {
                 writeVariant(out, variant);
@@ -62,11 +62,11 @@ public class BlockStateVariantListAdapter extends TypeAdapter<List<Variant>> {
 
         JsonToken token = in.peek();
         if (token == JsonToken.BEGIN_OBJECT) {
-            // 如果是对象 {}，创建一个包含单个元素的列表
+            
             Variant variant = readApply(in);
             variants.add(variant);
         } else if (token == JsonToken.BEGIN_ARRAY) {
-            // 如果是数组 []，读取所有元素
+            
             in.beginArray();
             while (in.hasNext()) {
                 Variant variant = readApply(in);
@@ -97,7 +97,7 @@ public class BlockStateVariantListAdapter extends TypeAdapter<List<Variant>> {
                     variant.setY(in.nextInt());
                     break;
                 case "z":
-                    // 处理新增的 z 轴旋转
+                    
                     variant.setZ(in.nextInt());
                     break;
                 case "uvlock":
@@ -107,7 +107,7 @@ public class BlockStateVariantListAdapter extends TypeAdapter<List<Variant>> {
                     variant.setWeight(in.nextInt());
                     break;
                 default:
-                    in.skipValue(); // 忽略未知字段
+                    in.skipValue(); 
                     break;
             }
         }

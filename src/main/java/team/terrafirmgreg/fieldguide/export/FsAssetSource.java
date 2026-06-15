@@ -14,9 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Reads assets from a guide-export {@code assets/} tree on disk.
- */
 public class FsAssetSource extends AssetSource {
 
     private final Path absoluteRootPath;

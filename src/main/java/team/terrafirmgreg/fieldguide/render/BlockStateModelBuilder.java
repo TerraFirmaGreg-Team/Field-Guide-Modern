@@ -17,12 +17,12 @@ public class BlockStateModelBuilder extends BaseModelBuilder {
     protected BlockModel loadModel(String modelId) {
         if (modelId.startsWith("#")) {
             List<String> blocks = assetLoader.loadBlockTag(modelId.substring(1));
-            modelId = blocks.get(0); // 获取第一个方块
+            modelId = blocks.get(0); 
         }
         BlockModel blockModel = assetLoader.loadBlockModelWithState(modelId);
         if (!blockModel.hasElements()) {
-            // 返回空节点
-            return new BlockModel(); // 需要根据你的BlockModel类调整
+            
+            return new BlockModel(); 
         }
         return blockModel;
     }

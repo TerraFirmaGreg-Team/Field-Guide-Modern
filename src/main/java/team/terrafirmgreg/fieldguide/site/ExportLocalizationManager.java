@@ -15,10 +15,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Loads merged {@code lang/<locale>.json} from guide-export (no mod jar scanning).
- * Also merges site UI strings from {@code assets/lang/<locale>.json} (CLI parity).
- */
 @Slf4j
 public class ExportLocalizationManager implements LocalizationManager {
 
@@ -116,6 +112,6 @@ public class ExportLocalizationManager implements LocalizationManager {
 
     @Override
     public void lazyLoadNamespace(String namespace) {
-        // Export lang files are already merged; nothing to lazy-load per namespace.
+        
     }
 }

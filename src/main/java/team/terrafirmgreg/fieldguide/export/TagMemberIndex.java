@@ -11,9 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Runtime-expanded tag members from {@code index/tag-members.json}.
- */
 @Slf4j
 public class TagMemberIndex {
 

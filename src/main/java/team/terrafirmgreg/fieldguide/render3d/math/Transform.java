@@ -1,24 +1,13 @@
 package team.terrafirmgreg.fieldguide.render3d.math;
 
-/**
- * 空间变换
- * @author yanmaoyuan
- *
- */
 public class Transform {
 
-    /**
-     * 单位空间变换
-     */
     public static final Transform IDENTITY = new Transform();
     
-    private Vector3f scale = new Vector3f(1, 1, 1);// 比例变换
-    private Quaternion rot = new Quaternion();// 旋转变换
-    private Vector3f translation = new Vector3f(0, 0, 0);// 平移变换
+    private Vector3f scale = new Vector3f(1, 1, 1);
+    private Quaternion rot = new Quaternion();
+    private Vector3f translation = new Vector3f(0, 0, 0);
     
-    /**
-     * 初始化空间变换
-     */
     public Transform(Vector3f translation, Quaternion rot){
         this.translation.set(translation);
         this.rot.set(rot);
@@ -41,89 +30,57 @@ public class Transform {
         this(Vector3f.ZERO, Quaternion.IDENTITY);
     }
     
-    /**
-     * 单位化
-     */
     public void loadIdentity() {
         scale.set(1, 1, 1);
         rot.set(0, 0, 0, 1);
         translation.set(0, 0, 0);
     }
     
-    /**
-     * 对空间进行空间变换
-     * @param in
-     * @param store
-     * @return
-     */
     public Vector3f transformVector(final Vector3f in, Vector3f store){
         if (store == null)
             store = new Vector3f();
         
         store.set(in);
-        // 先缩放
+        
         store.multLocal(scale);
-        // 再旋转
+        
         rot.mult(store, store);
-        // 再平移
+        
         store.addLocal(translation);
         return store;
     }
 
-    /**
-     * 对顶点进行逆变换
-     * @param in
-     * @param store
-     * @return
-     */
     public Vector3f transformInverseVector(final Vector3f in, Vector3f store){
         if (store == null)
             store = new Vector3f();
 
-        // 先负平移
         in.subtract(translation, store);
-        // 然后负旋转
+        
         rot.inverse().mult(store, store);
-        // 然后负缩放
+        
         store.divideLocal(scale);
 
         return store;
     }
     
-    /**
-     * 对法线进行空间变换
-     * 法线的变换只应用旋转，不考虑缩放（除非是均匀缩放）
-     * 平移不影响法线方向
-     * @param in 输入法线向量
-     * @param store 存储结果的向量
-     * @return 变换后的法线向量
-     */
     public Vector3f transformNormal(final Vector3f in, Vector3f store){
         if (store == null)
             store = new Vector3f();
         
         store.set(in);
         
-        // 检查是否为均匀缩放
         if (scale.x == scale.y && scale.y == scale.z) {
-            // 均匀缩放：法线需要反向缩放以保持单位长度
+            
             if (scale.x != 0) {
                 store.multLocal(1.0f / scale.x);
             }
         }
-        // 非均匀缩放时不处理缩放，因为会破坏法线的垂直性
-        // 这种情况下应该使用完整的矩阵逆转置变换，但为简化这里忽略
         
-        // 只应用旋转变换
         rot.mult(store, store);
         
         return store;
     }
     
-    /**
-     * 三种变换转为4x4矩阵
-     * @return
-     */
     public Matrix4f toTransformMatrix() {
         Matrix4f trans = new Matrix4f();
         trans.setTranslation(translation);
@@ -132,61 +89,34 @@ public class Transform {
         return trans;
     }
     
-    /**
-     * 4x4矩阵转为三种变换
-     * @param mat
-     */
     public void fromTransformMatrix(Matrix4f mat) {
         translation.set(mat.toTranslationVector());
         rot.set(mat.toRotationQuad());
         scale.set(mat.toScaleVector());
     }
     
-    /**
-     * 求空间变换的逆
-     * @return
-     */
     public Transform invert() {
         Transform t = new Transform();
         t.fromTransformMatrix(toTransformMatrix().invertLocal());
         return t;
     }
     
-    /**
-     * 在两个空间变换之间插值
-     * @param t1
-     * @param t2
-     * @param delta
-     */
     public void interpolateTransforms(Transform t1, Transform t2, float delta) {
         this.rot.slerp(t1.rot,t2.rot,delta);
         this.translation.interpolateLocal(t1.translation,t2.translation,delta);
         this.scale.interpolateLocal(t1.scale,t2.scale,delta);
     }
     
-    /**
-     * 根据“父”空间变换来计算当前空间变换。
-     * 
-     * @param parent
-     * @return
-     */
     public Transform combineWithParent(Transform parent) {
         scale.multLocal(parent.scale);
         parent.rot.mult(rot, rot);
 
-        translation.multLocal(parent.scale);// 缩放
-        parent.rot.multLocal(translation)   // 旋转
-            .addLocal(parent.translation);  // 平移
+        translation.multLocal(parent.scale);
+        parent.rot.multLocal(translation)   
+            .addLocal(parent.translation);  
         return this;
     }
     
-    // 基本的Getter和Setter
-    
-    /**
-     * 复制另一个空间变换的值
-     * @param matrixQuat
-     * @return
-     */
     public Transform set(Transform matrixQuat) {
         this.translation.set(matrixQuat.translation);
         this.rot.set(matrixQuat.rot);

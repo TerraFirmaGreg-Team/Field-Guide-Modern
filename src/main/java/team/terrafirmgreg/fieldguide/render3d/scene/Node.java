@@ -3,11 +3,6 @@ package team.terrafirmgreg.fieldguide.render3d.scene;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 节点
- * @author yanmaoyuan
- *
- */
 public class Node extends Spatial {
 
     private List<Spatial> children;
@@ -16,27 +11,15 @@ public class Node extends Spatial {
         children = new ArrayList<Spatial>();
     }
     
-    /**
-     * 添加子节点
-     * @param spatial
-     */
     public void attachChild(Spatial spatial) {
         children.add(spatial);
         spatial.setParent(this);
     }
-    /**
-     * 移除子节点
-     * @param spatial
-     */
+    
     public void detachChild(Spatial spatial) {
         children.remove(spatial);
     }
 
-    /**
-     * 遍历场景，获取所有Geometry
-     * @param list
-     * @return
-     */
     public List<Geometry> getGeometryList(List<Geometry> list) {
         if (list == null) {
             list = new ArrayList<>();
@@ -47,7 +30,7 @@ public class Node extends Spatial {
             if (spatial instanceof Geometry) {
                 list.add((Geometry) spatial);
             } else if (spatial instanceof Node) {
-                // 递归
+                
                 Node node = (Node) spatial;
                 node.getGeometryList(list);
             }

@@ -23,45 +23,32 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-/**
- * GlTF 2.0格式导出器
- * 只支持GLB二进制格式，JSON和二进制数据在同一个文件中
- */
 @Slf4j
 public class GlTFExporter {
 
-    // GLB文件头常量
-    private static final int GLB_MAGIC = 0x46546C67; // "glTF"
+    private static final int GLB_MAGIC = 0x46546C67; 
     private static final int GLB_VERSION = 2;
-    private static final int GLB_JSON_CHUNK_TYPE = 0x4E4F534A; // "JSON"
-    private static final int GLB_BIN_CHUNK_TYPE = 0x004E4942; // "BIN\0"
+    private static final int GLB_JSON_CHUNK_TYPE = 0x4E4F534A; 
+    private static final int GLB_BIN_CHUNK_TYPE = 0x004E4942; 
 
-    // 数据访问器类型
     private static final String ACCESSOR_TYPE_SCALAR = "SCALAR";
     private static final String ACCESSOR_TYPE_VEC3 = "VEC3";
     private static final String ACCESSOR_TYPE_VEC2 = "VEC2";
 
-    // 组件类型
     private static final int COMPONENT_TYPE_UNSIGNED_INT = 5125;
     private static final int COMPONENT_TYPE_FLOAT = 5126;
 
-    // 缓冲区视图目标
     private static final int TARGET_ARRAY_BUFFER = 34962;
     private static final int TARGET_ELEMENT_ARRAY_BUFFER = 34963;
 
-    // 材质Alpha模式
     private static final String ALPHA_MODE_OPAQUE = "OPAQUE";
     private static final String ALPHA_MODE_BLEND = "BLEND";
     private static final String ALPHA_MODE_MASK = "MASK";
     
-    // 纹理过滤/包装（仅 nearest + clamp，适合 MC 像素纹理）
     private static final int MAG_FILTER_NEAREST = 9728;
     private static final int MIN_FILTER_NEAREST_MIPMAP_NEAREST = 9984;
     private static final int WRAP_CLAMP_TO_EDGE = 33071;
 
-    /**
-     * GLTF数据结构
-     */
     private Map<String, Object> gltf;
     private List<Map<String, Object>> accessors;
     private List<Map<String, Object>> bufferViews;
@@ -74,34 +61,23 @@ public class GlTFExporter {
     private List<Map<String, Object>> nodes;
     private List<Map<String, Object>> scenes;
 
-    // 二进制数据
     private ByteArrayOutputStream binaryData;
     private Map<Material, Integer> materialIndexMap;
     private Map<Texture, Integer> imageIndexMap;
 
-
-    /**
-     * 导出节点树为GLB文件
-     */
     public void export(Node rootNode, String filePath) throws IOException {
         export(rootNode, filePath, "model");
     }
 
-    /**
-     * 导出节点树为GLB文件
-     */
     public void export(Node rootNode, String filePath, String modelName) throws IOException {
         reset();
 
         List<Geometry> geometries = rootNode.getGeometryList(null);
         
-        // 处理所有几何体
         processGeometries(geometries);
         
-        // 构建场景结构
         buildSceneStructure(geometries, modelName);
         
-        // 写入GLB文件
         writeGlbFile(filePath);
 
         log.debug("成功导出GLB文件: {}, 包含 {} 个几何体", filePath, geometries.size());
@@ -142,43 +118,36 @@ public class GlTFExporter {
             return;
         }
 
-        // 获取几何体的世界变换
         Transform transform = geometry.getWorldTransform();
 
-        // 提取顶点数据并应用变换
         List<Float> positions = new ArrayList<>();
         List<Float> normals = new ArrayList<>();
         List<Float> texCoords = new ArrayList<>();
 
         for (Vertex vertex : vertices) {
-            // 应用位置变换
+            
             Vector3f pos = transform.transformVector(vertex.position, null);
             positions.add(pos.x);
             positions.add(pos.y);
             positions.add(pos.z);
 
-            // 应用法线变换
             Vector3f norm = transform.transformNormal(vertex.normal, null);
             normals.add(norm.x);
             normals.add(norm.y);
             normals.add(norm.z);
 
-            // 纹理坐标保持不变（Transform不包含UV变换）
             Vector2f uv = vertex.texCoord;
             texCoords.add(uv.x);
-            texCoords.add(1.0f - uv.y); // GLTF使用不同的V坐标系
+            texCoords.add(1.0f - uv.y); 
         }
 
-        // 创建访问器和缓冲区视图
         int positionAccessor = createFloatAccessor(positions, ACCESSOR_TYPE_VEC3);
         int normalAccessor = createFloatAccessor(normals, ACCESSOR_TYPE_VEC3);
         int texCoordAccessor = createFloatAccessor(texCoords, ACCESSOR_TYPE_VEC2);
         int indexAccessor = createUnsignedIntAccessor(indices);
 
-        // 处理材质
         int materialIndex = processMaterial(geometry.getMaterial());
 
-        // 创建网格
         Map<String, Object> gltfMesh = new LinkedHashMap<>();
         List<Map<String, Object>> primitives = new ArrayList<>();
         
@@ -186,7 +155,7 @@ public class GlTFExporter {
         primitive.put("attributes", createAttributesMap(positionAccessor, normalAccessor, texCoordAccessor));
         primitive.put("indices", indexAccessor);
         primitive.put("material", materialIndex);
-        primitive.put("mode", 4); // TRIANGLES
+        primitive.put("mode", 4); 
 
         primitives.add(primitive);
         gltfMesh.put("primitives", primitives);
@@ -202,10 +171,9 @@ public class GlTFExporter {
     }
 
     private int createFloatAccessor(List<Float> data, String type) throws IOException {
-        // 创建缓冲区视图
+        
         int bufferView = createFloatBufferView(data);
         
-        // 创建访问器
         Map<String, Object> accessor = new LinkedHashMap<>();
         accessor.put("bufferView", bufferView);
         accessor.put("componentType", COMPONENT_TYPE_FLOAT);
@@ -220,10 +188,9 @@ public class GlTFExporter {
     }
 
     private int createUnsignedIntAccessor(int[] data) throws IOException {
-        // 创建缓冲区视图
+        
         int bufferView = createIntBufferView(data);
         
-        // 创建访问器
         Map<String, Object> accessor = new LinkedHashMap<>();
         accessor.put("bufferView", bufferView);
         accessor.put("componentType", COMPONENT_TYPE_UNSIGNED_INT);
@@ -258,22 +225,19 @@ public class GlTFExporter {
     }
 
     private int createBufferView(byte[] data, int target) throws IOException {
-        // 确保4字节对齐
+        
         int currentOffset = binaryData.size();
         int padding = (4 - (currentOffset % 4)) % 4;
         
-        // 添加填充字节
         for (int i = 0; i < padding; i++) {
             binaryData.write(0);
         }
         
-        // 添加到二进制数据
         int offset = binaryData.size();
         binaryData.write(data);
 
-        // 创建缓冲区视图
         Map<String, Object> bufferView = new LinkedHashMap<>();
-        bufferView.put("buffer", 0); // 使用第一个缓冲区
+        bufferView.put("buffer", 0); 
         bufferView.put("byteOffset", offset);
         bufferView.put("byteLength", data.length);
         if (target != 0) {
@@ -287,17 +251,15 @@ public class GlTFExporter {
 
     private int processMaterial(Material material) throws IOException {
         if (material == null) {
-            // 创建默认材质
+            
             return createDefaultMaterial();
         }
 
-        // 检查是否已经处理过这个材质
         Integer existingIndex = materialIndexMap.get(material);
         if (existingIndex != null) {
             return existingIndex;
         }
 
-        // 创建新材质
         Map<String, Object> gltfMaterial = createGltfMaterial(material);
         int index = materials.size();
         materials.add(gltfMaterial);
@@ -306,11 +268,8 @@ public class GlTFExporter {
         return index;
     }
     
-    /**
-     * 添加缓冲区视图（辅助方法）
-     */
     private int addBufferView(byte[] data, String name) throws IOException {
-        return createBufferView(data, 0); // target=0 for generic data
+        return createBufferView(data, 0); 
     }
     
     private int createDefaultMaterial() {
@@ -333,7 +292,6 @@ public class GlTFExporter {
     private Map<String, Object> createGltfMaterial(Material material) throws IOException {
         Map<String, Object> gltfMaterial = new LinkedHashMap<>();
         
-        // 处理纹理
         Texture diffuseTexture = material.getDiffuseMap();
         if (diffuseTexture != null) {
             int textureIndex = processTexture(diffuseTexture);
@@ -344,20 +302,18 @@ public class GlTFExporter {
             baseColorTexture.put("texCoord", 0);
             pbr.put("baseColorTexture", baseColorTexture);
             
-            // 检查透明度和混合模式
             String alphaMode = ALPHA_MODE_OPAQUE;
             float alpha = 1.0f;
             
             if (material.getRenderState() != null) {
                 RenderState.BlendMode blendMode = material.getRenderState().getBlendMode();
                 
-                // 检查是否启用了Alpha测试
                 if (material.getRenderState().isAlphaTest()) {
                     alphaMode = ALPHA_MODE_MASK;
                     alpha = 0.8f;
                     gltfMaterial.put("alphaCutoff", material.getRenderState().getAlphaFalloff());
                 } else if (blendMode == RenderState.BlendMode.ALPHA_BLEND || blendMode == RenderState.BlendMode.ADD) {
-                    // 检查混合模式
+                    
                     alphaMode = ALPHA_MODE_BLEND;
                     alpha = 0.8f;
                 }
@@ -366,7 +322,6 @@ public class GlTFExporter {
             pbr.put("baseColorFactor", new float[]{1.0f, 1.0f, 1.0f, alpha});
             gltfMaterial.put("alphaMode", alphaMode);
             
-            // 使用材质的漫反射颜色作为基础颜色
             if (material.getDiffuse() != null) {
                 pbr.put("baseColorFactor", new float[]{
                     material.getDiffuse().x,
@@ -378,15 +333,13 @@ public class GlTFExporter {
                 pbr.put("baseColorFactor", new float[]{1.0f, 1.0f, 1.0f, alpha});
             }
             
-            // 设置光泽度转换为粗糙度（光泽度越高，粗糙度越低）
             float shininess = material.getShininess();
             float roughness = Math.max(0.0f, 1.0f - (shininess / 128.0f));
             pbr.put("roughnessFactor", roughness);
-            pbr.put("metallicFactor", 0.0f); // Minecraft材质通常非金属
+            pbr.put("metallicFactor", 0.0f); 
             
             gltfMaterial.put("pbrMetallicRoughness", pbr);
             
-            // 添加双面渲染支持
             if (material.getRenderState() != null) {
                 RenderState.CullMode cullMode = material.getRenderState().getCullMode();
                 if (cullMode == RenderState.CullMode.NEVER || cullMode == RenderState.CullMode.ALWAYS) {
@@ -394,7 +347,7 @@ public class GlTFExporter {
                 }
             }
         } else {
-            // 无纹理材质，使用材质的漫反射颜色
+            
             Map<String, Object> pbr = new LinkedHashMap<>();
             
             if (material.getDiffuse() != null) {
@@ -408,7 +361,6 @@ public class GlTFExporter {
                 pbr.put("baseColorFactor", new float[]{0.8f, 0.8f, 0.8f, 1.0f});
             }
             
-            // 设置光泽度转换为粗糙度
             float shininess = material.getShininess();
             float roughness = Math.max(0.0f, 1.0f - (shininess / 128.0f));
             pbr.put("roughnessFactor", roughness);
@@ -423,10 +375,9 @@ public class GlTFExporter {
 
     private int processTexture(Texture texture) throws IOException {
 
-        // 检查是否已经处理过这个纹理
         Integer existingIndex = imageIndexMap.get(texture);
         if (existingIndex != null) {
-            // 创建纹理引用（指向现有图像）
+            
             Map<String, Object> gltfTexture = new LinkedHashMap<>();
             gltfTexture.put("source", existingIndex);
             gltfTexture.put("sampler", createNearestSampler());
@@ -436,13 +387,10 @@ public class GlTFExporter {
             return index;
         }
         
-        // 从Texture创建PNG数据
         byte[] pngData = createPNGFromTexture(texture);
 
-        // 添加到二进制数据缓冲区
-        int imageBufferView = createBufferView(pngData, 0); // target=0 for images
+        int imageBufferView = createBufferView(pngData, 0); 
         
-        // 创建图像对象
         Map<String, Object> image = new LinkedHashMap<>();
         image.put("name", texture.getName() != null ? texture.getName() : "texture_" + images.size());
         image.put("bufferView", imageBufferView);
@@ -452,7 +400,6 @@ public class GlTFExporter {
         images.add(image);
         imageIndexMap.put(texture, imageIndex);
         
-        // 创建纹理
         int textureIndex = textures.size();
         Map<String, Object> gltfTexture = new LinkedHashMap<>();
         gltfTexture.put("source", imageIndex);
@@ -462,11 +409,8 @@ public class GlTFExporter {
         return textureIndex;
     }
     
-    /**
-     * 创建最近邻过滤的采样器（适合像素纹理）
-     */
     private int createNearestSampler() {
-        // 检查是否已经创建了最近邻采样器
+        
         for (int i = 0; i < samplers.size(); i++) {
             Map<String, Object> sampler = samplers.get(i);
             if (MAG_FILTER_NEAREST == (Integer) sampler.get("magFilter") &&
@@ -475,7 +419,6 @@ public class GlTFExporter {
             }
         }
         
-        // 创建新的最近邻采样器
         Map<String, Object> sampler = new LinkedHashMap<>();
         sampler.put("magFilter", MAG_FILTER_NEAREST);
         sampler.put("minFilter", MIN_FILTER_NEAREST_MIPMAP_NEAREST);
@@ -488,12 +431,11 @@ public class GlTFExporter {
     }
     
     private void buildSceneStructure(List<Geometry> geometries, String modelName) {
-        // 创建缓冲区
+        
         Map<String, Object> buffer = new LinkedHashMap<>();
         buffer.put("byteLength", binaryData.size());
         buffers.add(buffer);
 
-        // 创建节点
         for (int i = 0; i < geometries.size(); i++) {
             Map<String, Object> node = new LinkedHashMap<>();
             node.put("name", modelName + "_" + i);
@@ -501,7 +443,6 @@ public class GlTFExporter {
             nodes.add(node);
         }
 
-        // 创建场景
         Map<String, Object> scene = new LinkedHashMap<>();
         List<Integer> sceneNodes = new ArrayList<>();
         for (int i = 0; i < geometries.size(); i++) {
@@ -510,7 +451,6 @@ public class GlTFExporter {
         scene.put("nodes", sceneNodes);
         scenes.add(scene);
 
-        // 构建主要GLTF结构
         gltf.put("asset", createAsset());
         gltf.put("accessors", accessors);
         gltf.put("bufferViews", bufferViews);
@@ -536,19 +476,16 @@ public class GlTFExporter {
         Path path = Paths.get(filePath);
         Files.createDirectories(path.getParent());
 
-        // 创建JSON字符串
         String json = mapToJson(gltf);
         byte[] jsonData = json.getBytes(StandardCharsets.UTF_8);
 
-        // 填充JSON到4字节对齐
         int jsonPadding = (4 - (jsonData.length % 4)) % 4;
         byte[] paddedJsonData = new byte[jsonData.length + jsonPadding];
         System.arraycopy(jsonData, 0, paddedJsonData, 0, jsonData.length);
         for (int i = 0; i < jsonPadding; i++) {
-            paddedJsonData[jsonData.length + i] = 32; // 空格字符
+            paddedJsonData[jsonData.length + i] = 32; 
         }
 
-        // 填充二进制数据到4字节对齐
         int binPadding = (4 - (binaryData.size() % 4)) % 4;
         for (int i = 0; i < binPadding; i++) {
             binaryData.write(0);
@@ -557,25 +494,22 @@ public class GlTFExporter {
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             ByteBuffer header = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN);
             
-            // GLB文件头 (12字节)
-            header.putInt(GLB_MAGIC);           // 4字节: "glTF"
-            header.putInt(GLB_VERSION);        // 4字节: 版本 2
-            header.putInt(12 + 8 + paddedJsonData.length + 8 + binaryData.size()); // 4字节: 总长度
+            header.putInt(GLB_MAGIC);           
+            header.putInt(GLB_VERSION);        
+            header.putInt(12 + 8 + paddedJsonData.length + 8 + binaryData.size()); 
             
             fos.write(header.array());
             
-            // JSON块 (12 + JSON数据长度)
             ByteBuffer jsonChunkHeader = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-            jsonChunkHeader.putInt(paddedJsonData.length); // 4字节: JSON块长度
-            jsonChunkHeader.putInt(GLB_JSON_CHUNK_TYPE); // 4字节: "JSON"
+            jsonChunkHeader.putInt(paddedJsonData.length); 
+            jsonChunkHeader.putInt(GLB_JSON_CHUNK_TYPE); 
             
             fos.write(jsonChunkHeader.array());
             fos.write(paddedJsonData);
             
-            // 二进制块 (8 + 二进制数据长度)
             ByteBuffer binChunkHeader = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-            binChunkHeader.putInt(binaryData.size()); // 4字节: 二进制块长度
-            binChunkHeader.putInt(GLB_BIN_CHUNK_TYPE); // 4字节: "BIN\0"
+            binChunkHeader.putInt(binaryData.size()); 
+            binChunkHeader.putInt(GLB_BIN_CHUNK_TYPE); 
             
             fos.write(binChunkHeader.array());
             fos.write(binaryData.toByteArray());
@@ -701,9 +635,6 @@ public class GlTFExporter {
         return Collections.singletonList(max);
     }
     
-    /**
-     * 从Texture创建PNG二进制数据
-     */
     private byte[] createPNGFromTexture(Texture texture) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(texture.getImage(), "png", baos);

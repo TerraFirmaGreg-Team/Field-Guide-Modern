@@ -73,9 +73,6 @@ public class TextureRenderer {
         return prefix + count;
     }
 
-    /**
-     * Resolves handbook icons from {@code guide-export/assets/icons/} (FGE atlas).
-     */
     public ItemImageResult getItemImage(String item, boolean placeholder) {
         if (item.endsWith(".png")) {
             return new ItemImageResult(convertIcon(item), null, null);
@@ -171,7 +168,6 @@ public class TextureRenderer {
         }
     }
 
-    /** {@code patchouli:image} — crop/resize book textures for static HTML. */
     public String convertImage(String image) {
         if (IMAGE_CACHE.containsKey(image)) {
             return IMAGE_CACHE.get(image);

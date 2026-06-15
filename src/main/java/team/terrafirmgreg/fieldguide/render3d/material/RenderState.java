@@ -1,8 +1,5 @@
 package team.terrafirmgreg.fieldguide.render3d.material;
 
-/**
- * Alpha/blend hints for glTF material export.
- */
 public class RenderState {
 
     public enum CullMode {

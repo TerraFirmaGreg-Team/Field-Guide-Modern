@@ -12,9 +12,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Loads export tag bundles: {@code data/<namespace>/tags/{items,blocks,fluids}.json}.
- */
 @Slf4j
 public class TagBundleLoader {
 

@@ -10,5 +10,5 @@ public class ShapelessCraftingRecipe extends CraftingRecipe {
     private List<Ingredient> ingredients;
 
     @SerializedName("primary_ingredient")
-    private Ingredient primaryIngredient;// used for firmalife food recipe
+    private Ingredient primaryIngredient;
 }

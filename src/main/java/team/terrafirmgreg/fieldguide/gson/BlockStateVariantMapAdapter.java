@@ -93,7 +93,7 @@ public class BlockStateVariantMapAdapter extends TypeAdapter<Map<String, List<Va
                     variant.setY(in.nextInt());
                     break;
                 case "z":
-                    // 处理新增的 z 轴旋转
+                    
                     variant.setZ(in.nextInt());
                     break;
                 case "uvlock":
@@ -103,7 +103,7 @@ public class BlockStateVariantMapAdapter extends TypeAdapter<Map<String, List<Va
                     variant.setWeight(in.nextInt());
                     break;
                 default:
-                    in.skipValue(); // 忽略未知字段
+                    in.skipValue(); 
                     break;
             }
         }

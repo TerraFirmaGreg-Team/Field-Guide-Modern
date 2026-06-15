@@ -1,11 +1,5 @@
 package team.terrafirmgreg.fieldguide.render3d.math;
 
-/**
- * 4*4矩阵
- * 
- * @author yanmaoyuan
- *
- */
 public class Matrix4f {
     
     protected float m00, m01, m02, m03;
@@ -13,19 +7,10 @@ public class Matrix4f {
     protected float m20, m21, m22, m23;
     protected float m30, m31, m32, m33;
 
-    /**
-     * 零矩阵
-     */
     public static final Matrix4f ZERO = new Matrix4f(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-    /**
-     * 单位矩阵
-     */
     public static final Matrix4f IDENTITY = new Matrix4f();
     
-    /**
-     * 初始化为单位矩阵
-     */
     public Matrix4f() {
         loadIdentity();
     }
@@ -53,18 +38,10 @@ public class Matrix4f {
         this.m33 = m33;
     }
 
-    /**
-     * 使用数组来初始化矩阵，数组顺序为列优先格式。
-     * @param array
-     */
     public Matrix4f(float[] array) {
         set(array, false);
     }
     
-    /**
-     * 使用另一个矩阵来初始化矩阵
-     * @param mat4
-     */
     public Matrix4f(Matrix4f mat4) {
         if (mat4 == null) {
             loadIdentity();
@@ -73,9 +50,6 @@ public class Matrix4f {
         }
     }
     
-    /**
-     * 单位矩阵
-     */
     public void loadIdentity() {
         m01 = m02 = m03 = 0.0f;
         m10 = m12 = m13 = 0.0f;
@@ -84,10 +58,6 @@ public class Matrix4f {
         m00 = m11 = m22 = m33 = 1.0f;
     }
 
-    /**
-     * 零矩阵
-     * @return
-     */
     public Matrix4f zero() {
         m00 = m01 = m02 = m03 = 0.0f;
         m10 = m11 = m12 = m13 = 0.0f;
@@ -96,10 +66,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 求转置矩阵
-     * @return
-     */
     public Matrix4f transpose() {
         float[] tmp = new float[16];
         get(tmp, true);
@@ -107,10 +73,6 @@ public class Matrix4f {
         return mat;
     }
 
-    /**
-     * 求转置矩阵
-     * @return
-     */
     public Matrix4f transposeLocal() {
         float tmp = m01;
         m01 = m10;
@@ -139,10 +101,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 标量乘法
-     * @param scalar
-     */
     public void multLocal(float scalar) {
         m00 *= scalar;
         m01 *= scalar;
@@ -162,11 +120,6 @@ public class Matrix4f {
         m33 *= scalar;
     }
 
-    /**
-     * 标量乘法
-     * @param scalar
-     * @return
-     */
     public Matrix4f mult(float scalar) {
         Matrix4f out = new Matrix4f();
         out.set(this);
@@ -174,35 +127,16 @@ public class Matrix4f {
         return out;
     }
 
-    /**
-     * 标量乘法
-     * @param scalar
-     * @param store
-     * @return
-     */
     public Matrix4f mult(float scalar, Matrix4f store) {
         store.set(this);
         store.multLocal(scalar);
         return store;
     }
     
-    /**
-     * 矩阵乘法，结果将返回一个新的Matrix4f对象。
-     * 
-     * @param mat4
-     * @return
-     */
     public Matrix4f mult(Matrix4f mat4) {
         return mult(mat4, null);
     }
 
-    /**
-     * 矩阵乘法，乘积保存在store对象中。
-     * 
-     * @param mat4
-     * @param store
-     * @return
-     */
     public Matrix4f mult(Matrix4f mat4, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
@@ -301,33 +235,14 @@ public class Matrix4f {
         return store;
     }
 
-    /**
-     * 矩阵乘法，乘积保存在当前矩阵中。
-     * 
-     * @param mat4
-     * @return
-     */
     public Matrix4f multLocal(Matrix4f mat4) {
         return mult(mat4, this);
     }
     
-    /**
-     * 4x4矩阵与Vector3f向量相乘，结果保存在一个新的Vector3f对象中。
-     * 
-     * @param vec
-     * @return
-     */
     public Vector3f mult(Vector3f vec) {
         return mult(vec, null);
     }
 
-    /**
-     * 4x4矩阵与Vector3f向量相乘，结果保存在一个新的store对象中。
-     * 
-     * @param vec
-     * @param store
-     * @return
-     */
     public Vector3f mult(Vector3f vec, Vector3f store) {
         if (store == null) {
             store = new Vector3f();
@@ -341,23 +256,10 @@ public class Matrix4f {
         return store;
     }
 
-    /**
-     * 矩阵与四位向量相乘，结果返回一个新的Vector4f对象。
-     *
-     * @param vec
-     * @return
-     */
     public Vector4f mult(Vector4f vec) {
         return mult(vec, null);
     }
 
-    /**
-     * 矩阵与四位向量相乘，结果返保存在store对象中。
-     *
-     * @param vec
-     * @param store
-     * @return
-     */
     public Vector4f mult(Vector4f vec, Vector4f store) {
         if (null == vec) {
             return null;
@@ -375,10 +277,6 @@ public class Matrix4f {
         return store;
     }
     
-    /**
-     * 计算行列式
-     * @return
-     */
     public float determinant() {
         float fA0 = m00 * m11 - m01 * m10;
         float fA1 = m00 * m12 - m02 * m10;
@@ -396,21 +294,10 @@ public class Matrix4f {
         return fDet;
     }
     
-    /**
-     * 求Matrix4f的标准伴随矩阵。
-     * 
-     * @return
-     */
     public Matrix4f adjoint() {
         return adjoint(null);
     }
     
-    /**
-     * 求Matrix4f的标准伴随矩阵，结果保存在store对象中。
-     * 
-     * @param store
-     * @return
-     */
     public Matrix4f adjoint(Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
@@ -449,20 +336,10 @@ public class Matrix4f {
         return store;
     }
     
-    /**
-     * 求矩阵的逆
-     * 
-     * @return 
-     */
     public Matrix4f invert() {
         return invert(null);
     }
 
-    /**
-     * 求矩阵的逆
-     * 
-     * @return
-     */
     public Matrix4f invert(Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
@@ -509,11 +386,6 @@ public class Matrix4f {
         return store;
     }
 
-    /**
-     * 求矩阵的逆
-     * 
-     * @return
-     */
     public Matrix4f invertLocal() {
 
         float fA0 = m00 * m11 - m01 * m10;
@@ -574,13 +446,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 4*4矩阵的第四列表示位移
-     * @param x
-     * @param y
-     * @param z
-     * @return
-     */
     public Matrix4f initTranslation(float x, float y, float z) {
         m00 = 1; m01 = 0; m02 = 0; m03 = x;
         m10 = 0; m11 = 1; m12 = 0; m13 = y;
@@ -590,11 +455,6 @@ public class Matrix4f {
         return this;
     }
 
-    /**
-     * 4*4矩阵的左上角3个Vector3f，表示缩放矩阵。
-     * @param v
-     * @return
-     */
     public Matrix4f fromScale(Vector3f v) {
         m00 = v.x; m01 = 0;   m02 = 0;   m03 = 0;
         m10 = 0;   m11 = v.y; m12 = 0;   m13 = 0;
@@ -603,13 +463,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 4*4矩阵的左上角3个Vector3f，表示缩放矩阵。
-     * @param x
-     * @param y
-     * @param z
-     * @return
-     */
     public Matrix4f fromScale(float x, float y, float z) {
         m00 = x; m01 = 0; m02 = 0; m03 = 0;
         m10 = 0; m11 = y; m12 = 0; m13 = 0;
@@ -618,11 +471,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 绕x轴旋转
-     * @param angle
-     * @return
-     */
     public Matrix4f fromRotateX(float angle) {
         float sin = (float) Math.sin(angle);
         float cos = (float) Math.cos(angle);
@@ -634,11 +482,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 绕y轴旋转
-     * @param angle
-     * @return
-     */
     public Matrix4f fromRotateY(float angle) {
         float sin = (float) Math.sin(angle);
         float cos = (float) Math.cos(angle);
@@ -650,11 +493,6 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 绕z轴旋转
-     * @param angle
-     * @return
-     */
     public Matrix4f fromRotateZ(float angle) {
         float sin = (float) Math.sin(angle);
         float cos = (float) Math.cos(angle);
@@ -666,24 +504,10 @@ public class Matrix4f {
         return this;
     }
 
-    /**
-     * 轴角对旋转矩阵
-     * @param v
-     * @param angle
-     * @return
-     */
     public Matrix4f fromAxisAngle(Vector3f v, float angle) {
         return fromAxisAngle(v.x, v.y, v.z, angle);
     }
     
-    /**
-     * 轴角对旋转矩阵。
-     * @param vx
-     * @param vy
-     * @param vz
-     * @param angle
-     * @return
-     */
     public Matrix4f fromAxisAngle(float vx, float vy, float vz, float angle) {
         zero();
         m33 = 1;
@@ -693,7 +517,6 @@ public class Matrix4f {
             return this;
         }
         
-        // 先把向量规范化
         if (Math.abs(length - 1.0) > 0.0001) {
             length = (float) (1.0 / Math.sqrt(length));
             vx *= length;
@@ -704,15 +527,12 @@ public class Matrix4f {
         float sin = (float) Math.sin(angle);
         float cos = (float) Math.cos(angle);
         
-        // 节省5次减法运算
         float _1_minus_cos = 1f - cos;
 
-        // 节省3次乘法运算
         float xSin = vx * sin;
         float ySin = vy * sin;
         float zSin = vz * sin;
         
-        // 节省6次乘法运算
         float xyM = vx * vy * _1_minus_cos;
         float xzM = vx * vz * _1_minus_cos;
         float yzM = vy * vz * _1_minus_cos;
@@ -730,52 +550,28 @@ public class Matrix4f {
         return this;
     }
     
-    /**
-     * 获得平移变换向量
-     * @return
-     */
     public Vector3f toTranslationVector() {
         return new Vector3f(m03, m13, m23);
     }
 
-    /**
-     * 获得平移变换向量
-     * @param vector
-     */
     public void toTranslationVector(Vector3f vector) {
         vector.set(m03, m13, m23);
     }
     
-    /**
-     * 旋转矩阵转为四元数
-     * @return
-     */
     public Quaternion toRotationQuad() {
         Quaternion quad = new Quaternion();
         quad.fromRotationMatrix(toRotationMatrix());
         return quad;
     }
 
-    /**
-     * 旋转矩阵转为四元数
-     * @param q
-     */
     public void toRotationQuad(Quaternion q) {
         q.fromRotationMatrix(toRotationMatrix());
     }
 
-    /**
-     * 获得旋转矩阵
-     * @return
-     */
     public Matrix3f toRotationMatrix() {
         return new Matrix3f(m00, m01, m02, m10, m11, m12, m20, m21, m22);
     }
 
-    /**
-     * 获得旋转矩阵
-     * @param mat
-     */
     public void toRotationMatrix(Matrix3f mat) {
         mat.m00 = m00;
         mat.m01 = m01;
@@ -788,22 +584,12 @@ public class Matrix4f {
         mat.m22 = m22;
     }
     
-    /**
-     * 获得比例变换向量
-     * 
-     * @return
-     */
     public Vector3f toScaleVector() {
         Vector3f result = new Vector3f();
         this.toScaleVector(result);
         return result;
     }
 
-    /**
-     * 设置比例变换向量
-     * 
-     * @param vector
-     */
     public void toScaleVector(Vector3f vector) {
         float scaleX = (float) Math.sqrt(m00 * m00 + m10 * m10 + m20 * m20);
         float scaleY = (float) Math.sqrt(m01 * m01 + m11 * m11 + m21 * m21);
@@ -811,13 +597,6 @@ public class Matrix4f {
         vector.set(scaleX, scaleY, scaleZ);
     }
 
-    /**
-     * 设置比例变换
-     * 
-     * @param x
-     * @param y
-     * @param z
-     */
     public void setScale(float x, float y, float z) {
         Vector3f tmp = new Vector3f();
         
@@ -840,20 +619,10 @@ public class Matrix4f {
         m22 = tmp.z;
     }
 
-    /**
-     * 设置比例变换
-     * 
-     * @param scale
-     */
     public void setScale(Vector3f scale) {
         this.setScale(scale.x, scale.y, scale.z);
     }
 
-    /**
-     * 设置平移变换
-     * 
-     * @param translation
-     */
     public void setTranslation(float[] translation) {
         if (translation.length != 3) {
             throw new IllegalArgumentException("Translation size must be 3.");
@@ -863,53 +632,26 @@ public class Matrix4f {
         m23 = translation[2];
     }
 
-    /**
-     * 设置平移变换
-     * 
-     * @param x
-     * @param y
-     * @param z
-     */
     public void setTranslation(float x, float y, float z) {
         m03 = x;
         m13 = y;
         m23 = z;
     }
 
-    /**
-     * 设置平移变换
-     *
-     * @param translation
-     */
     public void setTranslation(Vector3f translation) {
         m03 = translation.x;
         m13 = translation.y;
         m23 = translation.z;
     }
     
-    /**
-     * 设置旋转变换
-     * @param quat
-     */
     public void setRotationQuaternion(Quaternion quat) {
         quat.toRotationMatrix(this);
     }
     
-    /**
-     * 以行向量模式，把矩阵的值复制到一个float数组中。
-     * 
-     * @param matrix
-     */
     public void get(float[] matrix) {
         get(matrix, true);
     }
 
-    /**
-     * 将矩阵数据保存到一个float数组中。
-     * 
-     * @param matrix
-     * @param rowMajor 判断输出数据是行优先还是列优先
-     */
     public void get(float[] matrix, boolean rowMajor) {
         if (matrix.length != 16) {
             throw new IllegalArgumentException("Array must be of size 16.");
@@ -952,13 +694,6 @@ public class Matrix4f {
         }
     }
 
-    /**
-     * 获取第i行第j列元素
-     * 
-     * @param i
-     * @param j
-     * @return
-     */
     public float get(int i, int j) {
         switch (i) {
             case 0:
@@ -1010,23 +745,10 @@ public class Matrix4f {
         throw new IllegalArgumentException("Invalid indices into matrix.");
     }
 
-    /**
-     * 获取矩阵第i列数据
-     * 
-     * @param i
-     * @return
-     */
     public float[] getColumn(int i) {
         return getColumn(i, null);
     }
 
-    /**
-     * 将第i列数据保存到一个float数组中。
-     * 
-     * @param i
-     * @param store
-     * @return
-     */
     public float[] getColumn(int i, float[] store) {
         if (store == null) {
             store = new float[4];
@@ -1062,12 +784,6 @@ public class Matrix4f {
         return store;
     }
 
-    /**
-     * 设置矩阵第i列的值
-     * 
-     * @param i
-     * @param column
-     */
     public void setColumn(int i, float[] column) {
 
         if (column == null) {
@@ -1103,13 +819,6 @@ public class Matrix4f {
         }
     }
 
-    /**
-     * 设置矩阵第i行第j列的值。
-     * 
-     * @param i
-     * @param j
-     * @param value
-     */
     public void set(int i, int j, float value) {
         switch (i) {
             case 0:
@@ -1177,11 +886,6 @@ public class Matrix4f {
         throw new IllegalArgumentException("Invalid indices into matrix.");
     }
 
-    /**
-     * 使用二维数组来为矩阵赋值。
-     * 
-     * @param matrix
-     */
     public void set(float[][] matrix) {
         if (matrix.length != 4 || matrix[0].length != 4) {
             throw new IllegalArgumentException("Array must be of size 16.");
@@ -1205,10 +909,6 @@ public class Matrix4f {
         m33 = matrix[3][3];
     }
     
-    
-    /**
-     * 根据给定的值来为矩阵赋值
-     */
     public void set(float m00, float m01, float m02, float m03,
             float m10, float m11, float m12, float m13,
             float m20, float m21, float m22, float m23,
@@ -1232,10 +932,6 @@ public class Matrix4f {
         this.m33 = m33;
     }
     
-    /**
-     * 复制另一个Matrix4f的值
-     * @param matrix
-     */
     public void set(Matrix4f matrix) {
         m00 = matrix.m00;
         m01 = matrix.m01;
@@ -1255,21 +951,10 @@ public class Matrix4f {
         m33 = matrix.m33;
     }
 
-    /**
-     * 按行优先规则，把数组中的值赋给矩阵。
-     * 
-     * @param matrix
-     */
     public void set(float[] matrix) {
         set(matrix, true);
     }
 
-    /**
-     * 使用给定数组来为矩阵赋值
-     * 
-     * @param matrix
-     * @param rowMajor 判断输入数据是否为行优先，还是列优先。
-     */
     public void set(float[] matrix, boolean rowMajor) {
         if (matrix.length != 16) {
             throw new IllegalArgumentException(

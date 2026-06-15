@@ -4,22 +4,11 @@ import team.terrafirmgreg.fieldguide.render3d.math.Vector2f;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector3f;
 import team.terrafirmgreg.fieldguide.render3d.math.Vector4f;
 
-/**
- * 定义三角形网格
- * 
- * @author yanmaoyuan
- *
- */
 public class Mesh {
-    /**
-     * 顶点数据
-     */
+    
     protected Vertex[] vertexes;
-    /**
-     * 顶点索引
-     */
+    
     protected int[] indexes;
-
 
     public Vertex[] getVertexes() {
         return vertexes;

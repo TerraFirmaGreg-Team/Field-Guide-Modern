@@ -7,9 +7,7 @@ import lombok.Data;
 @JsonAdapter(TagElementAdapter.class)
 @Data
 public class TagElement {
-    // id or tag
-    // if it's a tag: #<namespace>:<name>
-    // if it's an id: <namespace>:<name>
+    
     private String id;
     private Boolean required = true;
 

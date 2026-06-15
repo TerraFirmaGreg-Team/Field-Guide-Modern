@@ -1,11 +1,7 @@
 package team.terrafirmgreg.fieldguide.generated;
 
-/**
- * EMI recipe layout paths (under {@link EmiBundlePaths}).
- */
 public final class RecipeLayoutPaths {
 
-    /** Layout JSON schema — v2 recipe cards use PNG + meta hit layer. */
     public static final int SCHEMA_VERSION = 2;
 
     public static final String LAYOUTS_DIR = EmiBundlePaths.RECIPES_DIR;
