@@ -111,6 +111,8 @@ public class BookEntry implements Comparable<BookEntry> {
     private transient String categoryId;
 
     private transient String iconPath = "";
+    /** Site-root-relative OG preview PNG (e.g. {@code assets/icons/og/foo/bar.png}). */
+    private transient String ogImagePath = "";
     private transient String iconName = "";
     /** Pre-rendered header icon HTML (atlas span or legacy img). */
     private transient String iconHeaderHtml = "";

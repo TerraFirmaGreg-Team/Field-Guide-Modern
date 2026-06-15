@@ -29,7 +29,16 @@ class SiteSeoTest {
     }
 
     @Test
-    void ogImageUrlUsesAssetPathForEntryIcons() {
+    void ogImageUrlUsesEntryOgPreviewPath() {
+        assertEquals(
+                "https://wiki.terrafirmagreg.team/modern/field-guide/assets/icons/og/beneath/piglins.png",
+                SiteSeo.ogImageUrl(
+                        SiteSeo.DEFAULT_SITE_BASE_URL,
+                        "assets/icons/og/beneath/piglins.png"));
+    }
+
+    @Test
+    void ogImageUrlUsesAssetPathForLegacyAtlasFallback() {
         assertEquals(
                 "https://wiki.terrafirmagreg.team/modern/field-guide/assets/icons/atlas-000.png",
                 SiteSeo.ogImageUrl(

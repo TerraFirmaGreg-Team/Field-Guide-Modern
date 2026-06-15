@@ -196,6 +196,21 @@ public class SiteRenderer {
         log.info("Copied field-guide icons to {}", destIcons);
     }
 
+    /** Copies {@code guide-export/assets/entities/} to site {@code assets/entities/}. */
+    public void copyEntityPreviews(Path exportRoot) throws IOException {
+        Path srcEntities = exportRoot.resolve("assets/entities");
+        if (!Files.isDirectory(srcEntities)) {
+            log.warn("No entity previews under {}, skipping", srcEntities.toAbsolutePath());
+            return;
+        }
+        Path destEntities = Paths.get(outputRootDir, "assets", "entities");
+        if (Files.exists(destEntities)) {
+            FileUtils.deleteDirectory(destEntities.toFile());
+        }
+        FileUtils.copyDirectory(srcEntities.toFile(), destEntities.toFile());
+        log.info("Copied entity previews to {}", destEntities);
+    }
+
     /** MWE emits {@code .icon-atlas}; rename so EMI footer CSS cannot override field-guide sprites. */
     private static void rewriteFieldGuideIconCss(Path iconsRoot) throws IOException {
         Path css = iconsRoot.resolve("icons.css");
@@ -339,12 +354,19 @@ public class SiteRenderer {
             Map<String, Object> data = basePageData("../..");
             data.put("long_title", entry.getName() + " | " + localizationManager.translate(I18n.SHORT_TITLE));
             data.put("short_description", entry.getName());
-            data.put("preview_image", cleanImagePath(entry.getIconPath()));
+            data.put("preview_image", cleanImagePath(
+                    entry.getOgImagePath() != null && !entry.getOgImagePath().isBlank()
+                            ? entry.getOgImagePath()
+                            : entry.getIconPath()));
             data.put("index", "../");
             data.put("categories", categories);
             data.put("current_category", cat);
             data.put("current_entry", entry);
-            putSeoData(data, entry.getId() + ".html", entry.getIconPath());
+            String seoPreview = entry.getOgImagePath();
+            if (seoPreview == null || seoPreview.isBlank()) {
+                seoPreview = entry.getIconPath();
+            }
+            putSeoData(data, entry.getId() + ".html", seoPreview);
             generatePage("entry.ftl", entry.getId() + ".html", data);
         }
     }

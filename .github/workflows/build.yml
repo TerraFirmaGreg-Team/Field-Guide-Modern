@@ -164,7 +164,7 @@ jobs:
             -Djava.awt.headless=false
             -Dmodernfix.config.mixin.feature.integrated_server_watchdog=false
             -DminecraftWebExport.export.enabled=true
-            -DminecraftWebExport.runExportAndExit=true
+            -DminecraftWebExport.export.compressed=false
             -DminecraftWebExport.export.outputDir=${{ env.EXPORT_ROOT }}
             -DminecraftWebExport.exportMode=scoped
             -DminecraftWebExport.exportWorldName=emi-export

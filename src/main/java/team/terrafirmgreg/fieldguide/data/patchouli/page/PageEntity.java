@@ -11,6 +11,7 @@ public class PageEntity extends IPageWithText {
 
     private float scale = 1F;
 
+    @SerializedName("offset")
     private float extraOffset = 0F;
 
     private String name;

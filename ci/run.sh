@@ -808,9 +808,23 @@ EOF
   fi
 }
 
+materialize_emi_bundle() {
+  local root="${1:-${EXPORT_ROOT:?EXPORT_ROOT required}}"
+  local zip="$root/emi.zip"
+  if [[ ! -f "$zip" ]]; then
+    return 0
+  fi
+  rm -rf "$root/emi"
+  mkdir -p "$root/emi"
+  unzip -q -o "$zip" -d "$root/emi"
+  rm -f "$zip"
+}
+
 verify_guide_export() {
   local guide="${EXPORT_GUIDE:?EXPORT_GUIDE required}"
   local root="${EXPORT_ROOT:?EXPORT_ROOT required}"
+
+  materialize_emi_bundle "$root"
 
   for f in manifest.json meta.json; do
     if [[ ! -f "$guide/$f" ]]; then
@@ -933,7 +947,13 @@ finalize_export() {
   local archive="$FGM_ROOT/guide-export-${bundle_id}.tar.gz"
 
   load_config
-  tar -czf "$archive" -C "$EXPORT_ROOT" guide-export emi
+  if [[ -f "${EXPORT_ROOT}/emi.zip" ]]; then
+    ls -lh "${EXPORT_ROOT}/emi.zip"
+    tar -czf "$archive" -C "$EXPORT_ROOT" guide-export emi.zip
+  else
+    materialize_emi_bundle
+    tar -czf "$archive" -C "$EXPORT_ROOT" guide-export emi
+  fi
   ls -lh "$archive"
 }
 
@@ -1008,6 +1028,8 @@ extract_bundle() {
   tar -xzf "$archive" -C "$EXPORT_ROOT"
   rm -f "$archive"
 
+  materialize_emi_bundle
+
   verify_guide_export
   echo "Extracted export bundle to ${EXPORT_ROOT}"
 }
@@ -1017,10 +1039,13 @@ fetch_bundle() {
 
   load_config
 
-  if [[ -f "${EXPORT_ROOT}/guide-export/manifest.json" && -f "${EXPORT_ROOT}/emi/bundle.json" ]]; then
-    echo "Export bundle already at ${EXPORT_ROOT}"
-    verify_guide_export
-    return 0
+  if [[ -f "${EXPORT_ROOT}/guide-export/manifest.json" ]]; then
+    materialize_emi_bundle
+    if [[ -f "${EXPORT_ROOT}/emi/bundle.json" ]]; then
+      echo "Export bundle already at ${EXPORT_ROOT}"
+      verify_guide_export
+      return 0
+    fi
   fi
 
   if ! command -v gh >/dev/null 2>&1; then

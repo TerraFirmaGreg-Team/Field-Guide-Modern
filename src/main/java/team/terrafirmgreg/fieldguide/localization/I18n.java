@@ -12,6 +12,8 @@ public final class I18n {
     public static final String HOME = key("home");
     public static final String MULTIBLOCK = key("multiblock");
     public static final String MULTIBLOCK_ONLY_IN_GAME = key("multiblock_only_in_game");
+    public static final String ENTITY = key("entity");
+    public static final String ENTITY_ONLY_IN_GAME = key("entity_only_in_game");
     public static final String RECIPE = key("recipe");
     public static final String RECIPE_ONLY_IN_GAME = key("recipe_only_in_game");
     public static final String ITEM = key("item");

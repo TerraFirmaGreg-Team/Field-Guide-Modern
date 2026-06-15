@@ -11,6 +11,7 @@ import team.terrafirmgreg.fieldguide.data.patchouli.BookEntry;
 import team.terrafirmgreg.fieldguide.data.patchouli.BookPage;
 import team.terrafirmgreg.fieldguide.exception.InternalException;
 import team.terrafirmgreg.fieldguide.export.BlockstateRefResolver;
+import team.terrafirmgreg.fieldguide.export.EntityRenderResolver;
 import team.terrafirmgreg.fieldguide.export.ExportBundle;
 import team.terrafirmgreg.fieldguide.export.ExportModelLoader;
 import team.terrafirmgreg.fieldguide.export.MultiblockRenderResolver;
@@ -102,6 +103,7 @@ public class SiteGenerator implements Callable<Integer> {
         Path emiRoot = resolveEmiRoot(export);
         EmiRecipeIndex emiIndex = EmiRecipeIndex.load(emiRoot);
 
+        EntityRenderResolver entityRenders = EntityRenderResolver.fromMeta(bundle.getMeta());
         ExportLocalizationManager l10n = new ExportLocalizationManager(bundle.getLangs());
         BlockstateRefResolver blockstateRefs =
                 new BlockstateRefResolver(bundle.getAssets(), bundle.getTagMembers());
@@ -110,13 +112,15 @@ public class SiteGenerator implements Callable<Integer> {
         TextureRenderer textureRenderer =
                 new TextureRenderer(models, l10n, bundle.getIcons(), multiblockResolver);
         PageRenderer pageRenderer = new PageRenderer(
-                models, l10n, textureRenderer, emiIndex, bundle.getRecipeMountIds());
+                models, l10n, textureRenderer, emiIndex, bundle.getRecipeMountIds(), entityRenders);
+        Map<String, String> entryOgImages = bundle.getEntryOgImages();
         SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl, ogImageUrl);
 
         siteRenderer.copyStaticFiles();
         // Runtime assets: icons from export; GLBs + patchouli:image PNGs written during render.
         // EMI bundle is copied separately by ci/run.sh build-site (not part of guide-export assets/).
         siteRenderer.copyHandbookIcons(export);
+        siteRenderer.copyEntityPreviews(export);
 
         Book fallback = bundle.getBooks().loadBook(FIELD_GUIDE);
         List<Language> languages = resolveLanguages(bundle);
@@ -125,7 +129,7 @@ public class SiteGenerator implements Callable<Integer> {
                     ? fallback
                     : bundle.getBooks().loadBook(FIELD_GUIDE, lang, fallback);
             pageRenderer.setBookMacros(book.getMacros());
-            prepare(book, l10n, textureRenderer, pageRenderer);
+            prepare(book, l10n, textureRenderer, pageRenderer, entryOgImages);
             siteRenderer.generate(book, textureRenderer);
         }
 
@@ -168,7 +172,8 @@ public class SiteGenerator implements Callable<Integer> {
             Book book,
             LocalizationManager localizationManager,
             TextureRenderer textureRenderer,
-            PageRenderer pageRenderer) {
+            PageRenderer pageRenderer,
+            Map<String, String> entryOgImages) {
         localizationManager.switchLanguage(book.getLanguage());
         book.setName(localizationManager.translate(book.getName()));
         book.setLandingText(localizationManager.translate(book.getLandingText()));
@@ -180,7 +185,7 @@ public class SiteGenerator implements Callable<Integer> {
                 if (entry.isRendered()) {
                     continue;
                 }
-                prepareEntry(entry, textureRenderer);
+                prepareEntry(entry, textureRenderer, entryOgImages);
                 for (BookPage page : entry.getPages()) {
                     try {
                         pageRenderer.renderPage(entry, page);
@@ -204,8 +209,15 @@ public class SiteGenerator implements Callable<Integer> {
         category.setDescription(String.join("", descriptionBuffer));
     }
 
-    private void prepareEntry(BookEntry entry, TextureRenderer textureRenderer) {
+    private void prepareEntry(
+            BookEntry entry,
+            TextureRenderer textureRenderer,
+            Map<String, String> entryOgImages) {
         entry.setName(TextFormatter.stripVanillaFormatting(entry.getName()));
+        String ogPath = entryOgImages.get(entry.getId());
+        if (ogPath != null && !ogPath.isBlank()) {
+            entry.setOgImagePath(ogPath);
+        }
         try {
             ItemImageResult itemSrc = textureRenderer.getItemImage(entry.getIcon(), false);
             if (itemSrc != null) {

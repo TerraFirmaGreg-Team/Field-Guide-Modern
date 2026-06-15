@@ -1,18 +1,78 @@
 package team.terrafirmgreg.fieldguide.render;
 
 import org.junit.jupiter.api.Test;
+import team.terrafirmgreg.fieldguide.localization.LocalizationManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TextFormatterTest {
 
-    private static String html(String patchouli) {
+    @Test
+    void resolveKeybindKeyAddsKeyPrefixForPatchouliAliases() {
+        assertEquals("key.sneak", TextFormatter.resolveKeybindKey("sneak"));
+        assertEquals("key.use", TextFormatter.resolveKeybindKey("use"));
+        assertEquals("key.sneak", TextFormatter.resolveKeybindKey("key.sneak"));
+    }
+
+    @Test
+    void shorthandKeybindUsesSiteKeybindingLabels() {
+        LocalizationManager l10n = new StubLocalizationManager(Map.of(
+                "key.sneak", "Shift",
+                "key.use", "Right Click"
+        ));
+        String out = html("$(item)$(k:sneak)$() + $(item)$(k:use)$()", l10n);
+        assertTrue(out.contains("Shift"));
+        assertTrue(out.contains("Right Click"));
+        assertFalse(out.contains("未配置"));
+    }
+
+    private static String html(String patchouli, LocalizationManager l10n) {
         List<String> buffer = new ArrayList<>();
-        TextFormatter.formatText(buffer, patchouli, null);
+        TextFormatter.formatText(buffer, patchouli, l10n);
         return String.join("", buffer);
+    }
+
+    private static final class StubLocalizationManager implements LocalizationManager {
+        private final Map<String, String> keybindings;
+
+        StubLocalizationManager(Map<String, String> keybindings) {
+            this.keybindings = keybindings;
+        }
+
+        @Override
+        public void switchLanguage(team.terrafirmgreg.fieldguide.localization.Language lang) {}
+
+        @Override
+        public team.terrafirmgreg.fieldguide.localization.Language getCurrentLanguage() {
+            return team.terrafirmgreg.fieldguide.localization.Language.EN_US;
+        }
+
+        @Override
+        public String translate(String... keys) {
+            return keys[0];
+        }
+
+        @Override
+        public String translateWithArgs(String key, Object... args) {
+            return key;
+        }
+
+        @Override
+        public Map<String, String> getKeybindings() {
+            return keybindings;
+        }
+
+        @Override
+        public void lazyLoadNamespace(String namespace) {}
+    }
+
+    private static String html(String patchouli) {
+        return html(patchouli, null);
     }
 
     @Test

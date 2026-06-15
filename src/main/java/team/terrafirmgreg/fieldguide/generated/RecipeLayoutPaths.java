@@ -5,13 +5,11 @@ package team.terrafirmgreg.fieldguide.generated;
  */
 public final class RecipeLayoutPaths {
 
-    /** Layout JSON schema — v2 removes fallback flags; chrome via {@link #CHROME_DIR}. */
+    /** Layout JSON schema — v2 recipe cards use PNG + meta hit layer. */
     public static final int SCHEMA_VERSION = 2;
 
     public static final String LAYOUTS_DIR = EmiBundlePaths.RECIPES_DIR;
     public static final String LAYOUT_INDEX_FILE = EmiBundlePaths.RECIPE_INDEX_FILE;
-
-    public static final String CHROME_DIR = EmiBundlePaths.CHROME_DIR;
 
     public static final String TEXTURES_DIR = EmiBundlePaths.TEXTURES_DIR;
     public static final String TEXTURE_MANIFEST_FILE = EmiBundlePaths.TEXTURE_MANIFEST_FILE;

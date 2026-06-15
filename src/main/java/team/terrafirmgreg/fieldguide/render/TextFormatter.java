@@ -1,6 +1,7 @@
 package team.terrafirmgreg.fieldguide.render;
 
 import lombok.extern.slf4j.Slf4j;
+import team.terrafirmgreg.fieldguide.localization.I18n;
 import team.terrafirmgreg.fieldguide.localization.LocalizationManager;
 
 import java.util.ArrayList;
@@ -296,28 +297,57 @@ public class TextFormatter {
     }
 
     private void appendKeybind(String keybindKey) {
-        if (keybindings.containsKey(keybindKey)) {
-            buffer.add(keybindings.get(keybindKey));
-        } else if (localizationManager != null) {
-            String translated = localizationManager.translate(keybindKey);
-            if (translated != null && !translated.equals(keybindKey)) {
-                buffer.add("<span class=\"keybind\" style=\"color:#333;\">");
-                buffer.add(translated);
-                buffer.add("</span>");
+        String resolvedKey = resolveKeybindKey(keybindKey);
+        String label = lookupKeybindLabel(resolvedKey);
+        if (label != null) {
+            if (keybindings.containsKey(resolvedKey)) {
+                buffer.add(label);
             } else {
-                buffer.add("<span class=\"keybind\" style=\"color:#888;font-style:italic;\" title=\"");
-                buffer.add(escapeAttr(keybindKey));
-                buffer.add("\">");
-                buffer.add("未配置");
-                buffer.add("</span>");
+                appendKeybindSpan(label, resolvedKey, "#333", false);
             }
-        } else {
-            buffer.add("<span class=\"keybind\" style=\"color:#666;font-style:italic;\" title=\"");
-            buffer.add(escapeAttr(keybindKey));
-            buffer.add("\">");
-            buffer.add(keybindKey);
-            buffer.add("</span>");
+            return;
         }
+        appendKeybindSpan(resolvedKey, resolvedKey, "#666", true);
+    }
+
+    /** Patchouli accepts {@code sneak} as an alias for {@code key.sneak}. */
+    static String resolveKeybindKey(String keybindKey) {
+        if (keybindKey.startsWith("key.")) {
+            return keybindKey;
+        }
+        return "key." + keybindKey;
+    }
+
+    private String lookupKeybindLabel(String resolvedKey) {
+        if (keybindings.containsKey(resolvedKey)) {
+            return keybindings.get(resolvedKey);
+        }
+        if (localizationManager == null) {
+            return null;
+        }
+        String siteKey = I18n.key(resolvedKey);
+        String translated = localizationManager.translate(siteKey);
+        if (!translated.equals(siteKey)) {
+            return translated;
+        }
+        translated = localizationManager.translate(resolvedKey);
+        if (!translated.equals(resolvedKey)) {
+            return translated;
+        }
+        return null;
+    }
+
+    private void appendKeybindSpan(String label, String titleKey, String color, boolean italic) {
+        buffer.add("<span class=\"keybind\" style=\"color:");
+        buffer.add(color);
+        if (italic) {
+            buffer.add(";font-style:italic");
+        }
+        buffer.add(";\" title=\"");
+        buffer.add(escapeAttr(titleKey));
+        buffer.add("\">");
+        buffer.add(label);
+        buffer.add("</span>");
     }
 
     private void openTooltip(String tooltipText) {

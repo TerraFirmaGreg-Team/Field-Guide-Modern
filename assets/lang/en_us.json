@@ -11,6 +11,8 @@
     "home": "This is a translation of the TerraFirmaGreg Field Guide, which is viewable in game. Some parts of this field guide are only visible in-game, such as multiblock visualizations or some recipes.",
     "multiblock": "Multiblock",
     "multiblock_only_in_game": "View the field guide in Minecraft to see this multiblock.",
+    "entity": "Entity",
+    "entity_only_in_game": "View the field guide in Minecraft to see this entity.",
     "recipe": "Recipe",
     "recipe_only_in_game": "View the field guide in Minecraft to see this recipe.",
     "item": "Item",

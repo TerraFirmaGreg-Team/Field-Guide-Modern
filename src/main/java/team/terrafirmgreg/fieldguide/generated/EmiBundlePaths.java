@@ -14,7 +14,6 @@ public final class EmiBundlePaths {
     public static final String RECIPES_DIR = ROOT + "/recipes/layouts";
     public static final String RECIPE_INDEX_FILE = ROOT + "/recipes/index.json";
 
-    public static final String CHROME_DIR = ROOT + "/chrome";
     public static final String TEXTURES_DIR = ROOT + "/textures";
     public static final String TEXTURE_MANIFEST_FILE = "manifest.json";
 

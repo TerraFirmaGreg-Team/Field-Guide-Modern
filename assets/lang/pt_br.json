@@ -11,6 +11,8 @@
     "home": "Esta é uma tradução do Guia de Campo do TerraFirmaGreg, que pode ser visualizado no jogo. Algumas partes deste guia de campo são visíveis apenas no jogo, como visualizações multiblocos ou algumas receitas.",
     "multiblock": "Multibloco",
     "multiblock_only_in_game": "Veja o guia de campo no Minecraft para ver este multibloco.",
+    "entity": "Entidade",
+    "entity_only_in_game": "Veja o guia de campo no Minecraft para ver esta entidade.",
     "recipe": "Receita",
     "recipe_only_in_game": "Veja o guia de campo no Minecraft para ver esta receita.",
     "item": "Item",

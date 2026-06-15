@@ -1,5 +1,6 @@
 package team.terrafirmgreg.fieldguide.render;
 
+import team.terrafirmgreg.fieldguide.export.EntityRenderResolver;
 import team.terrafirmgreg.fieldguide.export.ExportModelLoader;
 import team.terrafirmgreg.fieldguide.asset.ItemImageResult;
 import team.terrafirmgreg.fieldguide.data.patchouli.BookEntry;
@@ -29,6 +30,7 @@ public class PageRenderer {
     private final EmiRecipeIndex emiRecipes;
     /** Handbook recipe id → EMI recipe id for {@code data-recipe-id}. */
     private final Map<String, String> recipeMountIds;
+    private final EntityRenderResolver entityRenders;
     private Map<String, String> bookMacros = Map.of();
 
     private int id = 0;
@@ -38,12 +40,14 @@ public class PageRenderer {
             LocalizationManager localizationManager,
             TextureRenderer textureRenderer,
             EmiRecipeIndex emiRecipes,
-            Map<String, String> recipeMountIds) {
+            Map<String, String> recipeMountIds,
+            EntityRenderResolver entityRenders) {
         this.assetLoader = loader;
         this.localizationManager = localizationManager;
         this.textureRenderer = textureRenderer;
         this.emiRecipes = emiRecipes;
         this.recipeMountIds = recipeMountIds == null ? Map.of() : Map.copyOf(recipeMountIds);
+        this.entityRenders = entityRenders != null ? entityRenders : EntityRenderResolver.fromMeta(Map.of());
     }
 
     public void setBookMacros(Map<String, String> bookMacros) {
@@ -74,8 +78,8 @@ public class PageRenderer {
             formatText(entry, buffer, pageSpotlight.getText());
         } else if (page instanceof PageEntity pageEntity) {
             formatTitle(entry, buffer, pageEntity.getName());
-            // TODO support entity
-            formatText(entry, buffer, pageEntity.getText());
+            parseEntityPage(buffer, pageEntity);
+            formatCenteredText(entry, buffer, pageEntity.getText());
         } else if (page instanceof PageEmpty) {
             buffer.add("<hr>");
         } else if (page instanceof PageMultiblock pageMultiblock) {
@@ -367,6 +371,54 @@ public class PageRenderer {
             String itemHtml = String.format("%s: %s", localizationManager.translate(count > 1 ? I18n.ITEMS : I18n.ITEM), sb);
             formatWithTooltip(buffer, itemHtml, localizationManager.translate(I18n.ITEM_ONLY_IN_GAME));
         }
+    }
+
+    private void parseEntityPage(List<String> buffer, PageEntity page) {
+        entityRenders.resolve(page).ifPresentOrElse(
+                record -> buffer.add(String.format("""
+                        <div class="entity-preview-container">
+                            <img class="entity-preview d-block mx-auto"
+                                 src="../../%s"
+                                 width="%d"
+                                 height="%d"
+                                 alt="%s"
+                                 loading="lazy">
+                        </div>
+                        """,
+                        record.path(),
+                        record.width(),
+                        record.height(),
+                        escapeHtml(entityAltText(page)))),
+                () -> {
+                    String entityId = page.getEntityId() != null ? page.getEntityId() : "unknown";
+                    formatWithTooltip(buffer,
+                            String.format("%s: <code>%s</code>",
+                                    localizationManager.translate(I18n.ENTITY),
+                                    escapeHtml(entityId)),
+                            localizationManager.translate(I18n.ENTITY_ONLY_IN_GAME));
+                });
+    }
+
+    private static String entityAltText(PageEntity page) {
+        if (page.getName() != null && !page.getName().isBlank()) {
+            return page.getName();
+        }
+        String entityId = page.getEntityId();
+        if (entityId == null) {
+            return "Entity";
+        }
+        int brace = entityId.indexOf('{');
+        return brace > 0 ? entityId.substring(0, brace) : entityId;
+    }
+
+    private static String escapeHtml(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private void parseMultiblockPage(List<String> buffer, PageMultiblock page) {

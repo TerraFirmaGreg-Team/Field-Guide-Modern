@@ -24,6 +24,7 @@ public class ExportBundle {
     private final ExportAssetAccess assets;
     private final ExportBookLoader books;
     private final Map<String, String> recipeMountIds;
+    private final Map<String, String> entryOgImages;
 
     private ExportBundle(
             Path exportRoot,
@@ -36,7 +37,8 @@ public class ExportBundle {
             MultiblockRegistry multiblocks,
             ExportAssetAccess assets,
             ExportBookLoader books,
-            Map<String, String> recipeMountIds) {
+            Map<String, String> recipeMountIds,
+            Map<String, String> entryOgImages) {
         this.exportRoot = exportRoot;
         this.manifest = manifest;
         this.meta = meta;
@@ -48,6 +50,7 @@ public class ExportBundle {
         this.assets = assets;
         this.books = books;
         this.recipeMountIds = recipeMountIds != null ? recipeMountIds : Map.of();
+        this.entryOgImages = entryOgImages != null ? entryOgImages : Map.of();
     }
 
     public static ExportBundle open(Path exportDir) throws IOException {
@@ -79,7 +82,8 @@ public class ExportBundle {
                 MultiblockRegistry.load(root),
                 assetAccess,
                 new ExportBookLoader(modelLoader),
-                RecipeMountIds.fromMeta(meta));
+                RecipeMountIds.fromMeta(meta),
+                EntryOgImages.fromMeta(meta));
     }
 
     @SuppressWarnings("unchecked")
