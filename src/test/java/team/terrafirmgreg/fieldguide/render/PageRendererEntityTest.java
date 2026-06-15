@@ -28,7 +28,7 @@ class PageRendererEntityTest {
                                 "width", 256,
                                 "height", 256))));
 
-        PageRenderer renderer = new PageRenderer(
+        HtmlPageRenderer renderer = new HtmlPageRenderer(
                 null,
                 stubL10n(),
                 null,
@@ -54,7 +54,7 @@ class PageRendererEntityTest {
 
     @Test
     void entityPageFallsBackWhenPreviewMissing() {
-        PageRenderer renderer = new PageRenderer(
+        HtmlPageRenderer renderer = new HtmlPageRenderer(
                 null,
                 stubL10n(),
                 null,

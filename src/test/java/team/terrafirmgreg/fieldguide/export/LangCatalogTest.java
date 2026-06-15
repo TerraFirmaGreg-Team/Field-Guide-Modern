@@ -2,6 +2,7 @@ package team.terrafirmgreg.fieldguide.export;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import team.terrafirmgreg.fieldguide.localization.I18n;
 import team.terrafirmgreg.fieldguide.localization.Language;
 import team.terrafirmgreg.fieldguide.site.ExportLocalizationManager;
 
@@ -29,5 +30,7 @@ class LangCatalogTest {
         ExportLocalizationManager l10n = new ExportLocalizationManager(catalog);
         l10n.switchLanguage(Language.ZH_CN);
         assertEquals("实地指南", l10n.translate("patchouli.tfg.title"));
+        assertEquals("群峦格雷野外手册", l10n.translate(I18n.TITLE));
+        assertEquals("类别", l10n.translate(I18n.CATEGORIES));
     }
 }

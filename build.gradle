@@ -50,6 +50,20 @@ test {
     reports.html.required = false
 }
 
+tasks.named('processResources') {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from('assets/lang') {
+        into 'assets/lang'
+    }
+}
+
+tasks.named('processTestResources') {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from('assets/lang') {
+        into 'assets/lang'
+    }
+}
+
 tasks.register('writeExportLanguagesFile', JavaExec) {
     group = 'field guide'
     description = 'Write export locale codes from Language enum to build/export-languages.txt (CI → -Dfieldguide.exportLanguages)'

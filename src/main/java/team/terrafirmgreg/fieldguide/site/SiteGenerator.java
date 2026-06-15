@@ -18,6 +18,7 @@ import team.terrafirmgreg.fieldguide.export.MultiblockRenderResolver;
 import team.terrafirmgreg.fieldguide.localization.Language;
 import team.terrafirmgreg.fieldguide.localization.LocalizationManager;
 import team.terrafirmgreg.fieldguide.render.IconMarkup;
+import team.terrafirmgreg.fieldguide.render.HtmlPageRenderer;
 import team.terrafirmgreg.fieldguide.render.PageRenderer;
 import team.terrafirmgreg.fieldguide.render.TextFormatter;
 import team.terrafirmgreg.fieldguide.render.TextureRenderer;
@@ -111,7 +112,7 @@ public class SiteGenerator implements Callable<Integer> {
                 new MultiblockRenderResolver(bundle.getMultiblocks(), blockstateRefs);
         TextureRenderer textureRenderer =
                 new TextureRenderer(models, l10n, bundle.getIcons(), multiblockResolver);
-        PageRenderer pageRenderer = new PageRenderer(
+        PageRenderer pageRenderer = new HtmlPageRenderer(
                 models, l10n, textureRenderer, emiIndex, bundle.getRecipeMountIds(), entityRenders);
         Map<String, String> entryOgImages = bundle.getEntryOgImages();
         SiteRenderer siteRenderer = new SiteRenderer(l10n, output.toString(), recipeBookBaseUrl, siteBaseUrl, ogImageUrl);

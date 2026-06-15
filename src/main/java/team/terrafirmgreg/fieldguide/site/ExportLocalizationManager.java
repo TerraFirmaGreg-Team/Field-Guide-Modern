@@ -19,7 +19,7 @@ import java.util.TreeMap;
 
 /**
  * Merges guide-export lang files with site UI strings (titles, keybind labels, …)
- * from {@code assets/lang/*.json} on the classpath (shipped in field-guide-gen jar).
+ * from {@code assets/lang/*.json} on the classpath (packaged from project {@code assets/lang/}).
  */
 @Slf4j
 public class ExportLocalizationManager implements LocalizationManager {
