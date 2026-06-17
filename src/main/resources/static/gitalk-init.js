@@ -45,9 +45,33 @@
     return null
   }
 
-  function normalizeIssueId(raw) {
-    if (raw.length <= GITALK_ID_MAX) return raw
-    return raw.slice(0, GITALK_ID_MAX)
+  function syncHashGitalkRaw(raw) {
+    const parts = []
+    for (let seed = 0; seed < 4; seed++) {
+      let hash = seed
+      for (let i = 0; i < raw.length; i++) {
+        hash = Math.imul(hash ^ raw.charCodeAt(i), 0x5bd1e995)
+        hash = (hash ^ (hash >>> 15)) >>> 0
+      }
+      parts.push(hash.toString(16).padStart(8, '0'))
+    }
+    return parts.join('')
+  }
+
+  async function hashGitalkRaw(raw) {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))
+      return Array.from(new Uint8Array(buf))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('')
+    }
+    return syncHashGitalkRaw(raw)
+  }
+
+  async function gitalkHashedId(sitePrefix, raw) {
+    const hash = await hashGitalkRaw(raw)
+    const hashBudget = GITALK_ID_MAX - sitePrefix.length - 1
+    return `${sitePrefix}/${hash.slice(0, hashBudget)}`
   }
 
   function localeFromPath() {
@@ -64,10 +88,11 @@
 
     section.hidden = false
 
-    const id = normalizeIssueId(section.dataset.gitalkId || '')
+    const rawKey = section.dataset.gitalkKey || ''
     const title = section.dataset.gitalkTitle || document.title
     const pageUrl = section.dataset.gitalkUrl || window.location.href
     const locale = localeFromPath()
+    const id = rawKey ? await gitalkHashedId('field-guide', rawKey) : ''
 
     const script = document.createElement('script')
     script.src = 'https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js'
@@ -80,8 +105,8 @@
         admin: config.admin,
         id: id,
         title: title,
-        body: ['Field Guide discussion', '', `- Page: ${pageUrl}`].join('\n'),
-        labels: ['field-guide', locale],
+        body: ['Field Guide discussion', '', `- Key: \`${rawKey}\``, `- Page: ${pageUrl}`].join('\n'),
+        labels: ['field-guide'],
         language: gitalkLanguage(locale),
         distractionFreeMode: config.distractionFreeMode || false,
         createIssueManually: config.createIssueManually || false,
@@ -95,6 +120,6 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init)
   } else {
-    init()
+    void init()
   }
 })()

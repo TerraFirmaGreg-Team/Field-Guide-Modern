@@ -66,7 +66,7 @@
           ${current_entry.innerHtml}
 
           <section id="comments" class="mt-5"
-            data-gitalk-id="field-guide/${current_lang.key}/${current_entry.relId}"
+            data-gitalk-key="field-guide/${current_lang.key}/${current_entry.id}"
             data-gitalk-title="${current_entry.name?html}"
             data-gitalk-url="${canonicalUrl?html}"
             hidden>

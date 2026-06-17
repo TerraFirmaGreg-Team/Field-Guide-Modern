@@ -319,6 +319,7 @@ public class SiteRenderer {
         data.put("categories", categories);
         data.put("current_category", cat);
         putSeoData(data, cat.getId() + ".html", true);
+        data.put("text_comments", localizationManager.translate(I18n.COMMENTS));
         generatePage("category.ftl", cat.getId() + ".html", data);
         buildEntryPages(cat, categories);
     }
