@@ -73,12 +73,12 @@
           </div>
 
           <section id="comments" class="mt-5"
-            data-gitalk-key="field-guide/${current_lang.key}/${current_category.id}"
-            data-gitalk-title="${current_category.name?html}"
-            data-gitalk-url="${canonicalUrl?html}"
+            data-giscus-lang="${current_lang.key}"
+            data-giscus-title="${current_category.name?html}"
+            data-giscus-url="${canonicalUrl?html}"
             hidden>
             <h2 class="h5 mb-3">${text_comments}</h2>
-            <div id="gitalk-container"></div>
+            <div id="giscus-container"></div>
           </section>
         </div>
       </div>
@@ -110,8 +110,7 @@
     <script src="${root}/static/icons.min.js"></script>
     <script src="${root}/static/tooltips.js"></script>
     <script src="${root}/static/search.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.css">
-    <link rel="stylesheet" href="${root}/static/gitalk.css">
-    <script src="${root}/static/gitalk-init.js"></script>
+    <link rel="stylesheet" href="${root}/static/giscus.css">
+    <script src="${root}/static/giscus-init.js"></script>
   </body>
 </html>
