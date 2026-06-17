@@ -2,8 +2,9 @@
   'use strict'
 
   const GISCUS_HOST = 'https://giscus.app'
+  const WIKI_GISCUS_CONFIG_URL = 'https://wiki.terrafirmagreg.team/giscus-config.json'
 
-  const GISCUS = {
+  const GISCUS_DEFAULT = {
     repo: 'TerraFirmaGreg-Team/Modpack-Modern',
     repoId: 'R_kgDOH_FIbA',
     category: 'General',
@@ -38,6 +39,24 @@
     return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'
   }
 
+  async function loadConfig() {
+    const cfg = { ...GISCUS_DEFAULT }
+
+    for (const url of ['/giscus-config.json', WIKI_GISCUS_CONFIG_URL]) {
+      try {
+        const res = await fetch(url)
+        if (!res.ok) continue
+        const json = await res.json()
+        if (json.enabled === false) return null
+        Object.assign(cfg, json)
+        return cfg
+      } catch {
+      }
+    }
+
+    return cfg
+  }
+
   function sendGiscusConfig(message) {
     const iframe = document.querySelector('#giscus-container iframe')
     if (!iframe?.contentWindow) return false
@@ -60,16 +79,16 @@
     observer.observe(container, { childList: true, subtree: true })
   }
 
-  function mountGiscus(section) {
+  function mountGiscus(cfg, section) {
     const container = document.getElementById('giscus-container')
     if (!container) return
 
     const script = document.createElement('script')
     script.src = `${GISCUS_HOST}/client.js`
-    script.setAttribute('data-repo', GISCUS.repo)
-    script.setAttribute('data-repo-id', GISCUS.repoId)
-    script.setAttribute('data-category', GISCUS.category)
-    script.setAttribute('data-category-id', GISCUS.categoryId)
+    script.setAttribute('data-repo', cfg.repo)
+    script.setAttribute('data-repo-id', cfg.repoId)
+    script.setAttribute('data-category', cfg.category)
+    script.setAttribute('data-category-id', cfg.categoryId)
     script.setAttribute('data-mapping', 'pathname')
     script.setAttribute('data-theme', giscusTheme())
     script.setAttribute('data-lang', giscusLang(section.dataset.giscusLang))
@@ -82,11 +101,14 @@
     container.replaceChildren(script)
   }
 
-  function init() {
+  async function init() {
     const section = document.getElementById('comments')
     if (!section) return
 
-    mountGiscus(section)
+    const cfg = await loadConfig()
+    if (!cfg) return
+
+    mountGiscus(cfg, section)
     section.hidden = false
 
     window.addEventListener('handbook-theme-change', applyTheme)
@@ -97,8 +119,8 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
+    document.addEventListener('DOMContentLoaded', () => void init())
   } else {
-    init()
+    void init()
   }
 })()
