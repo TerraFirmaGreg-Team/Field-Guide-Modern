@@ -118,7 +118,7 @@
     <script src="${root}/static/tooltips.js"></script>
     <script src="${root}/static/search.js"></script>
     <link rel="stylesheet" href="${root}/static/giscus.css">
-    <script type="module" src="${root}/static/giscus-init.js"></script>
+    <script src="${root}/static/giscus-init.js"></script>
     
     <!-- GLB Viewer - 根据协议选择加载方式 -->
     <script>
