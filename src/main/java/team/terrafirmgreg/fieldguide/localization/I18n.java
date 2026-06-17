@@ -8,6 +8,7 @@ public final class I18n {
     public static final String CONTENTS = key("contents");
     public static final String GITHUB = key("github");
     public static final String DISCORD = key("discord");
+    public static final String COMMENTS = key("comments");
     public static final String CATEGORIES = key("categories");
     public static final String HOME = key("home");
     public static final String MULTIBLOCK = key("multiblock");

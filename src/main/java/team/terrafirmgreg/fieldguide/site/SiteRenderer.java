@@ -352,6 +352,7 @@ public class SiteRenderer {
                 seoPreview = entry.getIconPath();
             }
             putSeoData(data, entry.getId() + ".html", seoPreview);
+            data.put("text_comments", localizationManager.translate(I18n.COMMENTS));
             generatePage("entry.ftl", entry.getId() + ".html", data);
         }
     }

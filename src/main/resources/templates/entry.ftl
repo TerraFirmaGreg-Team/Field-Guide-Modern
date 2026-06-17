@@ -64,6 +64,15 @@
           </h1>
 
           ${current_entry.innerHtml}
+
+          <section id="comments" class="mt-5"
+            data-gitalk-id="field-guide/${current_lang.key}/${current_entry.relId}"
+            data-gitalk-title="${current_entry.name?html}"
+            data-gitalk-url="${canonicalUrl?html}"
+            hidden>
+            <h2 class="h5 mb-3">${text_comments}</h2>
+            <div id="gitalk-container"></div>
+          </section>
         </div>
       </div>
     </div>
@@ -108,6 +117,9 @@
     <script src="${root}/static/icons.min.js"></script>
     <script src="${root}/static/tooltips.js"></script>
     <script src="${root}/static/search.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.css">
+    <link rel="stylesheet" href="${root}/static/gitalk.css">
+    <script src="${root}/static/gitalk-init.js"></script>
     
     <!-- GLB Viewer - 根据协议选择加载方式 -->
     <script>

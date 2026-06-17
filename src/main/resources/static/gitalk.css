@@ -1,0 +1,135 @@
+#comments {
+  color: var(--bs-body-color);
+}
+
+/* Focus dimmer: Gitalk default is pure #000 — use theme background instead */
+#comments .gt-container.gt-input-focused:after {
+  background: var(--bs-body-bg);
+  opacity: 0.72;
+}
+
+#comments .gt-container .gt-header-textarea {
+  color: var(--bs-body-color);
+  background-color: var(--bs-secondary-bg);
+  border-color: var(--bs-border-color);
+}
+
+#comments .gt-container .gt-header-textarea:hover {
+  background-color: var(--bs-tertiary-bg);
+}
+
+#comments .gt-container .gt-header-textarea::placeholder {
+  color: var(--bs-secondary-color);
+}
+
+#comments .gt-container .gt-header-preview {
+  color: var(--bs-body-color);
+  background-color: var(--bs-secondary-bg);
+  border-color: var(--bs-border-color);
+}
+
+#comments .gt-container .gt-header-controls-tip {
+  color: var(--bs-link-color);
+}
+
+#comments .gt-container .gt-btn {
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+#comments .gt-container .gt-btn-preview,
+#comments .gt-container .gt-btn-public {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--bs-white);
+}
+
+#comments .gt-container .gt-btn-preview:hover,
+#comments .gt-container .gt-btn-public:hover {
+  filter: brightness(0.92);
+}
+
+#comments .gt-container .gt-comments-null,
+#comments .gt-container .gt-comment-text,
+#comments .gt-container .gt-comment-date {
+  color: var(--bs-secondary-color);
+}
+
+#comments .gt-container .gt-comment-content {
+  color: var(--bs-body-color);
+  background-color: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+}
+
+#comments .gt-container .gt-comment-content:hover {
+  box-shadow: none;
+  background-color: var(--bs-tertiary-bg);
+}
+
+#comments .gt-container .gt-comment-username,
+#comments .gt-container a {
+  color: var(--bs-link-color);
+}
+
+#comments .gt-container .gt-popup .gt-action.is--active:before {
+  border-top-color: var(--bs-primary);
+}
+
+#comments .gt-container .gt-popup .gt-action.is--active:after {
+  background-color: var(--bs-primary);
+}
+
+/* Gitalk bundles github-markdown-css (light-only); align preview/comment body with Bootstrap theme */
+#comments .markdown-body {
+  color: var(--bs-body-color);
+  background-color: transparent;
+}
+
+#comments .markdown-body a {
+  color: var(--bs-link-color);
+}
+
+#comments .markdown-body p,
+#comments .markdown-body li,
+#comments .markdown-body blockquote,
+#comments .markdown-body h1,
+#comments .markdown-body h2,
+#comments .markdown-body h3,
+#comments .markdown-body h4,
+#comments .markdown-body h5,
+#comments .markdown-body h6 {
+  color: var(--bs-body-color);
+}
+
+#comments .markdown-body code,
+#comments .markdown-body tt {
+  color: var(--bs-body-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+#comments .markdown-body pre {
+  color: var(--bs-body-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+#comments .markdown-body pre code {
+  background-color: transparent;
+}
+
+#comments .markdown-body blockquote {
+  border-left-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+
+#comments .markdown-body hr {
+  background-color: var(--bs-border-color);
+}
+
+#comments .markdown-body table tr {
+  background-color: var(--bs-secondary-bg);
+  border-color: var(--bs-border-color);
+}
+
+#comments .markdown-body table tr:nth-child(2n) {
+  background-color: var(--bs-tertiary-bg);
+}
