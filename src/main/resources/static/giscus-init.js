@@ -90,6 +90,7 @@
     script.setAttribute('data-category', cfg.category)
     script.setAttribute('data-category-id', cfg.categoryId)
     script.setAttribute('data-mapping', 'pathname')
+    script.setAttribute('data-strict', '1')
     script.setAttribute('data-theme', giscusTheme())
     script.setAttribute('data-lang', giscusLang(section.dataset.giscusLang))
     script.setAttribute('data-reactions-enabled', '1')
