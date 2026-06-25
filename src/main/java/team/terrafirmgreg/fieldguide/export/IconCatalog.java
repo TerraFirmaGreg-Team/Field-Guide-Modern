@@ -24,7 +24,7 @@ public class IconCatalog implements IconLookup {
     private final Map<String, SpritePlacement> unified;
     private final MissingIconReport missingReport;
 
-    public static final String MISSING_ICON_ID = "fieldguide:missing_icon";
+    public static final String MISSING_ICON_ID = "minecraft_web_export:missing_icon";
     
     public static final String FIELD_GUIDE_ICON_CSS_CLASS = "field-guide-icon-atlas";
 

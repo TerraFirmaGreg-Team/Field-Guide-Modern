@@ -20,20 +20,20 @@ public class MultiblockSceneBuilder {
     public Node buildMultiblock(String[][] pattern, Map<String, String> mapping) {
         Node root = new Node();
         int height = pattern.length;
-        int col = pattern[0].length;
-        int row = pattern[0][0].length();
-        log.debug("Model size: {}x{}x{}", col, height, row);
+        int sizeX = pattern[0].length;
+        int sizeZ = pattern[0][0].length();
+        log.debug("Model size: {}x{}x{} (patchouli x/y/z)", sizeX, height, sizeZ);
 
-        float startX = -row * 8f;
+        float startX = -sizeX * 8f;
         float startY = -height * 8f;
-        float startZ = -col * 8f;
+        float startZ = -sizeZ * 8f;
 
         for (int y = 0; y < height; y++) {
             String[] layer = pattern[height - y - 1];
-            for (int z = 0; z < col; z++) {
-                String line = layer[z];
-                for (int x = 0; x < row; x++) {
-                    char c = line.charAt(x);
+            for (int patchouliX = 0; patchouliX < sizeX; patchouliX++) {
+                String line = layer[patchouliX];
+                for (int patchouliZ = 0; patchouliZ < sizeZ; patchouliZ++) {
+                    char c = line.charAt(patchouliZ);
                     if (c == ' ') {
                         continue;
                     }
@@ -41,13 +41,22 @@ public class MultiblockSceneBuilder {
                     if (model == null || "AIR".equalsIgnoreCase(model) || "minecraft:air".equalsIgnoreCase(model)) {
                         continue;
                     }
-                    Vector3f location = v3(x * 16 + startX, y * 16 + startY, z * 16 + startZ);
+                    Vector3f location = blockLocation(patchouliX, y, patchouliZ, startX, startY, startZ);
                     Node node = modelBuilder.buildModel(model);
-                    node.getLocalTransform().setTranslation(location);
+                    node.getLocalTransform().getTranslation().addLocal(location);
                     root.attachChild(node);
                 }
             }
         }
         return root;
+    }
+
+    static Vector3f blockLocation(
+            int patchouliX, int patchouliY, int patchouliZ,
+            float startX, float startY, float startZ) {
+        return v3(
+                patchouliX * 16 + startX,
+                patchouliY * 16 + startY,
+                patchouliZ * 16 + startZ);
     }
 }

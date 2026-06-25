@@ -42,7 +42,7 @@ class IconCatalogTest {
                   "schema": 1,
                   "cellSize": 32,
                   "items": {
-                    "fieldguide:missing_icon": { "page": 0, "x": 0, "y": 0 }
+                    "minecraft_web_export:missing_icon": { "page": 0, "x": 0, "y": 0 }
                   }
                 }
                 """);

@@ -50,6 +50,9 @@ public class ExportBookLoader {
     private void loadCategoriesAndEntries(Book book, String bookId, String lang) throws IOException {
         String categoryDir = Constants.getCategoryDir(bookId, lang);
         for (Asset asset : models.listAssets(categoryDir)) {
+            if (!isPatchouliJsonAsset(asset)) {
+                continue;
+            }
             BookCategory category = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
             category.setAssetSource(categoryDir, asset);
             if (Constants.EXCLUDES_CATEGORIES.contains(category.getId())) {
@@ -60,6 +63,9 @@ public class ExportBookLoader {
 
         String entryDir = Constants.getEntryDir(bookId, lang);
         for (Asset asset : models.listAssets(entryDir)) {
+            if (!isPatchouliJsonAsset(asset)) {
+                continue;
+            }
             BookEntry entry = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
             entry.setAssetSource(entryDir, asset);
             if (Constants.EXCLUDES_ENTRIES.contains(entry.getId())) {
@@ -109,5 +115,12 @@ public class ExportBookLoader {
                 }
             }
         }
+    }
+
+    private static boolean isPatchouliJsonAsset(Asset asset) {
+        String path = asset.getPath();
+        int slash = path.lastIndexOf('/');
+        String name = slash >= 0 ? path.substring(slash + 1) : path;
+        return name.endsWith(".json") && !name.startsWith(".");
     }
 }

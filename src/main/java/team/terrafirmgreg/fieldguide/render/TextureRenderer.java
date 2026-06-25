@@ -103,7 +103,10 @@ public class TextureRenderer {
 
         if (item.startsWith("#")) {
             name = localizationManager.translateWithArgs(I18n.TAG, item);
-            items = loader.loadItemTag(item.substring(1));
+            items = loader.loadTagMembers(item.substring(1));
+            if (items.isEmpty()) {
+                log.warn("No tag members in export index for {}", item);
+            }
         } else if (item.contains(",")) {
             items = Arrays.asList(item.split(","));
         } else {
@@ -144,6 +147,9 @@ public class TextureRenderer {
                 itemImageCache.put(cacheKey, fallback);
                 return fallback;
             }
+            if (cacheKey.startsWith("#")) {
+                return resolveMissingTagIcon(cacheKey, name);
+            }
             throw new InternalException("No export icon for: " + cacheKey);
         }
 
@@ -166,6 +172,14 @@ public class TextureRenderer {
             }
             throw new InternalException("Failed to create item image: " + cacheKey);
         }
+    }
+
+    private ItemImageResult resolveMissingTagIcon(String cacheKey, String name) {
+        IconRef missing = iconCatalog.resolveAnyItem(IconCatalog.MISSING_ICON_ID).orElseThrow();
+        ItemImageResult result =
+                ItemImageResult.atlas(missing, name, null).withTagClickId(cacheKey.substring(1));
+        itemImageCache.put(cacheKey, result);
+        return result;
     }
 
     public String convertImage(String image) {
@@ -313,9 +327,7 @@ public class TextureRenderer {
 
     private String exportGlb(Node node, String glbPath) throws Exception {
         Path outputPath = loader.getOutputDir().resolve(glbPath);
-        if (!Files.exists(outputPath)) {
-            new GlTFExporter().export(node, outputPath.toString());
-        }
+        new GlTFExporter().export(node, outputPath.toString());
         return glbPath;
     }
 

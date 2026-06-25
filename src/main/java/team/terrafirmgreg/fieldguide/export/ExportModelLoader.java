@@ -35,6 +35,7 @@ public class ExportModelLoader {
     private final Map<String, AssetSourceCache> resourceCache = new HashMap<>();
     private final Map<String, BlockModel> blockModelCache = new TreeMap<>();
     private final Map<String, BlockModel> itemModelCache = new TreeMap<>();
+    private final Map<String, List<BlockStateLayer>> blockStateLayerCache = new TreeMap<>();
 
     public ExportModelLoader(Path exportRoot, TagMemberIndex tagMembers) {
         this(exportRoot, tagMembers, exportRoot.resolve("dist"));
@@ -146,12 +147,24 @@ public class ExportModelLoader {
         return members;
     }
 
-    public List<String> loadItemTag(String tagId) {
-        return tagMembers.getItemMembers(tagId);
-    }
-
     public List<String> loadFluidTag(String tagId) {
         return tagMembers.getFluidMembers(tagId);
+    }
+
+    public List<String> loadTagMembers(String tagId) {
+        List<String> members = tagMembers.getItemMembers(tagId);
+        if (!members.isEmpty()) {
+            return members;
+        }
+        members = tagMembers.getBlockMembers(tagId);
+        if (!members.isEmpty()) {
+            return members;
+        }
+        return tagMembers.getFluidMembers(tagId);
+    }
+
+    public List<String> loadItemTag(String tagId) {
+        return tagMembers.getItemMembers(tagId);
     }
 
     public BlockModel loadItemModel(String itemId) {
@@ -175,21 +188,23 @@ public class ExportModelLoader {
         }
     }
 
-    public BlockModel loadBlockModelWithState(String modelId) {
+    public List<BlockStateLayer> resolveBlockStateLayers(String modelId) {
+        if (blockStateLayerCache.containsKey(modelId)) {
+            return blockStateLayerCache.get(modelId);
+        }
+
         BlockVariant blockVariant = parseBlockState(modelId);
         if (!blockVariant.hasProperties()) {
             try {
-                return loadBlockModel(modelId);
+                List<BlockStateLayer> layers = List.of(new BlockStateLayer(loadBlockModel(modelId), 0, 0, 0));
+                blockStateLayerCache.put(modelId, layers);
+                return layers;
             } catch (Exception e) {
                 log.error("Failed to load model: {}", modelId);
+                return List.of();
             }
         }
 
-        if (blockModelCache.containsKey(modelId)) {
-            return blockModelCache.get(modelId);
-        }
-
-        String blockStateId = blockVariant.getBlock();
         Map<String, String> state = blockVariant.getProperties();
         List<BlockState> list = loadBlockStates(blockVariant.getBlock());
         if (list == null || list.isEmpty()) {
@@ -213,29 +228,45 @@ public class ExportModelLoader {
             }
         }
 
-        BlockModel model = null;
+        List<BlockStateLayer> layers = new ArrayList<>();
         if (blockVariant.getVariant() != null) {
-            model = loadModel(blockVariant.getVariant().getModel());
+            layers.add(toLayer(blockVariant.getVariant()));
         } else if (blockVariant.getVariants() != null && !blockVariant.getVariants().isEmpty()) {
-            List<Variant> variants = blockVariant.getVariants();
-            Variant variant = variants.size() > 1 ? BlockState.selectByWeight(variants) : variants.get(0);
-            model = loadModel(variant.getModel());
+            for (Variant variant : blockVariant.getVariants()) {
+                layers.add(toLayer(variant));
+            }
         } else {
             for (BlockState b : list) {
                 List<Variant> defaultVariant = b.getDefault();
                 if (defaultVariant != null && !defaultVariant.isEmpty()) {
-                    Variant defaultVar = BlockState.selectByWeight(defaultVariant);
-                    model = loadModel(defaultVar.getModel());
+                    layers.add(toLayer(BlockState.selectByWeight(defaultVariant)));
                     break;
                 }
             }
-            if (model == null) {
+            if (layers.isEmpty()) {
                 throw new InternalException("BlockVariants not found:" + modelId);
             }
         }
 
+        blockStateLayerCache.put(modelId, layers);
+        return layers;
+    }
+
+    public BlockModel loadBlockModelWithState(String modelId) {
+        if (blockModelCache.containsKey(modelId)) {
+            return blockModelCache.get(modelId);
+        }
+        List<BlockStateLayer> layers = resolveBlockStateLayers(modelId);
+        if (layers.isEmpty()) {
+            return new BlockModel();
+        }
+        BlockModel model = layers.get(0).model();
         blockModelCache.put(modelId, model);
         return model;
+    }
+
+    private BlockStateLayer toLayer(Variant variant) {
+        return new BlockStateLayer(loadModel(variant.getModel()), variant.getX(), variant.getY(), variant.getZ());
     }
 
     public static BlockVariant parseBlockState(String blockStateId) {
