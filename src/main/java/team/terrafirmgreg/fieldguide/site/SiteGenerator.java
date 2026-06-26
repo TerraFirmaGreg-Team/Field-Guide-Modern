@@ -205,7 +205,12 @@ public class SiteGenerator implements Callable<Integer> {
             Map<String, String> bookMacros) {
         category.setName(TextFormatter.stripVanillaFormatting(category.getName()));
         List<String> descriptionBuffer = new ArrayList<>();
-        TextFormatter.formatText(descriptionBuffer, category.getDescription(), localizationManager, bookMacros);
+        TextFormatter.formatText(
+                descriptionBuffer,
+                category.getDescription(),
+                localizationManager,
+                bookMacros,
+                TextFormatter.CATEGORY_LINK_PREFIX);
         category.setDescription(String.join("", descriptionBuffer));
     }
 

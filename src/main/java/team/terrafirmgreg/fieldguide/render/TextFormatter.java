@@ -100,9 +100,15 @@ public class TextFormatter {
     private static final Pattern FORMATTING_PATTERN = Pattern.compile("(\\$\\(([^)]*)\\))|§(.)");
     private static final Pattern OL_PATTERN = Pattern.compile("\\$\\\\(br\\\\) {2}[0-9+]. ");
 
+    /** Prefix for internal $(l:...) links on entry pages under {@code lang/category/entry.html}. */
+    public static final String ENTRY_LINK_PREFIX = "../";
+    /** Prefix for internal links on category/home pages under {@code lang/category.html}. */
+    public static final String CATEGORY_LINK_PREFIX = "";
+
     private final List<String> buffer;
     private final Map<String, String> keybindings;
     private String root;
+    private final String linkPrefix;
     
     private final List<String> inlineStack;
     private final LocalizationManager localizationManager;
@@ -113,10 +119,20 @@ public class TextFormatter {
             String text,
             LocalizationManager localizationManager,
             Map<String, String> bookMacros) {
+        this(buffer, text, localizationManager, bookMacros, ENTRY_LINK_PREFIX);
+    }
+
+    public TextFormatter(
+            List<String> buffer,
+            String text,
+            LocalizationManager localizationManager,
+            Map<String, String> bookMacros,
+            String linkPrefix) {
         this.buffer = buffer;
         this.localizationManager = localizationManager;
         this.keybindings = localizationManager != null ? localizationManager.getKeybindings() : new HashMap<>();
         this.root = "p";
+        this.linkPrefix = linkPrefix != null ? linkPrefix : ENTRY_LINK_PREFIX;
         this.inlineStack = new ArrayList<>();
 
         this.buffer.add("<p>");
@@ -167,7 +183,16 @@ public class TextFormatter {
             String text,
             LocalizationManager localizationManager,
             Map<String, String> bookMacros) {
-        new TextFormatter(buffer, text, localizationManager, bookMacros);
+        formatText(buffer, text, localizationManager, bookMacros, ENTRY_LINK_PREFIX);
+    }
+
+    public static void formatText(
+            List<String> buffer,
+            String text,
+            LocalizationManager localizationManager,
+            Map<String, String> bookMacros,
+            String linkPrefix) {
+        new TextFormatter(buffer, text, localizationManager, bookMacros, linkPrefix);
     }
 
     private void processText(String text) {
@@ -235,7 +260,7 @@ public class TextFormatter {
                 link = link.substring(link.indexOf(':') + 1);
             }
             link = link.contains("#") ? link.replace("#", ".html#") : link + ".html";
-            matchingTags("<a href=\"../" + escapeAttr(link) + "\">", "</a>");
+            matchingTags("<a href=\"" + linkPrefix + escapeAttr(link) + "\">", "</a>");
         } else if (key.equals("/l")) {
             closeLink();
         } else if (key.startsWith("t:") || key.startsWith("tooltip:")) {

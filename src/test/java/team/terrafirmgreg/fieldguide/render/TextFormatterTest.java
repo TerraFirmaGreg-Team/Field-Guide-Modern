@@ -169,6 +169,27 @@ class TextFormatterTest {
     }
 
     @Test
+    void entryPageInternalLinkUsesParentPrefix() {
+        String out = html("$(l:the_world/geology)Geology$()");
+        assertTrue(out.contains("href=\"../the_world/geology.html\""));
+    }
+
+    @Test
+    void categoryPageInternalLinkOmitsParentPrefix() {
+        List<String> buffer = new ArrayList<>();
+        TextFormatter.formatText(
+                buffer,
+                "$(l:the_world/geology)Geology$(), $(l:getting_started/finding_ores)Indicators$()",
+                null,
+                null,
+                TextFormatter.CATEGORY_LINK_PREFIX);
+        String out = String.join("", buffer);
+        assertTrue(out.contains("href=\"the_world/geology.html\""));
+        assertTrue(out.contains("href=\"getting_started/finding_ores.html\""));
+        assertFalse(out.contains("href=\"../the_world/geology.html\""));
+    }
+
+    @Test
     void strikeAndPlayernameRender() {
         assertTrue(html("$(strike)gone$()").contains("<del>gone</del>"));
         assertTrue(html("Hello $(playername)").contains("<span class=\"patchouli-playername\">Player</span>"));
