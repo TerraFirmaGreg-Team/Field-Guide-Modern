@@ -1,6 +1,7 @@
 package team.terrafirmgreg.fieldguide.export;
 
 import lombok.Getter;
+import team.terrafirmgreg.fieldguide.Constants;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +52,10 @@ public class ExportBundle {
     }
 
     public static ExportBundle open(Path exportDir) throws IOException {
+        return open(exportDir, Constants.DEFAULT_BOOK_NAMESPACE);
+    }
+
+    public static ExportBundle open(Path exportDir, String bookNamespace) throws IOException {
         Path root = exportDir.normalize().toAbsolutePath();
         Path manifestFile = root.resolve("manifest.json");
         Path assetsDir = root.resolve("assets");
@@ -78,7 +83,7 @@ public class ExportBundle {
                 IconCatalog.load(root),
                 MultiblockRegistry.load(root),
                 assetAccess,
-                new ExportBookLoader(modelLoader),
+                new ExportBookLoader(modelLoader, bookNamespace),
                 RecipeMountIds.fromMeta(meta),
                 EntryOgImages.fromMeta(meta));
     }

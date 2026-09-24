@@ -118,6 +118,7 @@ load_config() {
   export FGE_REPO FGE_VERSION MWE_REPO MWE_VERSION
   export EXPORT_WARMUP_TICKS EXPORT_WORLD_DELAY_TICKS EXPORT_TIMEOUT_SECONDS
   export EXPORT_ROOT EXPORT_GUIDE EXPORT_ROOT_DIR GUIDE_SUBDIR SITE_OUTPUT_DIR RECIPE_BOOK_BASE_URL SITE_BASE_URL OG_IMAGE_URL
+  export BOOK_NAMESPACE BOOK_ID
   export EXPORT_ARTIFACT_NAME="${EXPORT_ARTIFACT_NAME:-field-guide}"
 
   if [[ -n "${GITHUB_ENV:-}" ]]; then
@@ -142,6 +143,8 @@ load_config() {
       printf 'EXPORT_ROOT=%s\n' "$EXPORT_ROOT"
       printf 'EXPORT_GUIDE=%s\n' "$EXPORT_GUIDE"
       printf 'SITE_OUTPUT_DIR=%s\n' "${SITE_OUTPUT_DIR:-output}"
+      printf 'BOOK_NAMESPACE=%s\n' "${BOOK_NAMESPACE:-tfg}"
+      printf 'BOOK_ID=%s\n' "${BOOK_ID:-field_guide}"
       printf 'RECIPE_BOOK_BASE_URL=%s\n' "${RECIPE_BOOK_BASE_URL:-}"
       printf 'SITE_BASE_URL=%s\n' "${SITE_BASE_URL:-}"
       printf 'OG_IMAGE_URL=%s\n' "${OG_IMAGE_URL:-}"
@@ -1092,6 +1095,12 @@ build_site() {
 
   rm -rf "$SITE_OUTPUT_DIR"
   local site_args=()
+  if [[ -n "${BOOK_NAMESPACE:-}" ]]; then
+    site_args+=(--book-namespace "${BOOK_NAMESPACE}")
+  fi
+  if [[ -n "${BOOK_ID:-}" ]]; then
+    site_args+=(--book-id "${BOOK_ID}")
+  fi
   if [[ -d "${EXPORT_ROOT}/emi" ]]; then
     site_args+=(--emi-dir "${EXPORT_ROOT}/emi")
   fi

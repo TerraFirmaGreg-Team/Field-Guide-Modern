@@ -17,9 +17,11 @@ import java.util.List;
 public class ExportBookLoader {
 
     private final ExportModelLoader models;
+    private final String bookNamespace;
 
-    public ExportBookLoader(ExportModelLoader models) {
+    public ExportBookLoader(ExportModelLoader models, String bookNamespace) {
         this.models = models;
+        this.bookNamespace = bookNamespace;
     }
 
     public Book loadBook(String bookId) throws IOException {
@@ -27,7 +29,7 @@ public class ExportBookLoader {
     }
 
     public Book loadBook(String bookId, Language lang, Book fallback) throws IOException {
-        String bookPath = Constants.getBookPath(bookId);
+        String bookPath = Constants.getBookPath(bookNamespace, bookId);
         Asset bookAsset = models.getAsset(bookPath);
         if (bookAsset == null) {
             throw new AssetNotFoundException("Book not found: " + bookPath);
@@ -48,7 +50,7 @@ public class ExportBookLoader {
     }
 
     private void loadCategoriesAndEntries(Book book, String bookId, String lang) throws IOException {
-        String categoryDir = Constants.getCategoryDir(bookId, lang);
+        String categoryDir = Constants.getCategoryDir(bookNamespace, bookId, lang);
         for (Asset asset : models.listAssets(categoryDir)) {
             if (!isPatchouliJsonAsset(asset)) {
                 continue;
@@ -61,7 +63,7 @@ public class ExportBookLoader {
             book.addCategory(category);
         }
 
-        String entryDir = Constants.getEntryDir(bookId, lang);
+        String entryDir = Constants.getEntryDir(bookNamespace, bookId, lang);
         for (Asset asset : models.listAssets(entryDir)) {
             if (!isPatchouliJsonAsset(asset)) {
                 continue;
@@ -76,17 +78,17 @@ public class ExportBookLoader {
     }
 
     private void mergeLocalized(Book book, String bookId, Language lang, Book fallback) throws IOException {
-        String categoryDir = Constants.getCategoryDir(bookId, lang.getKey());
-        String fallbackCategoryDir = Constants.getCategoryDir();
+        String categoryDir = Constants.getCategoryDir(bookNamespace, bookId, lang.getKey());
+        String fallbackCategoryDir = Constants.getCategoryDir(bookNamespace, bookId, Constants.EN_US);
         for (BookCategory category : fallback.getCategories()) {
-            String path = Constants.getCategoryPath(lang.getKey(), category.getId());
+            String path = Constants.getCategoryPath(bookNamespace, bookId, lang.getKey(), category.getId());
             Asset asset = models.getAsset(path);
             if (asset != null) {
                 BookCategory localized = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
                 localized.setAssetSource(categoryDir, asset);
                 book.addCategory(localized);
             } else {
-                path = Constants.getCategoryPath(category.getId());
+                path = Constants.getCategoryPath(bookNamespace, bookId, Constants.EN_US, category.getId());
                 asset = models.getAsset(path);
                 if (asset != null) {
                     BookCategory fb = JsonUtils.readFile(asset.getInputStream(), BookCategory.class);
@@ -96,17 +98,17 @@ public class ExportBookLoader {
             }
         }
 
-        String entryDir = Constants.getEntryDir(lang.getKey());
-        String fallbackEntryDir = Constants.getEntryDir();
+        String entryDir = Constants.getEntryDir(bookNamespace, bookId, lang.getKey());
+        String fallbackEntryDir = Constants.getEntryDir(bookNamespace, bookId, Constants.EN_US);
         for (BookEntry entry : fallback.getEntries()) {
-            String path = Constants.getEntryPath(lang.getKey(), entry.getId());
+            String path = Constants.getEntryPath(bookNamespace, bookId, lang.getKey(), entry.getId());
             Asset asset = models.getAsset(path);
             if (asset != null) {
                 BookEntry localized = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);
                 localized.setAssetSource(entryDir, asset);
                 book.addEntry(localized);
             } else {
-                path = Constants.getEntryPath(entry.getId());
+                path = Constants.getEntryPath(bookNamespace, bookId, Constants.EN_US, entry.getId());
                 asset = models.getAsset(path);
                 if (asset != null) {
                     BookEntry fb = JsonUtils.readFile(asset.getInputStream(), BookEntry.class);

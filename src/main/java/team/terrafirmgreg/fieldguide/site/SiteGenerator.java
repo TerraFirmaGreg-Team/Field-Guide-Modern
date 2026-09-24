@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static team.terrafirmgreg.fieldguide.Constants.FIELD_GUIDE;
-
 @Slf4j
 public class SiteGenerator implements Callable<Integer> {
 
@@ -58,6 +56,20 @@ public class SiteGenerator implements Callable<Integer> {
             split = ","
     )
     List<String> locales;
+
+    @CommandLine.Option(
+            names = {"--book-namespace"},
+            description = "Patchouli book namespace in the export (data/<ns>/patchouli_books, assets/<ns>/patchouli_books)",
+            defaultValue = Constants.DEFAULT_BOOK_NAMESPACE
+    )
+    String bookNamespace;
+
+    @CommandLine.Option(
+            names = {"--book-id"},
+            description = "Patchouli book id",
+            defaultValue = Constants.DEFAULT_BOOK_ID
+    )
+    String bookId;
 
     @CommandLine.Option(
             names = {"--emi-dir"},
@@ -97,7 +109,7 @@ public class SiteGenerator implements Callable<Integer> {
         Path output = Paths.get(outputDir).toAbsolutePath().normalize();
         log.info("Generating site from export={}, output={}", export, output);
 
-        ExportBundle bundle = ExportBundle.open(export);
+        ExportBundle bundle = ExportBundle.open(export, bookNamespace);
         ExportModelLoader models = bundle.getAssets().getModels();
         models.setOutputDir(output);
 
@@ -122,12 +134,12 @@ public class SiteGenerator implements Callable<Integer> {
         siteRenderer.copyHandbookIcons(export);
         siteRenderer.copyEntityPreviews(export);
 
-        Book fallback = bundle.getBooks().loadBook(FIELD_GUIDE);
+        Book fallback = bundle.getBooks().loadBook(bookId);
         List<Language> languages = resolveLanguages(bundle);
         for (Language lang : languages) {
             Book book = lang == Language.EN_US
                     ? fallback
-                    : bundle.getBooks().loadBook(FIELD_GUIDE, lang, fallback);
+                    : bundle.getBooks().loadBook(bookId, lang, fallback);
             pageRenderer.setBookMacros(book.getMacros());
             prepare(book, l10n, textureRenderer, pageRenderer, entryOgImages);
             siteRenderer.generate(book, textureRenderer);
