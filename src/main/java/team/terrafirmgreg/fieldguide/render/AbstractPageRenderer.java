@@ -80,6 +80,9 @@ public abstract class AbstractPageRenderer implements PageRenderer {
         } else if (page instanceof PageQuern pageQuern) {
             emitDoubleRecipePage(buffer, pageQuern);
             formatText(entry, buffer, pageQuern.getText());
+        } else if (page instanceof PageSmoking pageSmoking) {
+            emitDoubleRecipePage(buffer, pageSmoking);
+            formatText(entry, buffer, pageSmoking.getText());
         } else if (page instanceof PageLoom pageLoom) {
             emitDoubleRecipePage(buffer, pageLoom);
             formatText(entry, buffer, pageLoom.getText());

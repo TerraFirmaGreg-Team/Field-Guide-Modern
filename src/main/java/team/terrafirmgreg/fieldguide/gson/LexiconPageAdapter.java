@@ -37,21 +37,39 @@ public class LexiconPageAdapter implements JsonDeserializer<BookPage> {
 		pageTypes.put("patchouli:relations", PageRelations.class);
 		pageTypes.put("patchouli:quest", PageQuest.class);
 
-		pageTypes.put("tfc:instant_barrel_recipe", PageBarrel.class);
-		pageTypes.put("tfc:sealed_barrel_recipe", PageBarrel.class);
-		pageTypes.put("tfc:heat_recipe", PageHeating.class);
-		pageTypes.put("tfc:quern_recipe", PageQuern.class);
-		pageTypes.put("tfc:loom_recipe", PageLoom.class);
 		pageTypes.put("tfc:anvil_recipe", PageAnvil.class);
-		pageTypes.put("tfc:welding_recipe", PageWelding.class);
 		pageTypes.put("tfc:drying_recipe", PageDrying.class);
 		pageTypes.put("tfc:glassworking_recipe", PageGlassworking.class);
-		pageTypes.put("tfc:rock_knapping_recipe", PageRockKnapping.class);
+		pageTypes.put("tfc:heat_recipe", PageHeating.class);
+		pageTypes.put("tfc:instant_barrel_recipe", PageBarrel.class);
 		pageTypes.put("tfc:knapping_recipe", PageKnapping.class);
+		pageTypes.put("tfc:loom_recipe", PageLoom.class);
 		pageTypes.put("tfc:multimultiblock", PageMultiMultiblock.class);
+		pageTypes.put("tfc:quern_recipe", PageQuern.class);
+		pageTypes.put("tfc:rock_knapping_recipe", PageRockKnapping.class);
+		pageTypes.put("tfc:sealed_barrel_recipe", PageBarrel.class);
+		pageTypes.put("tfc:smoking", PageSmoking.class);
 		pageTypes.put("tfc:table", PageTable.class);
 		pageTypes.put("tfc:table_small", PageTable.class);
+		pageTypes.put("tfc:welding_recipe", PageWelding.class);
 		pageTypes.put("tfc:sns/better_anvil_recipe", PageBetterAnvil.class);
+
+		// Add compatibility for tfg field-guide, see TerraFirmaGreg-Team/Modpack-Modern#5023
+		pageTypes.put("tfg:anvil_recipe", PageAnvil.class);
+		pageTypes.put("tfg:drying_recipe", PageDrying.class);
+		pageTypes.put("tfg:glassworking_recipe", PageGlassworking.class);
+		pageTypes.put("tfg:heat_recipe", PageHeating.class);
+		pageTypes.put("tfg:instant_barrel_recipe", PageBarrel.class);
+		pageTypes.put("tfg:knapping_recipe", PageKnapping.class);
+		pageTypes.put("tfg:loom_recipe", PageLoom.class);
+		pageTypes.put("tfg:multimultiblock", PageMultiMultiblock.class);
+		pageTypes.put("tfg:quern_recipe", PageQuern.class);
+		pageTypes.put("tfg:rock_knapping_recipe", PageRockKnapping.class);
+		pageTypes.put("tfg:sealed_barrel_recipe", PageBarrel.class);
+		pageTypes.put("tfg:smoking", PageSmoking.class);
+		pageTypes.put("tfg:table", PageTable.class);
+		pageTypes.put("tfg:table_small", PageTable.class);
+		pageTypes.put("tfg:welding_recipe", PageWelding.class);
 	}
 
 	@Override
