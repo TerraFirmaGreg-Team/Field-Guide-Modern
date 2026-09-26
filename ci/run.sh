@@ -921,11 +921,19 @@ onboardAccessibility:false
 pauseOnLostFocus:false
 EOF
 
+  local jvm_flags="${MWE_JVM_FLAGS:?MWE_JVM_FLAGS required}"
+  if [[ -n "${BOOK_NAMESPACE:-}" ]]; then
+    jvm_flags+=" -Dfieldguide.bookNamespace=${BOOK_NAMESPACE}"
+  fi
+  if [[ -n "${BOOK_ID:-}" ]]; then
+    jvm_flags+=" -Dfieldguide.bookId=${BOOK_ID}"
+  fi
+
   cd "$FGM_ROOT"
   xvfb-run --server-args="-screen 0 1280x720x24" -a java \
     -Dhmc.check.xvfb=true \
     -jar "$launcher" \
-    --command "launch .*forge.* -regex --jvm \"${MWE_JVM_FLAGS:?MWE_JVM_FLAGS required}\""
+    --command "launch .*forge.* -regex --jvm \"${jvm_flags}\""
 
   verify_guide_export
 }
